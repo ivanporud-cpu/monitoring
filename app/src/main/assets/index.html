@@ -351,9 +351,85 @@
 
         .header-inner { display: flex; align-items: center; gap: 0.75rem; }
         .header-inner h1 { flex: 1; text-align: left; }
+
+        /* Pull-to-refresh индикатор */
+        .ptr-indicator {
+            position: fixed;
+            top: -4.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 0.125rem solid var(--color-info);
+            border-radius: 999px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-size: 0.875rem;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            transition: top 0.2s ease, border-color 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .ptr-indicator.dragging {
+            transition: none;
+        }
+        .ptr-indicator.ready {
+            border-color: var(--color-success);
+        }
+        .ptr-spinner {
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 0.1875rem solid var(--border-input);
+            border-top-color: var(--color-info);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .ptr-indicator.ready .ptr-spinner {
+            border-top-color: var(--color-success);
+        }
+        .ptr-indicator.loading .ptr-spinner {
+            animation: ptrSpin 0.8s linear infinite;
+        }
+        @keyframes ptrSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Всплывающая плашка при свайпе между линиями */
+        .swipe-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            z-index: 2900;
+            background: rgba(20, 28, 44, 0.92);
+            color: #ffffff;
+            border: 0.0625rem solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            padding: 0.55rem 1.15rem;
+            font-size: 0.9375rem;
+            font-weight: bold;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            white-space: nowrap;
+        }
+        .swipe-toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
+    <div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
+        <div class="ptr-spinner" id="ptrSpinner"></div>
+        <span id="ptrText">Потяните вниз для обновления</span>
+    </div>
+    <div class="swipe-toast" id="swipeToast" aria-hidden="true"></div>
     <div class="container" id="mainContainer">
         <div class="header">
             <div class="header-inner">
@@ -445,7 +521,7 @@
             <div class="settings-group" id="apkServerSettingsGroup" style="display:none; border-bottom: 0.125rem solid var(--border-soft); padding-bottom: 0.9375rem;">
                 <label for="apkServerUrlInput">Адрес сервера мониторинга</label>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="text" id="apkServerUrlInput" placeholder="http://192.168.1.10:5000" style="flex:1;">
+                    <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1;">
                     <button class="btn btn-success btn-sm" id="apkApplyServerBtn" type="button">Подключить</button>
                 </div>
                 <div class="hint">Укажите IP и порт ПК с запущенным сервером мониторинга (в одной локальной сети / Wi-Fi).</div>
@@ -702,7 +778,9 @@
             WEIGHTS: 'monitoring_weights',
             FONTS: 'monitoring_font_sizes',
             SHOW_CHART: 'monitoring_show_chart',
-            SCALE: 'monitoring_scale_percent'
+            SCALE: 'monitoring_scale_percent',
+            CACHED_BLOCKS: 'monitoring_cached_blocks',
+            CACHED_SCAN_TIME: 'monitoring_cached_scan_time'
         };
 
         const MONTHS_RU = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
@@ -1036,6 +1114,54 @@
             }
         }
 
+        function saveCachedData() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.CACHED_BLOCKS, JSON.stringify(blocksByFolder));
+                const times = lastScanTime.map(t => (t instanceof Date && !isNaN(t.getTime())) ? t.toISOString() : null);
+                localStorage.setItem(STORAGE_KEYS.CACHED_SCAN_TIME, JSON.stringify(times));
+            } catch (e) {
+                console.warn('Не удалось сохранить кэш данных в localStorage:', e);
+            }
+        }
+
+        function loadCachedData() {
+            try {
+                const rawBlocks = localStorage.getItem(STORAGE_KEYS.CACHED_BLOCKS);
+                if (rawBlocks) {
+                    const parsed = JSON.parse(rawBlocks);
+                    if (Array.isArray(parsed) && parsed.length === FOLDER_COUNT) {
+                        blocksByFolder = parsed;
+                    }
+                }
+                const rawTimes = localStorage.getItem(STORAGE_KEYS.CACHED_SCAN_TIME);
+                if (rawTimes) {
+                    const parsedTimes = JSON.parse(rawTimes);
+                    if (Array.isArray(parsedTimes) && parsedTimes.length === FOLDER_COUNT) {
+                        lastScanTime = parsedTimes.map(s => {
+                            if (!s) return null;
+                            const d = new Date(s);
+                            return isNaN(d.getTime()) ? null : d;
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить кэш данных из localStorage:', e);
+            }
+        }
+
+        function formatCacheTime(dt) {
+            if (!(dt instanceof Date) || isNaN(dt.getTime())) return '—';
+            const now = new Date();
+            const sameDay = dt.getDate() === now.getDate() &&
+                            dt.getMonth() === now.getMonth() &&
+                            dt.getFullYear() === now.getFullYear();
+            if (sameDay) {
+                return dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            return dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' ' +
+                   dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
         function clearStorage() {
             localStorage.removeItem(STORAGE_KEYS.PATHS);
             localStorage.removeItem(STORAGE_KEYS.PATTERNS);
@@ -1047,6 +1173,8 @@
             localStorage.removeItem(STORAGE_KEYS.FONTS);
             localStorage.removeItem(STORAGE_KEYS.SHOW_CHART);
             localStorage.removeItem(STORAGE_KEYS.SCALE);
+            localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
+            localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
             folderPaths = ['', '', ''];
             folderPatterns = ['', '', ''];
             folderNames = ['', '', ''];
@@ -1124,25 +1252,39 @@
             if (el) el.textContent = switchCountdown;
         }
 
-        // Переключение активной линии БЕЗ обращения к серверу.
-        // Пропускает линии без названия. Если активная линия не настроена — прыгает на первую настроенную.
-        function switchToNextFolder() {
+        let swipeToastTimer = null;
+        function showSwipeToast(text) {
+            const el = document.getElementById('swipeToast');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.add('visible');
+            if (swipeToastTimer) clearTimeout(swipeToastTimer);
+            swipeToastTimer = setTimeout(() => {
+                el.classList.remove('visible');
+            }, 1400);
+        }
+
+        // Переключение активной линии по направлению (+1 вперёд, -1 назад) БЕЗ обращения к серверу.
+        function switchToFolderByOffset(step, isManualSwipe) {
             const configured = getConfiguredIndexes();
             if (configured.length === 0) {
                 stopSwitchTimer();
+                if (isManualSwipe) showSwipeToast('Нет настроенных линий');
                 return;
             }
 
             let nextIdx;
             if (configured.length === 1) {
-                // Одна настроенная папка — не «крутим» её, просто держим активной
                 nextIdx = configured[0];
+                if (isManualSwipe) {
+                    showSwipeToast('Активна одна линия: ' + lineLabel(nextIdx));
+                }
             } else if (!configured.includes(activeIndex)) {
-                // Активная папка не настроена — переходим на первую настроенную
                 nextIdx = configured[0];
             } else {
                 const curPos = configured.indexOf(activeIndex);
-                nextIdx = configured[(curPos + 1) % configured.length];
+                const nextPos = (curPos + step + configured.length) % configured.length;
+                nextIdx = configured[nextPos];
             }
 
             const prevIdx = activeIndex;
@@ -1155,8 +1297,7 @@
                 currentBlocks = blocksByFolder[activeIndex];
                 displayBlocks(currentBlocks);
                 prepareChartDataFromBlocks(currentBlocks);
-                const t = lastScanTime[activeIndex];
-                const timeStr = t ? t.toLocaleTimeString('ru-RU') : '—';
+                const timeStr = formatCacheTime(lastScanTime[activeIndex]);
                 updateStatus('Линия: ' + lineLabel(activeIndex) + ' (блоков: ' + blocksByFolder[activeIndex].length + ', данные от ' + timeStr + ')');
             } else {
                 currentBlocks = [];
@@ -1167,10 +1308,27 @@
                 updateStatus('Линия: ' + lineLabel(activeIndex) + ' (нет данных)');
             }
 
+            if (isManualSwipe && configured.length > 1) {
+                const posNum = configured.indexOf(activeIndex) + 1;
+                showSwipeToast('◀ ' + lineLabel(activeIndex) + ' (' + posNum + '/' + configured.length + ') ▶');
+                if (switchInterval > 0) {
+                    switchCountdown = switchInterval;
+                    updateSwitchCountdownDisplay();
+                }
+            }
+
             // Прокрутка к сегодняшнему/завтрашнему блоку — только при фактической смене линии
             if (prevIdx !== nextIdx) {
-                setTimeout(() => scrollToTodayOrTomorrowBlock(), 600);
+                setTimeout(() => scrollToTodayOrTomorrowBlock(), 400);
             }
+        }
+
+        function switchToNextFolder() {
+            switchToFolderByOffset(1, false);
+        }
+
+        function switchToPrevFolder() {
+            switchToFolderByOffset(-1, false);
         }
 
         function restartSwitchTimer() {
@@ -1220,23 +1378,33 @@
 
         // Сканирует все настроенные папки по очереди, обновляет blocksByFolder.
         async function refreshAllFolders() {
-            if (isScanning) return;
+            if (isScanning) return false;
             const configured = getConfiguredIndexes();
-            if (configured.length === 0) return;
+            if (configured.length === 0) return false;
 
             updateStatus('Обновление данных с сервера...');
+            let anySuccess = false;
             for (const idx of configured) {
                 // Сканируем конкретную папку, не переключая активную линию
-                await scanFolderByIndex(idx);
+                const ok = await scanFolderByIndex(idx);
+                if (ok) anySuccess = true;
             }
-            updateStatus('Данные обновлены: ' + new Date().toLocaleTimeString('ru-RU'));
 
-            // Показать актуальные блоки для текущей активной линии
+            if (anySuccess) {
+                updateStatus('Данные обновлены: ' + new Date().toLocaleTimeString('ru-RU'));
+            } else if (blocksByFolder[activeIndex]) {
+                updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
+            } else {
+                updateStatus('Нет связи с сервером — сохранённых данных пока нет');
+            }
+
+            // Показать актуальные (или сохранённые) блоки для текущей активной линии
             if (blocksByFolder[activeIndex]) {
                 currentBlocks = blocksByFolder[activeIndex];
                 displayBlocks(currentBlocks);
                 prepareChartDataFromBlocks(currentBlocks);
             }
+            return anySuccess;
         }
 
         // ==================== ПОИСК ПАПОК МЕСЯЦЕВ ====================
@@ -1408,6 +1576,8 @@
 
                 blocksByFolder[idx] = trimToFreshest(collected, blockLimit);
                 lastScanTime[idx] = new Date();
+                saveCachedData();
+                return true;
 
             } catch (error) {
                 const isNetwork = error.name === 'AbortError' || error instanceof TypeError ||
@@ -1418,6 +1588,7 @@
                     console.warn('Ошибка сканирования линии ' + (idx+1) + ': ' + error.message);
                 }
                 // Не перезаписываем blocksByFolder[idx] — оставляем старые данные
+                return false;
             } finally {
                 isScanning = false;
                 if (idx === activeIndex) {
@@ -1582,6 +1753,12 @@
             const windowsData = chartData.map(item => item.УсловныеОкна);
             const percentageChangeData = chartData.map((item, idx) => calculatePercentageChange(idx));
             const avg = calculateAveragePercentageAllDays();
+
+            if (typeof Chart === 'undefined') {
+                updateChartSummaryWithAverage(avg);
+                document.getElementById('chartInfo').textContent = 'График недоступен офлайн (сводка по сменам показана ниже)';
+                return;
+            }
 
             const theme = getChartTheme();
 
@@ -1907,18 +2084,26 @@
         async function refreshData() {
             if (!isFolderConfigured(activeIndex)) {
                 updateStatus('Нет активной линии: укажите название линии в настройках');
-                return;
+                return false;
             }
             const idx = activeIndex;
-            await scanFolderByIndex(idx);
+            const ok = await scanFolderByIndex(idx);
             if (blocksByFolder[idx]) {
                 currentBlocks = blocksByFolder[idx];
                 displayBlocks(currentBlocks);
                 prepareChartDataFromBlocks(currentBlocks);
             }
+            if (ok) {
+                updateStatus('Линия ' + lineLabel(idx) + ' обновлена: ' + new Date().toLocaleTimeString('ru-RU'));
+            } else if (blocksByFolder[idx]) {
+                updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[idx]) + ')');
+            } else {
+                updateStatus('Нет связи с сервером');
+            }
             // Сбрасываем счётчик обновления, чтобы следующее автообновление было через полный интервал
             refreshCountdown = refreshInterval;
             updateRefreshCountdownDisplay();
+            return ok;
         }
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
@@ -1933,6 +2118,7 @@
             });
 
             loadAllSettings();
+            loadCachedData();
             applyFontSizes();
             applyChartVisibility();
             applyScale();
@@ -1955,8 +2141,18 @@
             }
             updateActiveDisplay();
 
+            // Сразу отображаем последние сохранённые данные из кэша (даже если нет связи с сервером)
+            if (configured.length > 0 && blocksByFolder[activeIndex]) {
+                currentBlocks = blocksByFolder[activeIndex];
+                displayBlocks(currentBlocks);
+                prepareChartDataFromBlocks(currentBlocks);
+                updateStatus('Показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + '). Проверка сервера...');
+            }
+
             if (currentDirectory) {
-                updateStatus('Загрузка данных с сервера...');
+                if (!blocksByFolder[activeIndex]) {
+                    updateStatus('Загрузка данных с сервера...');
+                }
                 setTimeout(async () => {
                     // Первое обновление всех папок
                     await refreshAllFolders();
@@ -2006,11 +2202,12 @@
                 if (srvApply) {
                     srvApply.addEventListener('click', function() {
                         const val = (srvInp.value || '').trim();
-                        if (!val) { alert('Введите адрес сервера, например http://192.168.1.10:5000'); return; }
+                        if (!val) { alert('Введите адрес сервера, например http://192.168.57.107:5000'); return; }
                         window.AndroidApp.setServerUrl(val);
                     });
                 }
             }
+            setupTouchGestures();
             document.getElementById('closeSettingsBtn').addEventListener('click', hideSettingsModal);
             document.getElementById('saveSettingsBtn').addEventListener('click', function() {
                 const interval = parseInt(document.getElementById('switchInterval').value) || 0;
@@ -2146,6 +2343,135 @@
                     setTimeout(() => { productionChart.resize(); updateChart(); }, 100);
                 }
             });
+        }
+
+        // ==================== ЖЕСТЫ: PULL-TO-REFRESH И СВАЙП МЕЖДУ ЛИНИЯМИ ====================
+        function isAnyModalOpen() {
+            const ids = ['fileManager', 'filesModal', 'settingsModal'];
+            return ids.some(id => {
+                const el = document.getElementById(id);
+                return el && el.style.display === 'block';
+            });
+        }
+
+        function setupTouchGestures() {
+            const ptrIndicator = document.getElementById('ptrIndicator');
+            const ptrSpinner = document.getElementById('ptrSpinner');
+            const ptrText = document.getElementById('ptrText');
+
+            let startX = 0;
+            let startY = 0;
+            let startTime = 0;
+            let startedAtTop = false;
+            let startedInChart = false;
+            let gestureMode = null; // 'ptr' | 'swipe' | null
+            let currentPull = 0;
+            let isPtrRefreshing = false;
+
+            const PTR_THRESHOLD = 64;
+            const PTR_MAX = 110;
+
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length !== 1) return;
+                if (isAnyModalOpen()) {
+                    gestureMode = null;
+                    return;
+                }
+                const t = e.touches[0];
+                startX = t.clientX;
+                startY = t.clientY;
+                startTime = Date.now();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                startedAtTop = scrollTop <= 2;
+                startedInChart = !!(e.target && e.target.closest && e.target.closest('.chart-scroll-wrapper'));
+                gestureMode = null;
+                currentPull = 0;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                if (e.touches.length !== 1 || isAnyModalOpen() || isPtrRefreshing) return;
+                const t = e.touches[0];
+                const dx = t.clientX - startX;
+                const dy = t.clientY - startY;
+
+                if (gestureMode === null) {
+                    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+                    if (startedAtTop && dy > 10 && Math.abs(dy) > Math.abs(dx) * 1.3 && !isScanning) {
+                        gestureMode = 'ptr';
+                        if (ptrIndicator) ptrIndicator.classList.add('dragging');
+                    } else if (!startedInChart && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                        gestureMode = 'swipe';
+                    } else {
+                        gestureMode = 'ignore';
+                    }
+                }
+
+                if (gestureMode === 'ptr' && ptrIndicator) {
+                    if (dy <= 0) {
+                        currentPull = 0;
+                        ptrIndicator.style.top = '-4.5rem';
+                        ptrIndicator.classList.remove('ready');
+                        return;
+                    }
+                    currentPull = Math.min(PTR_MAX, dy * 0.45);
+                    ptrIndicator.style.top = (currentPull - 46) + 'px';
+                    if (ptrSpinner) {
+                        ptrSpinner.style.transform = 'rotate(' + Math.round(currentPull * 3.5) + 'deg)';
+                    }
+                    if (currentPull >= PTR_THRESHOLD) {
+                        ptrIndicator.classList.add('ready');
+                        if (ptrText) ptrText.textContent = 'Отпустите для обновления';
+                    } else {
+                        ptrIndicator.classList.remove('ready');
+                        if (ptrText) ptrText.textContent = 'Потяните вниз для обновления';
+                    }
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', async function(e) {
+                if (gestureMode === 'ptr' && ptrIndicator) {
+                    ptrIndicator.classList.remove('dragging');
+                    if (currentPull >= PTR_THRESHOLD && !isPtrRefreshing && !isScanning) {
+                        isPtrRefreshing = true;
+                        ptrIndicator.classList.remove('ready');
+                        ptrIndicator.classList.add('loading');
+                        ptrIndicator.style.top = '0.875rem';
+                        if (ptrText) ptrText.textContent = 'Обновление данных...';
+
+                        try {
+                            await refreshAllFolders();
+                            refreshCountdown = refreshInterval;
+                            updateRefreshCountdownDisplay();
+                        } finally {
+                            isPtrRefreshing = false;
+                            ptrIndicator.classList.remove('loading');
+                            ptrIndicator.style.top = '-4.5rem';
+                            if (ptrText) ptrText.textContent = 'Потяните вниз для обновления';
+                        }
+                    } else {
+                        ptrIndicator.classList.remove('ready');
+                        ptrIndicator.style.top = '-4.5rem';
+                    }
+                } else if (gestureMode === 'swipe' && !isAnyModalOpen() && !startedInChart) {
+                    const touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+                    if (touch) {
+                        const dx = touch.clientX - startX;
+                        const dy = touch.clientY - startY;
+                        const dt = Date.now() - startTime;
+                        if (dt < 750 && Math.abs(dx) >= 65 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+                            if (dx < 0) {
+                                // Свайп влево -> следующая папка/линия
+                                switchToFolderByOffset(1, true);
+                            } else {
+                                // Свайп вправо -> предыдущая папка/линия
+                                switchToFolderByOffset(-1, true);
+                            }
+                        }
+                    }
+                }
+                gestureMode = null;
+                currentPull = 0;
+            }, { passive: true });
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
