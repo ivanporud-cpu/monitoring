@@ -3,8 +3,11 @@ package com.production.monitoring;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
@@ -21,14 +24,23 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.content.FileProvider;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +57,9 @@ public class MainActivity extends Activity {
     private static final String KEY_SERVER_URL = "server_url";
     private static final int SCAN_PORT = 5000;
     private static final int CONNECT_TIMEOUT_MS = 500;
+    private static final String FALLBACK_SUBNET = "192.168.57.";
+    private static final String GITHUB_LATEST_RELEASE_API =
+            "https://api.github.com/repos/ivanporud-cpu/monitoring/releases/latest";
 
     private WebView webView;
     private SharedPreferences prefs;
@@ -125,7 +140,147 @@ public class MainActivity extends Activity {
         } else {
             loadWithBaseUrl(normalizeUrl(savedUrl));
         }
+
+        checkForAppUpdate();
     }
+
+    // ==================== АВТООБНОВЛЕНИЕ ЧЕРЕЗ GITHUB RELEASES ====================
+
+    private int getCurrentVersionCode() {
+        try {
+            PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return (int) pi.getLongVersionCode();
+            }
+            return pi.versionCode;
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    private void checkForAppUpdate() {
+        new Thread(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL(GITHUB_LATEST_RELEASE_API);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                conn.setRequestProperty("Accept", "application/vnd.github+json");
+                conn.setRequestProperty("User-Agent", "ProductionMonitoringApp");
+
+                if (conn.getResponseCode() != 200) return;
+
+                StringBuilder sb = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line);
+                }
+
+                JSONObject json = new JSONObject(sb.toString());
+                String tagName = json.optString("tag_name", "");
+                int remoteBuild = parseBuildNumber(tagName);
+                int localBuild = getCurrentVersionCode();
+
+                if (remoteBuild <= localBuild) return;
+
+                String apkUrl = null;
+                JSONArray assets = json.optJSONArray("assets");
+                if (assets != null) {
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        String name = asset.optString("name", "");
+                        if (name.toLowerCase(Locale.US).endsWith(".apk")) {
+                            apkUrl = asset.optString("browser_download_url", null);
+                            break;
+                        }
+                    }
+                }
+                if (apkUrl == null || apkUrl.isEmpty()) return;
+
+                final String finalApkUrl = apkUrl;
+                final String finalTag = tagName;
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Доступно обновление " + finalTag)
+                            .setMessage("Вышла новая версия приложения. Скачать и установить сейчас?")
+                            .setPositiveButton("Обновить", (d, w) -> downloadAndInstallApk(finalApkUrl))
+                            .setNegativeButton("Позже", null)
+                            .show();
+                });
+            } catch (Exception ignored) {
+            } finally {
+                if (conn != null) conn.disconnect();
+            }
+        }).start();
+    }
+
+    private int parseBuildNumber(String tag) {
+        if (tag == null) return 0;
+        int dot = tag.lastIndexOf('.');
+        String numPart = (dot >= 0) ? tag.substring(dot + 1) : tag.replaceAll("[^0-9]", "");
+        try {
+            return Integer.parseInt(numPart.replaceAll("[^0-9]", ""));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private void downloadAndInstallApk(final String apkUrl) {
+        final AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle("Загрузка обновления")
+                .setMessage("Скачивание APK с GitHub...")
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        new Thread(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL(apkUrl);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(30000);
+                conn.connect();
+
+                File apkFile = new File(getCacheDir(), "update.apk");
+                try (InputStream in = conn.getInputStream();
+                     FileOutputStream out = new FileOutputStream(apkFile)) {
+                    byte[] buf = new byte[8192];
+                    int len;
+                    while ((len = in.read(buf)) != -1) {
+                        out.write(buf, 0, len);
+                    }
+                }
+
+                runOnUiThread(() -> {
+                    try { progressDialog.dismiss(); } catch (Exception ignored) {}
+                    Uri apkUri = FileProvider.getUriForFile(
+                            MainActivity.this,
+                            getPackageName() + ".fileprovider",
+                            apkFile
+                    );
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    try { progressDialog.dismiss(); } catch (Exception ignored) {}
+                    Toast.makeText(MainActivity.this, "Ошибка загрузки: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            } finally {
+                if (conn != null) conn.disconnect();
+            }
+        }).start();
+    }
+
+    // ==================== ПОИСК СЕРВЕРА И ПОДКЛЮЧЕНИЕ ====================
 
     private String readAssetHtml(String assetName) {
         StringBuilder sb = new StringBuilder();
@@ -210,58 +365,63 @@ public class MainActivity extends Activity {
         return fallbackPrefix;
     }
 
-    private void scanNetworkForServer(final boolean isFirstRun) {
-        final String prefix = getLocalSubnetPrefix();
-        if (prefix == null) {
-            Toast.makeText(this, "Не удалось определить Wi-Fi подсеть. Введите IP вручную.", Toast.LENGTH_LONG).show();
-            showServerUrlDialog(isFirstRun);
-            return;
+    private List<String> scanSubnet(String prefix) {
+        final List<String> found = Collections.synchronizedList(new ArrayList<>());
+        ExecutorService pool = Executors.newFixedThreadPool(64);
+        for (int i = 1; i <= 254; i++) {
+            final String ip = prefix + i;
+            pool.submit(() -> {
+                try (Socket socket = new Socket()) {
+                    socket.connect(new InetSocketAddress(ip, SCAN_PORT), CONNECT_TIMEOUT_MS);
+                    found.add("http://" + ip + ":" + SCAN_PORT);
+                } catch (Exception ignored) {
+                }
+            });
         }
+        pool.shutdown();
+        try {
+            pool.awaitTermination(12, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+        }
+        Collections.sort(found);
+        return found;
+    }
+
+    private void scanNetworkForServer(final boolean isFirstRun) {
+        final String localPrefix = getLocalSubnetPrefix();
+        final String firstPrefix = (localPrefix != null) ? localPrefix : FALLBACK_SUBNET;
 
         final AlertDialog progressDialog = new AlertDialog.Builder(this)
                 .setTitle("Поиск сервера")
-                .setMessage("Сканирование " + prefix + "1–254 (порт " + SCAN_PORT + ")...")
+                .setMessage("Сканирование " + firstPrefix + "1–254 (порт " + SCAN_PORT + ")...")
                 .setCancelable(false)
                 .create();
         progressDialog.show();
 
         new Thread(() -> {
-            final List<String> foundUrls = Collections.synchronizedList(new ArrayList<>());
-            ExecutorService pool = Executors.newFixedThreadPool(64);
+            List<String> foundUrls = scanSubnet(firstPrefix);
 
-            for (int i = 1; i <= 254; i++) {
-                final String ip = prefix + i;
-                pool.submit(() -> {
-                    try (Socket socket = new Socket()) {
-                        socket.connect(new InetSocketAddress(ip, SCAN_PORT), CONNECT_TIMEOUT_MS);
-                        foundUrls.add("http://" + ip + ":" + SCAN_PORT);
-                    } catch (Exception ignored) {
+            if (foundUrls.isEmpty() && !FALLBACK_SUBNET.equals(firstPrefix)) {
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed()) {
+                        progressDialog.setMessage("Сканирование " + FALLBACK_SUBNET + "1–254 (порт " + SCAN_PORT + ")...");
                     }
                 });
+                foundUrls = scanSubnet(FALLBACK_SUBNET);
             }
 
-            pool.shutdown();
-            try {
-                pool.awaitTermination(12, TimeUnit.SECONDS);
-            } catch (InterruptedException ignored) {
-            }
-
-            Collections.sort(foundUrls);
-
+            final List<String> result = foundUrls;
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
-                try {
-                    progressDialog.dismiss();
-                } catch (Exception ignored) {
-                }
+                try { progressDialog.dismiss(); } catch (Exception ignored) {}
 
-                if (foundUrls.size() == 1) {
-                    applyAndConnect(foundUrls.get(0));
-                } else if (foundUrls.size() > 1) {
-                    showServerSelectionDialog(foundUrls, isFirstRun);
+                if (result.size() == 1) {
+                    applyAndConnect(result.get(0));
+                } else if (result.size() > 1) {
+                    showServerSelectionDialog(result, isFirstRun);
                 } else {
                     Toast.makeText(MainActivity.this,
-                            "В подсети " + prefix + "x сервер на порту " + SCAN_PORT + " не найден", Toast.LENGTH_LONG).show();
+                            "Серверы на порту " + SCAN_PORT + " не найдены", Toast.LENGTH_LONG).show();
                     showServerUrlDialog(isFirstRun);
                 }
             });
