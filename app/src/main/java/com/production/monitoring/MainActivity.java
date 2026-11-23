@@ -24,12 +24,26 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
 
     private static final String PREFS_NAME = "monitoring_prefs";
     private static final String KEY_SERVER_URL = "server_url";
+    private static final int SCAN_PORT = 5000;
+    private static final int CONNECT_TIMEOUT_MS = 300;
 
     private WebView webView;
     private SharedPreferences prefs;
@@ -106,7 +120,7 @@ public class MainActivity extends Activity {
         String savedUrl = prefs.getString(KEY_SERVER_URL, "");
         if (savedUrl == null || savedUrl.trim().isEmpty()) {
             loadWithBaseUrl("http://localhost/");
-            showServerUrlDialog(true);
+            scanNetworkForServer(true);
         } else {
             loadWithBaseUrl(normalizeUrl(savedUrl));
         }
@@ -148,9 +162,107 @@ public class MainActivity extends Activity {
     }
 
     private void loadWithBaseUrl(String baseUrl) {
-        // loadDataWithBaseURL задаёт origin = baseUrl:
-        // все относительные /api/files и /api/scan-directory идут на сервер напрямую без CORS-ошибок
         webView.loadDataWithBaseURL(baseUrl, cachedHtml, "text/html", "UTF-8", baseUrl);
+    }
+
+    private void applyAndConnect(String rawUrl) {
+        String normalized = normalizeUrl(rawUrl);
+        prefs.edit().putString(KEY_SERVER_URL, normalized).apply();
+        loadWithBaseUrl(normalized);
+        Toast.makeText(this, "Подключено: " + displayUrl(normalized), Toast.LENGTH_SHORT).show();
+    }
+
+    private String getLocalSubnetPrefix() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces != null && interfaces.hasMoreElements()) {
+                NetworkInterface nif = interfaces.nextElement();
+                if (!nif.isUp() || nif.isLoopback()) continue;
+                Enumeration<InetAddress> addrs = nif.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    InetAddress addr = addrs.nextElement();
+                    if (addr instanceof Inet4Address && addr.isSiteLocalAddress()) {
+                        String host = addr.getHostAddress();
+                        if (host != null) {
+                            int lastDot = host.lastIndexOf('.');
+                            if (lastDot > 0) {
+                                return host.substring(0, lastDot + 1);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private void scanNetworkForServer(final boolean isFirstRun) {
+        final String prefix = getLocalSubnetPrefix();
+        if (prefix == null) {
+            Toast.makeText(this, "Не удалось определить Wi-Fi подсеть. Введите IP вручную.", Toast.LENGTH_LONG).show();
+            showServerUrlDialog(isFirstRun);
+            return;
+        }
+
+        final AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle("Поиск сервера")
+                .setMessage("Сканирование " + prefix + "1–254 (порт " + SCAN_PORT + ")...")
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        new Thread(() -> {
+            final List<String> foundUrls = Collections.synchronizedList(new ArrayList<>());
+            ExecutorService pool = Executors.newFixedThreadPool(40);
+
+            for (int i = 1; i <= 254; i++) {
+                final String ip = prefix + i;
+                pool.submit(() -> {
+                    try (Socket socket = new Socket()) {
+                        socket.connect(new InetSocketAddress(ip, SCAN_PORT), CONNECT_TIMEOUT_MS);
+                        foundUrls.add("http://" + ip + ":" + SCAN_PORT);
+                    } catch (Exception ignored) {
+                    }
+                });
+            }
+
+            pool.shutdown();
+            try {
+                pool.awaitTermination(8, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+            }
+
+            Collections.sort(foundUrls);
+
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                try {
+                    progressDialog.dismiss();
+                } catch (Exception ignored) {
+                }
+
+                if (foundUrls.size() == 1) {
+                    applyAndConnect(foundUrls.get(0));
+                } else if (foundUrls.size() > 1) {
+                    showServerSelectionDialog(foundUrls, isFirstRun);
+                } else {
+                    Toast.makeText(MainActivity.this,
+                            "Серверы на порту " + SCAN_PORT + " не найдены", Toast.LENGTH_LONG).show();
+                    showServerUrlDialog(isFirstRun);
+                }
+            });
+        }).start();
+    }
+
+    private void showServerSelectionDialog(final List<String> urls, final boolean isFirstRun) {
+        final String[] items = urls.toArray(new String[0]);
+        new AlertDialog.Builder(this)
+                .setTitle("Выберите сервер (порт " + SCAN_PORT + ")")
+                .setItems(items, (dialog, which) -> applyAndConnect(items[which]))
+                .setNeutralButton("Ввести вручную", (dialog, which) -> showServerUrlDialog(isFirstRun))
+                .setNegativeButton("Отмена", null)
+                .show();
     }
 
     private void showServerUrlDialog(boolean isFirstRun) {
@@ -160,7 +272,7 @@ public class MainActivity extends Activity {
         layout.setPadding(pad, pad / 2, pad, 0);
 
         TextView hint = new TextView(this);
-        hint.setText("Укажите адрес сервера мониторинга в локальной сети (например, http://192.168.1.10:5000):");
+        hint.setText("Укажите адрес сервера мониторинга (например, http://192.168.1.10:5000):");
         layout.addView(hint);
 
         final EditText input = new EditText(this);
@@ -182,17 +294,11 @@ public class MainActivity extends Activity {
                         Toast.makeText(this, "Адрес сервера не указан", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    String normalized = normalizeUrl(entered);
-                    prefs.edit().putString(KEY_SERVER_URL, normalized).apply();
-                    loadWithBaseUrl(normalized);
-                    Toast.makeText(this, "Сервер: " + displayUrl(normalized), Toast.LENGTH_SHORT).show();
-                });
+                    applyAndConnect(entered);
+                })
+                .setNeutralButton("Найти в сети", (dialog, which) -> scanNetworkForServer(isFirstRun));
 
-        if (!isFirstRun) {
-            builder.setNegativeButton("Отмена", null);
-        } else {
-            builder.setNegativeButton("Позже", null);
-        }
+        builder.setNegativeButton(isFirstRun ? "Позже" : "Отмена", null);
         builder.show();
     }
 
@@ -210,9 +316,7 @@ public class MainActivity extends Activity {
                     Toast.makeText(MainActivity.this, "Введите корректный адрес сервера", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                prefs.edit().putString(KEY_SERVER_URL, normalized).apply();
-                loadWithBaseUrl(normalized);
-                Toast.makeText(MainActivity.this, "Подключение к " + displayUrl(normalized), Toast.LENGTH_SHORT).show();
+                applyAndConnect(normalized);
             });
         }
 
