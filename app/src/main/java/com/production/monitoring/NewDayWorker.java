@@ -27,16 +27,24 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +58,11 @@ public class NewDayWorker extends Worker {
     public static final String KEY_PENDING_DAYS = "pending_new_days";
     public static final String KEY_LAST_ALERT_MS = "last_new_day_alert_ms";
     public static final String EXTRA_OPEN_LINE_IDX = "extra_open_line_idx";
+
+    public static final int SCAN_PORT = 5000;
+    public static final int SOCKET_TIMEOUT_MS = 450;
+    public static final int VERIFY_TIMEOUT_MS = 1200;
+    public static final String FALLBACK_SUBNET = "192.168.57.";
 
     public static final String CHANNEL_ID = "new_day_channel";
     public static final int NOTIFICATION_ID = 7701;
@@ -81,15 +94,16 @@ public class NewDayWorker extends Worker {
             return Result.success();
         }
 
-        String serverUrl = normalizeBaseUrl(prefs.getString(KEY_SERVER_URL, ""));
-        if (serverUrl.isEmpty()) {
-            return Result.success();
-        }
-
         String configJson = prefs.getString(KEY_LINES_CONFIG, "");
         if (configJson == null || configJson.trim().isEmpty()) {
             return Result.success();
         }
+
+        List<String> servers = findWorkingServers(prefs, false);
+        if (servers.isEmpty()) {
+            return Result.success();
+        }
+        String serverUrl = servers.get(0);
 
         try {
             JSONArray lines = new JSONArray(configJson);
@@ -105,7 +119,6 @@ public class NewDayWorker extends Worker {
                 String rawPath = lineObj.optString("path", "").trim();
                 String pattern = lineObj.optString("pattern", "").trim();
 
-                // Пропускаем линии без названия или без пути
                 if (name.isEmpty()) continue;
                 String basePath = !pattern.isEmpty() ? resolveMacros(pattern) : rawPath;
                 if (basePath.isEmpty()) continue;
@@ -114,7 +127,6 @@ public class NewDayWorker extends Worker {
 
                 List<String> dayFolders = fetchCurrentDayFolders(serverUrl, basePath);
                 if (dayFolders == null) {
-                    // Сервер временно недоступен — не трогаем сохранённый список
                     continue;
                 }
 
@@ -124,7 +136,6 @@ public class NewDayWorker extends Worker {
                 boolean baselineReady = prefs.getBoolean(baselineKey, false);
 
                 if (!baselineReady) {
-                    // Первый проход по линии: молча запоминаем существующие папки
                     for (String f : dayFolders) {
                         knownSet.add(f.toLowerCase(Locale.ROOT));
                     }
@@ -150,9 +161,6 @@ public class NewDayWorker extends Worker {
             if (!foundInRun.isEmpty()) {
                 appendAndShowUnifiedNotification(ctx, prefs, foundInRun);
 
-                // Если настроено несколько линий, а новый день появился только на части из них —
-                // планируем допроверку через 6 минут, чтобы подхватить остальные линии (через 2–5 мин)
-                // и объединить их в то же самое уведомление.
                 Set<Integer> notifiedLines = new HashSet<>();
                 JSONArray pending = loadPendingArray(prefs);
                 for (int i = 0; i < pending.length(); i++) {
@@ -168,6 +176,142 @@ public class NewDayWorker extends Worker {
 
         return Result.success();
     }
+
+    // ==================== ТИХИЙ АВТОПОИСК СЕРВЕРА С ПРОВЕРКОЙ «СВОЙ/ЧУЖОЙ» ====================
+
+    public static List<String> findWorkingServers(SharedPreferences prefs, boolean forceFullScan) {
+        String savedUrl = normalizeBaseUrl(prefs.getString(KEY_SERVER_URL, ""));
+        if (!forceFullScan && !savedUrl.isEmpty()) {
+            if (isMonitoringServer(savedUrl, VERIFY_TIMEOUT_MS)) {
+                return Collections.singletonList(savedUrl);
+            }
+        }
+
+        String localPrefix = getLocalSubnetPrefix();
+        String firstPrefix = (localPrefix != null) ? localPrefix : FALLBACK_SUBNET;
+
+        List<String> verified = scanAndVerifySubnet(firstPrefix);
+        if (verified.isEmpty() && !FALLBACK_SUBNET.equals(firstPrefix)) {
+            verified = scanAndVerifySubnet(FALLBACK_SUBNET);
+        }
+
+        if (verified.size() == 1) {
+            String found = verified.get(0);
+            if (!found.equals(savedUrl)) {
+                prefs.edit().putString(KEY_SERVER_URL, found).apply();
+            }
+        }
+        return verified;
+    }
+
+    public static String getLocalSubnetPrefix() {
+        String fallbackPrefix = null;
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces != null && interfaces.hasMoreElements()) {
+                NetworkInterface nif = interfaces.nextElement();
+                if (!nif.isUp() || nif.isLoopback()) continue;
+                String name = nif.getName() == null ? "" : nif.getName().toLowerCase(Locale.US);
+                if (name.startsWith("tun") || name.startsWith("ppp") || name.startsWith("rmnet")
+                        || name.startsWith("ccmni") || name.startsWith("dummy")) {
+                    continue;
+                }
+                Enumeration<InetAddress> addrs = nif.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    InetAddress addr = addrs.nextElement();
+                    if (addr instanceof Inet4Address && addr.isSiteLocalAddress()) {
+                        String host = addr.getHostAddress();
+                        if (host != null) {
+                            int lastDot = host.lastIndexOf('.');
+                            if (lastDot > 0) {
+                                String prefix = host.substring(0, lastDot + 1);
+                                if (name.startsWith("wlan") || name.startsWith("wifi")) {
+                                    return prefix;
+                                }
+                                if (fallbackPrefix == null) {
+                                    fallbackPrefix = prefix;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return fallbackPrefix;
+    }
+
+    public static List<String> scanAndVerifySubnet(String prefix) {
+        final List<String> openUrls = Collections.synchronizedList(new ArrayList<>());
+        ExecutorService pool = Executors.newFixedThreadPool(64);
+        for (int i = 1; i <= 254; i++) {
+            final String ip = prefix + i;
+            pool.submit(() -> {
+                try (Socket socket = new Socket()) {
+                    socket.connect(new InetSocketAddress(ip, SCAN_PORT), SOCKET_TIMEOUT_MS);
+                    openUrls.add("http://" + ip + ":" + SCAN_PORT + "/");
+                } catch (Exception ignored) {
+                }
+            });
+        }
+        pool.shutdown();
+        try {
+            pool.awaitTermination(12, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+        }
+
+        Collections.sort(openUrls);
+        List<String> verified = new ArrayList<>();
+        for (String candidate : openUrls) {
+            if (isMonitoringServer(candidate, VERIFY_TIMEOUT_MS)) {
+                verified.add(candidate);
+            }
+        }
+        return verified;
+    }
+
+    public static boolean isMonitoringServer(String baseUrl, int timeoutMs) {
+        HttpURLConnection conn = null;
+        try {
+            String normalized = normalizeBaseUrl(baseUrl);
+            if (normalized.isEmpty()) return false;
+            URL url = new URL(normalized + "api/files");
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(timeoutMs);
+            conn.setReadTimeout(timeoutMs);
+
+            if (conn.getResponseCode() != 200) return false;
+
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) sb.append(line);
+            }
+            JSONObject json = new JSONObject(sb.toString());
+            return json.has("items") || json.has("current_path") || json.has("error");
+        } catch (Exception e) {
+            return false;
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    public static String normalizeBaseUrl(String raw) {
+        if (raw == null) return "";
+        String u = raw.trim();
+        if (u.isEmpty()) return "";
+        if (!u.startsWith("http://") && !u.startsWith("https://")) {
+            u = "http://" + u;
+        }
+        if (!u.endsWith("/")) {
+            u = u + "/";
+        }
+        return u;
+    }
+
+    // ==================== УВЕДОМЛЕНИЯ О НОВЫХ ДНЯХ ====================
 
     private static class NewDayEvent {
         final int lineIdx;
@@ -226,7 +370,6 @@ public class NewDayWorker extends Worker {
 
         long now = System.currentTimeMillis();
         long lastAlertMs = prefs.getLong(KEY_LAST_ALERT_MS, 0L);
-        // Если обновляем уже висящее уведомление в течение 15 минут — не звеним повторно
         boolean silentUpdate = hadPrevious && (now - lastAlertMs < 15 * 60 * 1000L);
         if (!silentUpdate) {
             prefs.edit().putLong(KEY_LAST_ALERT_MS, now).apply();
@@ -237,7 +380,6 @@ public class NewDayWorker extends Worker {
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
 
         int firstLineIdx = -1;
-        Set<Integer> distinctLines = new HashSet<>();
         List<String> inlineParts = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
@@ -247,7 +389,6 @@ public class NewDayWorker extends Worker {
             String lName = o.optString("lineName", "Линия");
             String fName = o.optString("folderName", "");
             if (firstLineIdx < 0) firstLineIdx = lIdx;
-            distinctLines.add(lIdx);
             inlineParts.add(lName + ": " + fName);
             inboxStyle.addLine(lName + " — " + fName);
         }
@@ -329,10 +470,8 @@ public class NewDayWorker extends Worker {
             String ownName = baseName(basePath);
             int ownMonthIdx = getMonthIndexFromName(ownName);
 
-            String targetMonthPath = basePath;
             List<DirItem> targetDirs = dirs;
 
-            // Если выбран конкретный месяц — проверяем родительскую папку, не появился ли более свежий месяц
             String parentPath = info.optString("parent_path", "");
             if (ownMonthIdx >= 0 && !parentPath.isEmpty()) {
                 JSONObject parentInfo = requestFilesApi(serverUrl, parentPath);
@@ -350,13 +489,11 @@ public class NewDayWorker extends Worker {
                     if (!bestMonthPath.equals(basePath)) {
                         JSONObject newerInfo = requestFilesApi(serverUrl, bestMonthPath);
                         if (newerInfo != null) {
-                            targetMonthPath = bestMonthPath;
                             targetDirs = extractDirs(newerInfo);
                         }
                     }
                 }
             } else {
-                // Если выбрана папка линии с месяцами внутри — берём самый свежий месяц
                 int bestMonthIdx = -1;
                 String bestMonthPath = null;
                 for (DirItem d : dirs) {
@@ -369,7 +506,6 @@ public class NewDayWorker extends Worker {
                 if (bestMonthPath != null) {
                     JSONObject monthInfo = requestFilesApi(serverUrl, bestMonthPath);
                     if (monthInfo != null) {
-                        targetMonthPath = bestMonthPath;
                         targetDirs = extractDirs(monthInfo);
                     }
                 }
@@ -487,19 +623,6 @@ public class NewDayWorker extends Worker {
             if (!parts[i].trim().isEmpty()) return parts[i].trim();
         }
         return "";
-    }
-
-    private String normalizeBaseUrl(String raw) {
-        if (raw == null) return "";
-        String u = raw.trim();
-        if (u.isEmpty()) return "";
-        if (!u.startsWith("http://") && !u.startsWith("https://")) {
-            u = "http://" + u;
-        }
-        if (!u.endsWith("/")) {
-            u = u + "/";
-        }
-        return u;
     }
 
     private static JSONArray loadPendingArray(SharedPreferences prefs) {
