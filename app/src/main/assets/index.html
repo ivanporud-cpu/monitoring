@@ -422,6 +422,25 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* Плавная анимация прокручивания (слайда) при перелистывании папок/линий */
+        .line-swipe-viewport {
+            width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .line-swipe-stage {
+            width: 100%;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
+            opacity: 1;
+        }
+        .line-swipe-stage.animating {
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+        }
+        .line-swipe-stage.slide-out {
+            transition: transform 0.17s cubic-bezier(0.4, 0, 1, 1), opacity 0.17s ease;
+        }
     </style>
 </head>
 <body>
@@ -483,6 +502,8 @@
             </div>
         </div>
 
+        <div class="line-swipe-viewport" id="lineSwipeViewport">
+            <div class="line-swipe-stage" id="lineSwipeStage">
         <div class="chart-container" id="chartContainer">
             <div class="chart-header">
                 <div class="chart-title">Загрузка производства</div>
@@ -512,6 +533,8 @@
         </div>
 
         <div class="blocks-grid" id="blocksGrid"></div>
+            </div>
+        </div>
     </div>
 
     <div class="settings-modal" id="settingsModal">
@@ -1253,38 +1276,61 @@
         }
 
         let swipeToastTimer = null;
-        function showSwipeToast(text) {
+        let isSwipeAnimating = false;
+
+        function showSwipeToast(text, autoHideMs = 1400) {
             const el = document.getElementById('swipeToast');
             if (!el) return;
             el.textContent = text;
             el.classList.add('visible');
             if (swipeToastTimer) clearTimeout(swipeToastTimer);
-            swipeToastTimer = setTimeout(() => {
-                el.classList.remove('visible');
-            }, 1400);
+            if (autoHideMs > 0) {
+                swipeToastTimer = setTimeout(() => {
+                    el.classList.remove('visible');
+                }, autoHideMs);
+            }
+        }
+
+        function hideSwipeToast() {
+            const el = document.getElementById('swipeToast');
+            if (!el) return;
+            if (swipeToastTimer) clearTimeout(swipeToastTimer);
+            el.classList.remove('visible');
+        }
+
+        function getTargetFolderByOffset(step) {
+            const configured = getConfiguredIndexes();
+            if (configured.length === 0) {
+                return { configured: configured, nextIdx: -1, posNum: 0 };
+            }
+            if (configured.length === 1) {
+                return { configured: configured, nextIdx: configured[0], posNum: 1 };
+            }
+            if (!configured.includes(activeIndex)) {
+                return { configured: configured, nextIdx: configured[0], posNum: 1 };
+            }
+            const curPos = configured.indexOf(activeIndex);
+            const nextPos = (curPos + step + configured.length) % configured.length;
+            return {
+                configured: configured,
+                nextIdx: configured[nextPos],
+                posNum: nextPos + 1
+            };
         }
 
         // Переключение активной линии по направлению (+1 вперёд, -1 назад) БЕЗ обращения к серверу.
         function switchToFolderByOffset(step, isManualSwipe) {
-            const configured = getConfiguredIndexes();
+            const target = getTargetFolderByOffset(step);
+            const configured = target.configured;
             if (configured.length === 0) {
                 stopSwitchTimer();
                 if (isManualSwipe) showSwipeToast('Нет настроенных линий');
                 return;
             }
 
-            let nextIdx;
-            if (configured.length === 1) {
-                nextIdx = configured[0];
-                if (isManualSwipe) {
-                    showSwipeToast('Активна одна линия: ' + lineLabel(nextIdx));
-                }
-            } else if (!configured.includes(activeIndex)) {
-                nextIdx = configured[0];
-            } else {
-                const curPos = configured.indexOf(activeIndex);
-                const nextPos = (curPos + step + configured.length) % configured.length;
-                nextIdx = configured[nextPos];
+            const nextIdx = target.nextIdx;
+            if (configured.length === 1 && isManualSwipe) {
+                showSwipeToast('Активна одна линия: ' + lineLabel(nextIdx));
             }
 
             const prevIdx = activeIndex;
@@ -1309,26 +1355,77 @@
             }
 
             if (isManualSwipe && configured.length > 1) {
-                const posNum = configured.indexOf(activeIndex) + 1;
-                showSwipeToast('◀ ' + lineLabel(activeIndex) + ' (' + posNum + '/' + configured.length + ') ▶');
+                showSwipeToast('◀ ' + lineLabel(activeIndex) + ' (' + target.posNum + '/' + configured.length + ') ▶');
                 if (switchInterval > 0) {
                     switchCountdown = switchInterval;
                     updateSwitchCountdownDisplay();
                 }
             }
 
-            // Прокрутка к сегодняшнему/завтрашнему блоку — только при фактической смене линии
-            if (prevIdx !== nextIdx) {
+            // При автопереключении по таймеру плавно прокручиваем к сегодняшнему/завтрашнему блоку
+            if (!isManualSwipe && prevIdx !== nextIdx) {
                 setTimeout(() => scrollToTodayOrTomorrowBlock(), 400);
             }
         }
 
+        // Плавная анимация ухода текущей папки в сторону и выезда новой с противоположной стороны
+        function animateLineSwitch(step, isManualSwipe) {
+            const configured = getConfiguredIndexes();
+            if (configured.length <= 1) {
+                switchToFolderByOffset(step, isManualSwipe);
+                return;
+            }
+            const stage = document.getElementById('lineSwipeStage');
+            if (!stage) {
+                switchToFolderByOffset(step, isManualSwipe);
+                return;
+            }
+            if (isSwipeAnimating) return;
+            isSwipeAnimating = true;
+            stage.style.pointerEvents = 'none';
+
+            // step > 0 (свайп влево -> следующая): уходит влево (-100%), новая выезжает справа (+100%)
+            // step < 0 (свайп вправо -> предыдущая): уходит вправо (+100%), новая выезжает слева (-100%)
+            const outX = step > 0 ? '-100%' : '100%';
+            const inStartX = step > 0 ? '100%' : '-100%';
+
+            stage.classList.remove('animating');
+            stage.classList.add('slide-out');
+            stage.style.transform = 'translate3d(' + outX + ', 0, 0)';
+            stage.style.opacity = '0.12';
+
+            setTimeout(() => {
+                switchToFolderByOffset(step, isManualSwipe);
+
+                stage.classList.remove('slide-out', 'animating');
+                stage.style.transition = 'none';
+                stage.style.transform = 'translate3d(' + inStartX + ', 0, 0)';
+                stage.style.opacity = '0.15';
+
+                // Форсируем перерисовку браузера перед запуском анимации появления
+                void stage.offsetWidth;
+
+                requestAnimationFrame(() => {
+                    stage.style.transition = '';
+                    stage.classList.add('animating');
+                    stage.style.transform = 'translate3d(0, 0, 0)';
+                    stage.style.opacity = '1';
+
+                    setTimeout(() => {
+                        stage.classList.remove('animating');
+                        stage.style.pointerEvents = '';
+                        isSwipeAnimating = false;
+                    }, 260);
+                });
+            }, 175);
+        }
+
         function switchToNextFolder() {
-            switchToFolderByOffset(1, false);
+            animateLineSwitch(1, false);
         }
 
         function switchToPrevFolder() {
-            switchToFolderByOffset(-1, false);
+            animateLineSwitch(-1, false);
         }
 
         function restartSwitchTimer() {
@@ -2358,22 +2455,42 @@
             const ptrIndicator = document.getElementById('ptrIndicator');
             const ptrSpinner = document.getElementById('ptrSpinner');
             const ptrText = document.getElementById('ptrText');
+            const swipeStage = document.getElementById('lineSwipeStage');
 
             let startX = 0;
             let startY = 0;
             let startTime = 0;
             let startedAtTop = false;
             let startedInChart = false;
-            let gestureMode = null; // 'ptr' | 'swipe' | null
+            let gestureMode = null; // 'ptr' | 'swipe' | 'ignore' | null
             let currentPull = 0;
             let isPtrRefreshing = false;
 
             const PTR_THRESHOLD = 64;
             const PTR_MAX = 110;
+            const SWIPE_THRESHOLD = 60;
+
+            function resetSwipeStagePosition(withSpring) {
+                if (!swipeStage || isSwipeAnimating) return;
+                swipeStage.style.pointerEvents = '';
+                if (withSpring) {
+                    swipeStage.classList.remove('slide-out');
+                    swipeStage.classList.add('animating');
+                    swipeStage.style.transform = 'translate3d(0, 0, 0)';
+                    swipeStage.style.opacity = '1';
+                    setTimeout(() => {
+                        if (!isSwipeAnimating) swipeStage.classList.remove('animating');
+                    }, 260);
+                } else {
+                    swipeStage.classList.remove('animating', 'slide-out');
+                    swipeStage.style.transform = 'translate3d(0, 0, 0)';
+                    swipeStage.style.opacity = '1';
+                }
+            }
 
             document.addEventListener('touchstart', function(e) {
                 if (e.touches.length !== 1) return;
-                if (isAnyModalOpen()) {
+                if (isAnyModalOpen() || isSwipeAnimating) {
                     gestureMode = null;
                     return;
                 }
@@ -2383,13 +2500,16 @@
                 startTime = Date.now();
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
                 startedAtTop = scrollTop <= 2;
-                startedInChart = !!(e.target && e.target.closest && e.target.closest('.chart-scroll-wrapper'));
+
+                const chartWrap = e.target && e.target.closest ? e.target.closest('.chart-scroll-wrapper') : null;
+                startedInChart = !!(chartWrap && chartWrap.scrollWidth > chartWrap.clientWidth + 4);
+
                 gestureMode = null;
                 currentPull = 0;
             }, { passive: true });
 
             document.addEventListener('touchmove', function(e) {
-                if (e.touches.length !== 1 || isAnyModalOpen() || isPtrRefreshing) return;
+                if (e.touches.length !== 1 || isAnyModalOpen() || isPtrRefreshing || isSwipeAnimating) return;
                 const t = e.touches[0];
                 const dx = t.clientX - startX;
                 const dy = t.clientY - startY;
@@ -2399,8 +2519,12 @@
                     if (startedAtTop && dy > 10 && Math.abs(dy) > Math.abs(dx) * 1.3 && !isScanning) {
                         gestureMode = 'ptr';
                         if (ptrIndicator) ptrIndicator.classList.add('dragging');
-                    } else if (!startedInChart && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                    } else if (!startedInChart && Math.abs(dx) > Math.abs(dy) * 1.45) {
                         gestureMode = 'swipe';
+                        if (swipeStage) {
+                            swipeStage.classList.remove('animating', 'slide-out');
+                            swipeStage.style.pointerEvents = 'none';
+                        }
                     } else {
                         gestureMode = 'ignore';
                     }
@@ -2425,10 +2549,34 @@
                         ptrIndicator.classList.remove('ready');
                         if (ptrText) ptrText.textContent = 'Потяните вниз для обновления';
                     }
+                } else if (gestureMode === 'swipe' && swipeStage) {
+                    const configured = getConfiguredIndexes();
+                    if (configured.length <= 1) {
+                        const damped = dx * 0.22;
+                        swipeStage.style.transform = 'translate3d(' + damped.toFixed(1) + 'px, 0, 0)';
+                    } else {
+                        const maxDrag = window.innerWidth * 0.65;
+                        const dragX = Math.max(-maxDrag, Math.min(maxDrag, dx * 0.85));
+                        const fade = Math.max(0.45, 1 - Math.abs(dragX) / (window.innerWidth * 1.15));
+                        swipeStage.style.transform = 'translate3d(' + dragX.toFixed(1) + 'px, 0, 0)';
+                        swipeStage.style.opacity = fade.toFixed(2);
+
+                        const step = dx < 0 ? 1 : -1;
+                        const preview = getTargetFolderByOffset(step);
+                        if (preview.nextIdx >= 0) {
+                            const ready = Math.abs(dx) >= SWIPE_THRESHOLD;
+                            const label = lineLabel(preview.nextIdx) + ' (' + preview.posNum + '/' + configured.length + ')';
+                            if (dx < 0) {
+                                showSwipeToast(ready ? ('Отпустите → ' + label) : (label + ' ▶'), 0);
+                            } else {
+                                showSwipeToast(ready ? ('← ' + label + ' — отпустите') : ('◀ ' + label), 0);
+                            }
+                        }
+                    }
                 }
             }, { passive: true });
 
-            document.addEventListener('touchend', async function(e) {
+            async function finishTouchGesture(e) {
                 if (gestureMode === 'ptr' && ptrIndicator) {
                     ptrIndicator.classList.remove('dragging');
                     if (currentPull >= PTR_THRESHOLD && !isPtrRefreshing && !isScanning) {
@@ -2454,20 +2602,45 @@
                     }
                 } else if (gestureMode === 'swipe' && !isAnyModalOpen() && !startedInChart) {
                     const touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+                    let switched = false;
                     if (touch) {
                         const dx = touch.clientX - startX;
                         const dy = touch.clientY - startY;
                         const dt = Date.now() - startTime;
-                        if (dt < 750 && Math.abs(dx) >= 65 && Math.abs(dx) > Math.abs(dy) * 1.6) {
-                            if (dx < 0) {
-                                // Свайп влево -> следующая папка/линия
-                                switchToFolderByOffset(1, true);
+                        const isFastFlick = dt < 320 && Math.abs(dx) >= 38 && Math.abs(dx) > Math.abs(dy) * 1.4;
+                        const isFarDrag = dt < 1200 && Math.abs(dx) >= SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.4;
+
+                        if (isFastFlick || isFarDrag) {
+                            const step = dx < 0 ? 1 : -1;
+                            const configured = getConfiguredIndexes();
+                            if (configured.length > 1) {
+                                switched = true;
+                                animateLineSwitch(step, true);
                             } else {
-                                // Свайп вправо -> предыдущая папка/линия
-                                switchToFolderByOffset(-1, true);
+                                resetSwipeStagePosition(true);
+                                switchToFolderByOffset(step, true);
+                                switched = true;
                             }
                         }
                     }
+                    if (!switched) {
+                        resetSwipeStagePosition(true);
+                        hideSwipeToast();
+                    }
+                }
+                gestureMode = null;
+                currentPull = 0;
+            }
+
+            document.addEventListener('touchend', finishTouchGesture, { passive: true });
+            document.addEventListener('touchcancel', function() {
+                if (gestureMode === 'swipe') {
+                    resetSwipeStagePosition(true);
+                    hideSwipeToast();
+                }
+                if (gestureMode === 'ptr' && ptrIndicator) {
+                    ptrIndicator.classList.remove('dragging', 'ready');
+                    ptrIndicator.style.top = '-4.5rem';
                 }
                 gestureMode = null;
                 currentPull = 0;
