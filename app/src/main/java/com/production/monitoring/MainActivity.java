@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,7 @@ public class MainActivity extends Activity {
     private static final String PREFS_NAME = "monitoring_prefs";
     private static final String KEY_SERVER_URL = "server_url";
     private static final int SCAN_PORT = 5000;
-    private static final int CONNECT_TIMEOUT_MS = 300;
+    private static final int CONNECT_TIMEOUT_MS = 500;
 
     private WebView webView;
     private SharedPreferences prefs;
@@ -173,11 +174,17 @@ public class MainActivity extends Activity {
     }
 
     private String getLocalSubnetPrefix() {
+        String fallbackPrefix = null;
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces != null && interfaces.hasMoreElements()) {
                 NetworkInterface nif = interfaces.nextElement();
                 if (!nif.isUp() || nif.isLoopback()) continue;
+                String name = nif.getName() == null ? "" : nif.getName().toLowerCase(Locale.US);
+                if (name.startsWith("tun") || name.startsWith("ppp") || name.startsWith("rmnet")
+                        || name.startsWith("ccmni") || name.startsWith("dummy")) {
+                    continue;
+                }
                 Enumeration<InetAddress> addrs = nif.getInetAddresses();
                 while (addrs.hasMoreElements()) {
                     InetAddress addr = addrs.nextElement();
@@ -186,7 +193,13 @@ public class MainActivity extends Activity {
                         if (host != null) {
                             int lastDot = host.lastIndexOf('.');
                             if (lastDot > 0) {
-                                return host.substring(0, lastDot + 1);
+                                String prefix = host.substring(0, lastDot + 1);
+                                if (name.startsWith("wlan") || name.startsWith("wifi")) {
+                                    return prefix;
+                                }
+                                if (fallbackPrefix == null) {
+                                    fallbackPrefix = prefix;
+                                }
                             }
                         }
                     }
@@ -194,7 +207,7 @@ public class MainActivity extends Activity {
             }
         } catch (Exception ignored) {
         }
-        return null;
+        return fallbackPrefix;
     }
 
     private void scanNetworkForServer(final boolean isFirstRun) {
@@ -214,7 +227,7 @@ public class MainActivity extends Activity {
 
         new Thread(() -> {
             final List<String> foundUrls = Collections.synchronizedList(new ArrayList<>());
-            ExecutorService pool = Executors.newFixedThreadPool(40);
+            ExecutorService pool = Executors.newFixedThreadPool(64);
 
             for (int i = 1; i <= 254; i++) {
                 final String ip = prefix + i;
@@ -229,7 +242,7 @@ public class MainActivity extends Activity {
 
             pool.shutdown();
             try {
-                pool.awaitTermination(8, TimeUnit.SECONDS);
+                pool.awaitTermination(12, TimeUnit.SECONDS);
             } catch (InterruptedException ignored) {
             }
 
@@ -248,7 +261,7 @@ public class MainActivity extends Activity {
                     showServerSelectionDialog(foundUrls, isFirstRun);
                 } else {
                     Toast.makeText(MainActivity.this,
-                            "Серверы на порту " + SCAN_PORT + " не найдены", Toast.LENGTH_LONG).show();
+                            "В подсети " + prefix + "x сервер на порту " + SCAN_PORT + " не найден", Toast.LENGTH_LONG).show();
                     showServerUrlDialog(isFirstRun);
                 }
             });
@@ -272,12 +285,12 @@ public class MainActivity extends Activity {
         layout.setPadding(pad, pad / 2, pad, 0);
 
         TextView hint = new TextView(this);
-        hint.setText("Укажите адрес сервера мониторинга (например, http://192.168.1.10:5000):");
+        hint.setText("Укажите адрес сервера мониторинга (например, http://192.168.57.107:5000):");
         layout.addView(hint);
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        input.setHint("http://192.168.1.10:5000");
+        input.setHint("http://192.168.57.107:5000");
         String current = prefs.getString(KEY_SERVER_URL, "");
         if (current != null && !current.isEmpty()) {
             input.setText(displayUrl(current));
