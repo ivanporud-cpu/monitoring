@@ -16,6 +16,15 @@ android {
         versionName "1.${buildNum}"
     }
 
+    signingConfigs {
+        debug {
+            storeFile file("signing.keystore")
+            storePassword "android123"
+            keyAlias "appkey"
+            keyPassword "android123"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,6 +32,7 @@ android {
         }
         debug {
             applicationIdSuffix ""
+            signingConfig signingConfigs.debug
         }
     }
 
