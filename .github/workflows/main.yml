@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,3 +38,12 @@ jobs:
         with:
           name: Production-Monitoring-APK
           path: Production-Monitoring.apk
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v1.${{ github.run_number }}" Production-Monitoring.apk \
+            --title "v1.${{ github.run_number }}" \
+            --notes "Автоматическая сборка #${{ github.run_number }}" \
+            --latest
