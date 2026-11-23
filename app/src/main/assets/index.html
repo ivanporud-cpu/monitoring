@@ -192,10 +192,11 @@
         .blocks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
         .date-block { background: var(--bg-card); border-radius: 0.625rem; padding: 1.25rem; cursor: pointer; transition: transform 0.2s, background .25s ease; box-shadow: var(--shadow-card); }
         .date-block:hover { transform: translateY(-0.125rem); box-shadow: var(--shadow-hover); }
-        .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9375rem; padding-bottom: 0.625rem; border-bottom: 0.125rem solid var(--border-soft); flex-wrap: wrap; gap: 0.3125rem; }
+        .date-header { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 0.9375rem; padding-bottom: 0.625rem; border-bottom: 0.125rem solid var(--border-soft); gap: 0.45rem; }
+        .date-header-top { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; width: 100%; }
         .date-title { font-size: 1.25rem; font-weight: bold; color: var(--text-primary); }
         .line-name-tag { background: #8e44ad; color: white; padding: 0.25rem 0.75rem; border-radius: 1.25rem; font-size: 0.875rem; font-weight: bold; }
-        .date-weekday { background: #3498db; color: white; padding: 0.25rem 0.75rem; border-radius: 1.25rem; font-size: 1.125rem; font-weight: bold; }
+        .date-weekday { background: #3498db; color: white; padding: 0.25rem 0.75rem; border-radius: 1.25rem; font-size: 1.125rem; font-weight: bold; align-self: flex-start; }
         .count-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 0.0625rem solid var(--border-soft); color: var(--text-primary); }
         .count-value { font-weight: bold; font-size: 1.125rem; color: var(--text-primary); }
 
@@ -2099,11 +2100,11 @@
                     const blockDate = getBlockDate(block);
                     html += '<div class="date-block" data-folder="' + block.folder_name + '" data-source="' + (block.sourcePath || '') + '" data-ts="' + (blockDate ? blockDate.getTime() : '') + '">';
                     html += '<div class="date-header">';
-                    html += '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">';
+                    html += '<div class="date-header-top">';
                     html += '<span class="date-title">' + folderName + '</span>';
                     if (lineName) html += '<span class="line-name-tag">' + lineName + '</span>';
                     html += '</div>';
-                    html += '<div class="date-weekday">' + fullWeekday + '</div>';
+                    if (fullWeekday) html += '<div class="date-weekday">' + fullWeekday + '</div>';
                     html += '</div>';
 
                     html += '<div class="count-item"><span>Ипостов:</span><span class="count-value">' + (block.total_counts?.Ипостов || 0) + '</span></div>';
