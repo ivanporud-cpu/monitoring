@@ -43,30 +43,18 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
 
     private static final String PREFS_NAME = "monitoring_prefs";
     private static final String KEY_SERVER_URL = "server_url";
-    private static final int SCAN_PORT = 5000;
-    private static final int CONNECT_TIMEOUT_MS = 500;
-    private static final String FALLBACK_SUBNET = "192.168.57.";
     private static final String GITHUB_LATEST_RELEASE_API =
             "https://api.github.com/repos/ivanporud-cpu/monitoring/releases/latest";
     private static final String PERIODIC_WORK_NAME = "new_day_periodic_check";
@@ -75,8 +63,12 @@ public class MainActivity extends Activity {
     private WebView webView;
     private SharedPreferences prefs;
     private String cachedHtml;
+    private String activeBaseUrl = "";
     private long lastBackPressMs = 0L;
     private int pendingOpenLineIdx = -1;
+
+    private final AtomicBoolean isAutoDiscovering = new AtomicBoolean(false);
+    private volatile long lastAutoDiscoveryMs = 0L;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -151,14 +143,15 @@ public class MainActivity extends Activity {
 
         cachedHtml = readAssetHtml("index.html");
 
-        String savedUrl = prefs.getString(KEY_SERVER_URL, "");
-        if (savedUrl == null || savedUrl.trim().isEmpty()) {
+        String savedUrl = normalizeUrl(prefs.getString(KEY_SERVER_URL, ""));
+        if (savedUrl.isEmpty()) {
             loadWithBaseUrl("http://localhost/");
-            scanNetworkForServer(true);
         } else {
-            loadWithBaseUrl(normalizeUrl(savedUrl));
+            loadWithBaseUrl(savedUrl);
         }
 
+        // Тихая фоновая проверка и автопоиск сервера без всплывающих окон
+        silentDiscoverServer(false);
         checkForAppUpdate();
     }
 
@@ -226,6 +219,46 @@ public class MainActivity extends Activity {
                 ExistingPeriodicWorkPolicy.KEEP,
                 periodicRequest
         );
+    }
+
+    // ==================== ТИХИЙ АВТОПОИСК СЕРВЕРА ====================
+
+    private void silentDiscoverServer(final boolean forceFullScan) {
+        long now = System.currentTimeMillis();
+        if (!forceFullScan && (now - lastAutoDiscoveryMs < 15000L)) {
+            return;
+        }
+        if (!isAutoDiscovering.compareAndSet(false, true)) {
+            return;
+        }
+        lastAutoDiscoveryMs = now;
+
+        new Thread(() -> {
+            try {
+                List<String> found = NewDayWorker.findWorkingServers(prefs, forceFullScan);
+                if (found == null || found.isEmpty()) {
+                    return;
+                }
+
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+
+                    if (found.size() == 1) {
+                        String targetUrl = normalizeUrl(found.get(0));
+                        if (!targetUrl.equals(activeBaseUrl)) {
+                            prefs.edit().putString(KEY_SERVER_URL, targetUrl).apply();
+                            loadWithBaseUrl(targetUrl);
+                            Toast.makeText(MainActivity.this,
+                                    "Сервер найден: " + displayUrl(targetUrl), Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (found.size() > 1) {
+                        showServerSelectionDialog(found, false);
+                    }
+                });
+            } finally {
+                isAutoDiscovering.set(false);
+            }
+        }).start();
     }
 
     // ==================== АВТООБНОВЛЕНИЕ ЧЕРЕЗ GITHUB RELEASES ====================
@@ -364,7 +397,7 @@ public class MainActivity extends Activity {
         }).start();
     }
 
-    // ==================== ПОИСК СЕРВЕРА И ПОДКЛЮЧЕНИЕ ====================
+    // ==================== ПОДКЛЮЧЕНИЕ И РУЧНОЙ ВЫБОР ====================
 
     private String readAssetHtml(String assetName) {
         StringBuilder sb = new StringBuilder();
@@ -381,16 +414,7 @@ public class MainActivity extends Activity {
     }
 
     private String normalizeUrl(String raw) {
-        if (raw == null) return "";
-        String u = raw.trim();
-        if (u.isEmpty()) return "";
-        if (!u.startsWith("http://") && !u.startsWith("https://")) {
-            u = "http://" + u;
-        }
-        if (!u.endsWith("/")) {
-            u = u + "/";
-        }
-        return u;
+        return NewDayWorker.normalizeBaseUrl(raw);
     }
 
     private String displayUrl(String raw) {
@@ -402,6 +426,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadWithBaseUrl(String baseUrl) {
+        activeBaseUrl = baseUrl;
         webView.loadDataWithBaseURL(baseUrl, cachedHtml, "text/html", "UTF-8", baseUrl);
     }
 
@@ -412,86 +437,27 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Подключено: " + displayUrl(normalized), Toast.LENGTH_SHORT).show();
     }
 
-    private String getLocalSubnetPrefix() {
-        String fallbackPrefix = null;
-        try {
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces != null && interfaces.hasMoreElements()) {
-                NetworkInterface nif = interfaces.nextElement();
-                if (!nif.isUp() || nif.isLoopback()) continue;
-                String name = nif.getName() == null ? "" : nif.getName().toLowerCase(Locale.US);
-                if (name.startsWith("tun") || name.startsWith("ppp") || name.startsWith("rmnet")
-                        || name.startsWith("ccmni") || name.startsWith("dummy")) {
-                    continue;
-                }
-                Enumeration<InetAddress> addrs = nif.getInetAddresses();
-                while (addrs.hasMoreElements()) {
-                    InetAddress addr = addrs.nextElement();
-                    if (addr instanceof Inet4Address && addr.isSiteLocalAddress()) {
-                        String host = addr.getHostAddress();
-                        if (host != null) {
-                            int lastDot = host.lastIndexOf('.');
-                            if (lastDot > 0) {
-                                String prefix = host.substring(0, lastDot + 1);
-                                if (name.startsWith("wlan") || name.startsWith("wifi")) {
-                                    return prefix;
-                                }
-                                if (fallbackPrefix == null) {
-                                    fallbackPrefix = prefix;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return fallbackPrefix;
-    }
-
-    private List<String> scanSubnet(String prefix) {
-        final List<String> found = Collections.synchronizedList(new ArrayList<>());
-        ExecutorService pool = Executors.newFixedThreadPool(64);
-        for (int i = 1; i <= 254; i++) {
-            final String ip = prefix + i;
-            pool.submit(() -> {
-                try (Socket socket = new Socket()) {
-                    socket.connect(new InetSocketAddress(ip, SCAN_PORT), CONNECT_TIMEOUT_MS);
-                    found.add("http://" + ip + ":" + SCAN_PORT);
-                } catch (Exception ignored) {
-                }
-            });
-        }
-        pool.shutdown();
-        try {
-            pool.awaitTermination(12, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-        }
-        Collections.sort(found);
-        return found;
-    }
-
-    private void scanNetworkForServer(final boolean isFirstRun) {
-        final String localPrefix = getLocalSubnetPrefix();
-        final String firstPrefix = (localPrefix != null) ? localPrefix : FALLBACK_SUBNET;
+    private void manualScanNetworkForServer(final boolean isFirstRun) {
+        final String localPrefix = NewDayWorker.getLocalSubnetPrefix();
+        final String firstPrefix = (localPrefix != null) ? localPrefix : NewDayWorker.FALLBACK_SUBNET;
 
         final AlertDialog progressDialog = new AlertDialog.Builder(this)
                 .setTitle("Поиск сервера")
-                .setMessage("Сканирование " + firstPrefix + "1–254 (порт " + SCAN_PORT + ")...")
+                .setMessage("Поиск сервера мониторинга в " + firstPrefix + "1–254...")
                 .setCancelable(false)
                 .create();
         progressDialog.show();
 
         new Thread(() -> {
-            List<String> foundUrls = scanSubnet(firstPrefix);
+            List<String> foundUrls = NewDayWorker.scanAndVerifySubnet(firstPrefix);
 
-            if (foundUrls.isEmpty() && !FALLBACK_SUBNET.equals(firstPrefix)) {
+            if (foundUrls.isEmpty() && !NewDayWorker.FALLBACK_SUBNET.equals(firstPrefix)) {
                 runOnUiThread(() -> {
                     if (!isFinishing() && !isDestroyed()) {
-                        progressDialog.setMessage("Сканирование " + FALLBACK_SUBNET + "1–254 (порт " + SCAN_PORT + ")...");
+                        progressDialog.setMessage("Поиск сервера в " + NewDayWorker.FALLBACK_SUBNET + "1–254...");
                     }
                 });
-                foundUrls = scanSubnet(FALLBACK_SUBNET);
+                foundUrls = NewDayWorker.scanAndVerifySubnet(NewDayWorker.FALLBACK_SUBNET);
             }
 
             final List<String> result = foundUrls;
@@ -505,7 +471,7 @@ public class MainActivity extends Activity {
                     showServerSelectionDialog(result, isFirstRun);
                 } else {
                     Toast.makeText(MainActivity.this,
-                            "Серверы на порту " + SCAN_PORT + " не найдены", Toast.LENGTH_LONG).show();
+                            "Сервер мониторинга на порту " + NewDayWorker.SCAN_PORT + " не найден", Toast.LENGTH_LONG).show();
                     showServerUrlDialog(isFirstRun);
                 }
             });
@@ -513,10 +479,13 @@ public class MainActivity extends Activity {
     }
 
     private void showServerSelectionDialog(final List<String> urls, final boolean isFirstRun) {
-        final String[] items = urls.toArray(new String[0]);
+        final String[] items = new String[urls.size()];
+        for (int i = 0; i < urls.size(); i++) {
+            items[i] = displayUrl(urls.get(i));
+        }
         new AlertDialog.Builder(this)
-                .setTitle("Выберите сервер (порт " + SCAN_PORT + ")")
-                .setItems(items, (dialog, which) -> applyAndConnect(items[which]))
+                .setTitle("Выберите сервер (порт " + NewDayWorker.SCAN_PORT + ")")
+                .setItems(items, (dialog, which) -> applyAndConnect(urls.get(which)))
                 .setNeutralButton("Ввести вручную", (dialog, which) -> showServerUrlDialog(isFirstRun))
                 .setNegativeButton("Отмена", null)
                 .show();
@@ -553,7 +522,7 @@ public class MainActivity extends Activity {
                     }
                     applyAndConnect(entered);
                 })
-                .setNeutralButton("Найти в сети", (dialog, which) -> scanNetworkForServer(isFirstRun));
+                .setNeutralButton("Найти в сети", (dialog, which) -> manualScanNetworkForServer(isFirstRun));
 
         builder.setNegativeButton(isFirstRun ? "Позже" : "Отмена", null);
         builder.show();
@@ -580,6 +549,12 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openServerDialog() {
             runOnUiThread(() -> showServerUrlDialog(false));
+        }
+
+        @JavascriptInterface
+        public void onServerUnreachable() {
+            // При обрыве связи запускаем тихий фоновый поиск нового IP сервера
+            silentDiscoverServer(true);
         }
 
         @JavascriptInterface
@@ -611,7 +586,6 @@ public class MainActivity extends Activity {
                         String name = o.optString("name", "").trim();
                         String path = o.optString("path", "").trim();
                         String pattern = o.optString("pattern", "").trim();
-                        // Если линия снята/очищена — сбрасываем её базу, чтобы не слать лишних пушей
                         if (name.isEmpty() || (path.isEmpty() && pattern.isEmpty())) {
                             ed.remove("known_days_" + idx);
                             ed.putBoolean("baseline_ready_" + idx, false);
