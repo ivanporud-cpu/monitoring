@@ -585,6 +585,14 @@
                 <div class="hint">Отключите, чтобы скрыть блок с графиком.</div>
             </div>
 
+            <div class="settings-group" id="apkNotifySettingsGroup">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="notifyNewDaysCheckbox" checked>
+                    <label for="notifyNewDaysCheckbox" style="font-weight: bold; margin:0;">Уведомлять о появлении нового дня</label>
+                </div>
+                <div class="hint">Фоновая проверка папок настроенных линий (приходит одно общее уведомление на телефон).</div>
+            </div>
+
             <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
                 <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Масштаб страницы</h3>
                 <div class="scale-control">
@@ -790,6 +798,7 @@
         };
 
         let showChart = true;
+        let notifyNewDays = true;
         let scalePercent = 100;
 
         const STORAGE_KEYS = {
@@ -804,7 +813,8 @@
             SHOW_CHART: 'monitoring_show_chart',
             SCALE: 'monitoring_scale_percent',
             CACHED_BLOCKS: 'monitoring_cached_blocks',
-            CACHED_SCAN_TIME: 'monitoring_cached_scan_time'
+            CACHED_SCAN_TIME: 'monitoring_cached_scan_time',
+            NOTIFY_NEW_DAYS: 'monitoring_notify_new_days'
         };
 
         const MONTHS_RU = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
@@ -959,6 +969,8 @@
             document.getElementById('folderPattern1').value = folderPatterns[1] || '';
             document.getElementById('folderPattern2').value = folderPatterns[2] || '';
             document.getElementById('showChartCheckbox').checked = showChart;
+            const notifyCb = document.getElementById('notifyNewDaysCheckbox');
+            if (notifyCb) notifyCb.checked = notifyNewDays;
             document.getElementById('scalePercent').value = scalePercent;
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
@@ -1066,6 +1078,49 @@
             localStorage.setItem(STORAGE_KEYS.FONTS, JSON.stringify(fontSizes));
             localStorage.setItem(STORAGE_KEYS.SHOW_CHART, String(showChart));
             localStorage.setItem(STORAGE_KEYS.SCALE, String(scalePercent));
+            localStorage.setItem(STORAGE_KEYS.NOTIFY_NEW_DAYS, String(notifyNewDays));
+            syncAndroidNotificationConfig(false);
+        }
+
+        function syncAndroidNotificationConfig(resetAll) {
+            if (!window.AndroidApp || typeof window.AndroidApp.syncLinesConfig !== 'function') return;
+            try {
+                const lines = [];
+                for (let i = 0; i < FOLDER_COUNT; i++) {
+                    const resolved = folderPatterns[i] ? resolvePath(folderPatterns[i]) : folderPaths[i];
+                    lines.push({
+                        idx: i,
+                        name: getLineName(i),
+                        path: resolved || folderPaths[i] || '',
+                        pattern: folderPatterns[i] || ''
+                    });
+                }
+                window.AndroidApp.syncLinesConfig(JSON.stringify(lines), !!notifyNewDays, !!resetAll);
+            } catch (e) {
+                console.warn('Ошибка синхронизации настроек уведомлений с Android:', e);
+            }
+        }
+
+        function syncAndroidKnownFoldersForLine(idx, blocks) {
+            if (!window.AndroidApp || typeof window.AndroidApp.syncKnownFolders !== 'function') return;
+            if (!isFolderConfigured(idx) || !Array.isArray(blocks)) return;
+            try {
+                const names = [];
+                const seen = new Set();
+                blocks.forEach(b => {
+                    if (b && b.folder_name) {
+                        const raw = String(b.folder_name).trim();
+                        const key = raw.toLowerCase();
+                        if (raw && !seen.has(key)) {
+                            seen.add(key);
+                            names.push(raw);
+                        }
+                    }
+                });
+                window.AndroidApp.syncKnownFolders(idx, JSON.stringify(names));
+            } catch (e) {
+                console.warn('Ошибка синхронизации известных дней с Android:', e);
+            }
         }
 
         function loadAllSettings() {
@@ -1136,6 +1191,10 @@
                     scalePercent = val;
                 }
             }
+            const notifySaved = localStorage.getItem(STORAGE_KEYS.NOTIFY_NEW_DAYS);
+            if (notifySaved !== null) {
+                notifyNewDays = notifySaved === 'true';
+            }
         }
 
         function saveCachedData() {
@@ -1199,6 +1258,7 @@
             localStorage.removeItem(STORAGE_KEYS.SCALE);
             localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
             localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
+            localStorage.removeItem(STORAGE_KEYS.NOTIFY_NEW_DAYS);
             folderPaths = ['', '', ''];
             folderPatterns = ['', '', ''];
             folderNames = ['', '', ''];
@@ -1213,6 +1273,7 @@
             lastScanTime = [null, null, null];
             fontSizes = { dateTitle:20, weekday:18, lineName:14, countValue:18 };
             showChart = true;
+            notifyNewDays = true;
             scalePercent = 100;
             applyFontSizes();
             applyChartVisibility();
@@ -1229,6 +1290,7 @@
             document.getElementById('chartSummary').innerHTML = '';
             document.getElementById('chartInfo').textContent = 'График показывает количество изделий по сменам';
             chartZoom = 1.0;
+            syncAndroidNotificationConfig(true);
             window.scrollTo(0, 0);
         }
 
@@ -1675,6 +1737,7 @@
                 blocksByFolder[idx] = trimToFreshest(collected, blockLimit);
                 lastScanTime[idx] = new Date();
                 saveCachedData();
+                syncAndroidKnownFoldersForLine(idx, collected);
                 return true;
 
             } catch (error) {
@@ -2228,10 +2291,16 @@
                 }
             }
 
-            // Активной делаем первую НАСТРОЕННУЮ папку
+            syncAndroidNotificationConfig(false);
+
+            // Активной делаем первую НАСТРОЕННУЮ папку (или ту, по уведомлению которой перешли)
             const configured = getConfiguredIndexes();
+            let pendingIdx = -1;
+            if (window.AndroidApp && typeof window.AndroidApp.getPendingOpenLine === 'function') {
+                try { pendingIdx = parseInt(window.AndroidApp.getPendingOpenLine(), 10); } catch (e) { pendingIdx = -1; }
+            }
             if (configured.length > 0) {
-                activeIndex = configured[0];
+                activeIndex = configured.includes(pendingIdx) ? pendingIdx : configured[0];
                 currentDirectory = folderPaths[activeIndex];
             } else {
                 activeIndex = 0;
@@ -2352,6 +2421,9 @@
 
                 showChart = document.getElementById('showChartCheckbox').checked;
                 applyChartVisibility();
+
+                const notifyCbSave = document.getElementById('notifyNewDaysCheckbox');
+                if (notifyCbSave) notifyNewDays = notifyCbSave.checked;
 
                 const wantDark = document.getElementById('darkThemeCheckbox').checked;
                 const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
