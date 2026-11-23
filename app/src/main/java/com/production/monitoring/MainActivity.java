@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -24,7 +25,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,6 +55,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -60,11 +69,14 @@ public class MainActivity extends Activity {
     private static final String FALLBACK_SUBNET = "192.168.57.";
     private static final String GITHUB_LATEST_RELEASE_API =
             "https://api.github.com/repos/ivanporud-cpu/monitoring/releases/latest";
+    private static final String PERIODIC_WORK_NAME = "new_day_periodic_check";
+    private static final int REQ_POST_NOTIFICATIONS = 2001;
 
     private WebView webView;
     private SharedPreferences prefs;
     private String cachedHtml;
     private long lastBackPressMs = 0L;
+    private int pendingOpenLineIdx = -1;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -77,6 +89,12 @@ public class MainActivity extends Activity {
         window.setNavigationBarColor(Color.parseColor("#0f1626"));
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        handleNotificationIntent(getIntent());
+        NewDayWorker.ensureNotificationChannel(this);
+        NewDayWorker.clearPendingNotifications(this);
+        requestNotificationPermissionIfNeeded();
+        scheduleBackgroundNewDayCheck();
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.parseColor("#0f1626"));
@@ -142,6 +160,72 @@ public class MainActivity extends Activity {
         }
 
         checkForAppUpdate();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNotificationIntent(intent);
+        NewDayWorker.clearPendingNotifications(this);
+        if (webView != null && pendingOpenLineIdx >= 0) {
+            final int idx = pendingOpenLineIdx;
+            pendingOpenLineIdx = -1;
+            webView.evaluateJavascript(
+                    "if (typeof isFolderConfigured === 'function' && isFolderConfigured(" + idx + ")) {" +
+                            "activeIndex = " + idx + "; currentDirectory = folderPaths[" + idx + "]; updateActiveDisplay();" +
+                            "if (blocksByFolder[" + idx + "]) { currentBlocks = blocksByFolder[" + idx + "]; displayBlocks(currentBlocks); prepareChartDataFromBlocks(currentBlocks); }" +
+                            "if (typeof refreshAllFolders === 'function') refreshAllFolders();" +
+                            "}",
+                    null
+            );
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        NewDayWorker.clearPendingNotifications(this);
+    }
+
+    private void handleNotificationIntent(Intent intent) {
+        if (intent != null && intent.hasExtra(NewDayWorker.EXTRA_OPEN_LINE_IDX)) {
+            pendingOpenLineIdx = intent.getIntExtra(NewDayWorker.EXTRA_OPEN_LINE_IDX, -1);
+            intent.removeExtra(NewDayWorker.EXTRA_OPEN_LINE_IDX);
+        }
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS")
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{"android.permission.POST_NOTIFICATIONS"},
+                        REQ_POST_NOTIFICATIONS
+                );
+            }
+        }
+    }
+
+    private void scheduleBackgroundNewDayCheck() {
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        PeriodicWorkRequest periodicRequest = new PeriodicWorkRequest.Builder(
+                NewDayWorker.class,
+                15,
+                TimeUnit.MINUTES
+        )
+                .setConstraints(constraints)
+                .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                PERIODIC_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                periodicRequest
+        );
     }
 
     // ==================== АВТООБНОВЛЕНИЕ ЧЕРЕЗ GITHUB RELEASES ====================
@@ -496,6 +580,65 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openServerDialog() {
             runOnUiThread(() -> showServerUrlDialog(false));
+        }
+
+        @JavascriptInterface
+        public int getPendingOpenLine() {
+            int val = pendingOpenLineIdx;
+            pendingOpenLineIdx = -1;
+            return val;
+        }
+
+        @JavascriptInterface
+        public void syncLinesConfig(final String linesJson, final boolean notifyEnabled, final boolean resetAll) {
+            try {
+                SharedPreferences.Editor ed = prefs.edit();
+                ed.putString(NewDayWorker.KEY_LINES_CONFIG, linesJson != null ? linesJson : "[]");
+                ed.putBoolean(NewDayWorker.KEY_NOTIFY_ENABLED, notifyEnabled);
+
+                if (resetAll) {
+                    for (int i = 0; i < 3; i++) {
+                        ed.remove("known_days_" + i);
+                        ed.putBoolean("baseline_ready_" + i, false);
+                    }
+                    ed.remove(NewDayWorker.KEY_PENDING_DAYS);
+                } else if (linesJson != null) {
+                    JSONArray arr = new JSONArray(linesJson);
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject o = arr.optJSONObject(i);
+                        if (o == null) continue;
+                        int idx = o.optInt("idx", i);
+                        String name = o.optString("name", "").trim();
+                        String path = o.optString("path", "").trim();
+                        String pattern = o.optString("pattern", "").trim();
+                        // Если линия снята/очищена — сбрасываем её базу, чтобы не слать лишних пушей
+                        if (name.isEmpty() || (path.isEmpty() && pattern.isEmpty())) {
+                            ed.remove("known_days_" + idx);
+                            ed.putBoolean("baseline_ready_" + idx, false);
+                        }
+                    }
+                }
+                ed.apply();
+            } catch (Exception ignored) {
+            }
+        }
+
+        @JavascriptInterface
+        public void syncKnownFolders(final int lineIdx, final String foldersJson) {
+            if (lineIdx < 0 || lineIdx >= 3 || foldersJson == null) return;
+            try {
+                JSONArray arr = new JSONArray(foldersJson);
+                Set<String> known = NewDayWorker.loadStringSet(prefs, "known_days_" + lineIdx);
+                for (int i = 0; i < arr.length(); i++) {
+                    String name = arr.optString(i, "").trim().toLowerCase(Locale.ROOT);
+                    if (!name.isEmpty()) {
+                        known.add(name);
+                    }
+                }
+                NewDayWorker.saveStringSet(prefs, "known_days_" + lineIdx, known);
+                prefs.edit().putBoolean("baseline_ready_" + lineIdx, true).apply();
+            } catch (Exception ignored) {
+            }
         }
     }
 
