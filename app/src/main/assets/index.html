@@ -221,10 +221,61 @@
         .auto-scan-info { background: var(--bg-auto-scan); color: var(--color-auto-scan-text); padding: 0.625rem; border-radius: 0.3125rem; margin-top: 0.625rem; font-size: 0.75rem; }
 
         .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; }
-        .settings-content { background: var(--bg-card); margin: 5% auto; border-radius: 0.625rem; width: 90%; max-width: 43.75rem; padding: 1.875rem; max-height: 90vh; overflow-y: auto; color: var(--text-primary); }
-        .settings-content h2 { margin-bottom: 1.25rem; color: var(--text-primary); }
+        .settings-content {
+            background: var(--bg-card);
+            margin: 2.5% auto;
+            border-radius: 0.75rem;
+            width: 94%;
+            max-width: 43.75rem;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: var(--text-primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        }
+        .settings-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.875rem 1.25rem;
+            background: var(--bg-card);
+            border-bottom: 0.125rem solid var(--border-soft);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .settings-topbar h2 { margin: 0; font-size: 1.2rem; color: var(--text-primary); }
+        .settings-topbar-actions { display: flex; align-items: center; gap: 0.5rem; }
+        .settings-body {
+            padding: 1.125rem 1.25rem 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+        .settings-section-title {
+            font-size: 0.8125rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--color-info);
+            margin: 1.25rem 0 0.75rem 0;
+            padding-bottom: 0.35rem;
+            border-bottom: 0.0625rem solid var(--border-soft);
+        }
+        .settings-section-title:first-child { margin-top: 0; }
         .settings-content h3 { color: var(--text-primary); }
-        .settings-group { margin-bottom: 1.25rem; }
+        .settings-group { margin-bottom: 1.125rem; }
+        .settings-group.disabled-group { opacity: 0.5; pointer-events: none; }
+        .file-manager-toolbar {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-soft);
+            border-bottom: 0.125rem solid var(--border-soft);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
         .settings-group label { display: block; font-weight: bold; margin-bottom: 0.3125rem; color: var(--text-strong); }
         .settings-group input[type="number"], .settings-group input[type="text"] {
             width: 100%;
@@ -305,7 +356,8 @@
             .line-name-tag { font-size: var(--font-size-line-name, 0.75rem); }
             .count-value { font-size: var(--font-size-count-value, 1rem); }
             .modal-content, .file-manager-content, .settings-content { width: 95%; margin: 10% auto; }
-            .settings-content { padding: 1.25rem; }
+            .settings-content { width: 96%; margin: 2% auto; max-height: 94vh; }
+            .settings-body { padding: 1rem; }
             .file-manager-body { max-height: 60vh; }
             .scale-control input[type="number"] { width: 4.375rem; }
         }
@@ -496,8 +548,10 @@
 
 
             <div id="autoScanInfo" class="auto-scan-info" style="display: none;">
-                <span id="autoScanLabel">Автоматическое переключение</span>... (следующее через <span id="autoScanTimer">--</span>с)
-                <span id="dataRefreshInfo" style="display:block; margin-top:4px; opacity:0.8;">
+                <span id="autoSwitchRow" style="display: none;">
+                    <span id="autoScanLabel">Автопереключение линий</span>: следующее через <span id="autoScanTimer">--</span>с
+                </span>
+                <span id="dataRefreshInfo" style="display: none; margin-top: 2px; opacity: 0.85;">
                     Обновление с сервера через: <span id="dataRefreshTimer">--</span>с
                 </span>
             </div>
@@ -540,158 +594,186 @@
 
     <div class="settings-modal" id="settingsModal">
         <div class="settings-content">
-            <h2>Настройки</h2>
-
-            <div class="settings-group" id="apkServerSettingsGroup" style="display:none; border-bottom: 0.125rem solid var(--border-soft); padding-bottom: 0.9375rem;">
-                <label for="apkServerUrlInput">Адрес сервера мониторинга</label>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1;">
-                    <button class="btn btn-success btn-sm" id="apkApplyServerBtn" type="button">Подключить</button>
-                </div>
-                <div class="hint">Укажите IP и порт ПК с запущенным сервером мониторинга (в одной локальной сети / Wi-Fi).</div>
-            </div>
-
-            <div class="settings-group" style="border-bottom: 0.125rem solid var(--border-soft); padding-bottom: 0.9375rem;">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="darkThemeCheckbox">
-                    <label for="darkThemeCheckbox" style="font-weight: bold; margin:0;">Тёмная тема</label>
-                </div>
-                <div class="hint">Тёмное оформление сайта. Также можно переключать кнопкой в шапке.</div>
-            </div>
-
-            <div class="settings-group" style="margin-top: 0.9375rem;">
-                <label for="switchInterval">Интервал переключения линий (секунд)</label>
-                <input type="number" id="switchInterval" min="5" max="3600" value="30">
-                <div class="hint">Минимум 5 секунд. Как часто переключать отображение между линиями 1, 2, 3 (без обращений к серверу).</div>
-            </div>
-
-            <div class="settings-group">
-                <label for="refreshInterval">Интервал обновления данных с сервера (секунд)</label>
-                <input type="number" id="refreshInterval" min="30" max="86400" value="600">
-                <div class="hint">Минимум 30 секунд. Как часто пересканировать все папки с сервера (по умолчанию 600 сек = 10 минут).</div>
-            </div>
-
-            <div class="settings-group">
-                <label for="blockLimit">Количество блоков на экране</label>
-                <input type="number" id="blockLimit" min="1" max="200" value="20">
-                <div class="hint">Показываются самые свежие блоки по дате (по умолчанию 20). Когда появляется папка нового месяца, её блоки вытесняют самые старые. Новая папка месяца подхватывается автоматически.</div>
-            </div>
-
-            <div class="settings-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="showChartCheckbox" checked>
-                    <label for="showChartCheckbox" style="font-weight: bold; margin:0;">Показывать график загрузки</label>
-                </div>
-                <div class="hint">Отключите, чтобы скрыть блок с графиком.</div>
-            </div>
-
-            <div class="settings-group" id="apkNotifySettingsGroup">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="notifyNewDaysCheckbox" checked>
-                    <label for="notifyNewDaysCheckbox" style="font-weight: bold; margin:0;">Уведомлять о появлении нового дня</label>
-                </div>
-                <div class="hint">Фоновая проверка папок настроенных линий (приходит одно общее уведомление на телефон).</div>
-            </div>
-
-            <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
-                <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Масштаб страницы</h3>
-                <div class="scale-control">
-                    <button class="btn btn-sm" id="scaleDecBtn">−</button>
-                    <input type="number" id="scalePercent" min="50" max="200" value="100" step="1">
-                    <span>%</span>
-                    <button class="btn btn-sm" id="scaleIncBtn">+</button>
-                </div>
-                <div class="hint">Масштаб всей страницы (50–200%). Шаг 1%. Карточки будут перестраиваться в ряду.</div>
-            </div>
-
-            <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
-                <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Названия линий</h3>
-                <div class="hint" style="margin-bottom: 0.625rem;">
-                    Линия без названия пропускается при переключении и сканировании.
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="lineName0">Линия 1</label>
-                    <input type="text" id="lineName0" placeholder="Пусто — линия пропускается">
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="lineName1">Линия 2</label>
-                    <input type="text" id="lineName1" placeholder="Пусто — линия пропускается">
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="lineName2">Линия 3</label>
-                    <input type="text" id="lineName2" placeholder="Пусто — линия пропускается">
+            <div class="settings-topbar">
+                <h2>Настройки</h2>
+                <div class="settings-topbar-actions">
+                    <button class="btn btn-sm" id="closeSettingsBtn" type="button" style="background: var(--bg-muted); color: var(--text-primary); border: 1px solid var(--border-input);">Отмена</button>
+                    <button class="btn btn-success btn-sm" id="saveSettingsBtn" type="button">Сохранить</button>
                 </div>
             </div>
 
-            <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
-                <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Шаблоны путей (с макросами)</h3>
-                <div class="hint" style="margin-bottom: 0.625rem;">
-                    Доступные макросы: <code>{YEAR}</code> — текущий год, <code>{MONTH}</code> — месяц (январь...декабрь), <code>{MONTH_NUM}</code> — номер месяца (01-12).<br>
-                    Если шаблон задан, он используется вместо выбранной папки. Оставьте пустым для использования фиксированного пути.<br>Макрос <code>{MONTH}</code> необязателен: можно указать папку линии без месяца (напр. <code>\\Сервер\Общая\{YEAR}\Мурат Стандарт</code>) — папки месяцев определяются автоматически.
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="folderPattern0">Линия 1</label>
-                    <input type="text" id="folderPattern0" placeholder="Напр. \\Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="folderPattern1">Линия 2</label>
-                    <input type="text" id="folderPattern1" placeholder="Напр. \\Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
-                </div>
-                <div style="margin-bottom: 0.625rem;">
-                    <label for="folderPattern2">Линия 3</label>
-                    <input type="text" id="folderPattern2" placeholder="Напр. \\Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
-                </div>
-            </div>
+            <div class="settings-body">
+                <div class="settings-section-title">Подключение и кэш</div>
 
-            <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
-                <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Размеры шрифтов в карточках (px)</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
-                    <div>
-                        <label for="fontDateTitle" style="font-size:0.75rem;">Дата (название папки)</label>
-                        <input type="number" id="fontDateTitle" min="8" max="40" value="20">
+                <div class="settings-group" id="apkServerSettingsGroup" style="display:none;">
+                    <label for="apkServerUrlInput">Адрес сервера мониторинга</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1;">
+                        <button class="btn btn-success btn-sm" id="apkApplyServerBtn" type="button">Подключить</button>
                     </div>
-                    <div>
-                        <label for="fontWeekday" style="font-size:0.75rem;">День недели</label>
-                        <input type="number" id="fontWeekday" min="8" max="40" value="18">
+                    <div class="hint">Сервер находится автоматически; при необходимости адрес можно задать вручную.</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>Кэш сменных данных</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <span style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
+                            Даты старше 3 дней берутся из кэша; последние 3 дня и все будущие даты пересчитываются всегда.
+                        </span>
+                        <button class="btn btn-warning btn-sm" id="resetDataCacheBtn" type="button">Сбросить кэш</button>
                     </div>
-                    <div>
-                        <label for="fontLineName" style="font-size:0.75rem;">Название линии</label>
-                        <input type="number" id="fontLineName" min="8" max="40" value="14">
+                    <div class="hint">Принудительно очищает кэш и заново пересчитывает все даты с сервера (настройки линий не сбрасываются).</div>
+                </div>
+
+                <div class="settings-section-title">Отображение</div>
+
+                <div class="settings-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="darkThemeCheckbox">
+                        <label for="darkThemeCheckbox" style="font-weight: bold; margin:0;">Тёмная тема</label>
                     </div>
-                    <div>
-                        <label for="fontCountValue" style="font-size:0.75rem;">Значения (Ипостов, Створки, Рамы, ...)</label>
-                        <input type="number" id="fontCountValue" min="8" max="40" value="18">
+                    <div class="hint">Тёмное оформление экрана. Также переключается кнопкой в шапке.</div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showChartCheckbox">
+                        <label for="showChartCheckbox" style="font-weight: bold; margin:0;">Показывать график загрузки</label>
+                    </div>
+                    <div class="hint">По умолчанию выключено, чтобы сразу видеть карточки смен.</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>Масштаб страницы</label>
+                    <div class="scale-control">
+                        <button class="btn btn-sm" id="scaleDecBtn" type="button">−</button>
+                        <input type="number" id="scalePercent" min="50" max="200" value="100" step="1">
+                        <span>%</span>
+                        <button class="btn btn-sm" id="scaleIncBtn" type="button">+</button>
+                    </div>
+                    <div class="hint">Масштаб всей страницы (50–200%). Шаг 1%.</div>
+                </div>
+
+                <div class="settings-section-title">Линии и уведомления</div>
+
+                <div class="settings-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoSwitchEnabledCheckbox">
+                        <label for="autoSwitchEnabledCheckbox" style="font-weight: bold; margin:0;">Автоматическое переключение линий</label>
+                    </div>
+                    <div class="hint">По умолчанию выключено — переключать линии можно свайпом влево и вправо.</div>
+                </div>
+
+                <div class="settings-group" id="switchIntervalGroup">
+                    <label for="switchInterval">Интервал автопереключения линий (секунд)</label>
+                    <input type="number" id="switchInterval" min="5" max="3600" value="30">
+                    <div class="hint">Минимум 5 секунд. Работает только при включённом автопереключении.</div>
+                </div>
+
+                <div class="settings-group" id="apkNotifySettingsGroup">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="notifyNewDaysCheckbox" checked>
+                        <label for="notifyNewDaysCheckbox" style="font-weight: bold; margin:0;">Уведомлять о появлении нового дня</label>
+                    </div>
+                    <div class="hint">Фоновая проверка выбранных линий (приходит одно общее уведомление на телефон).</div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Названия линий</h3>
+                    <div class="hint" style="margin-bottom: 0.5rem;">
+                        Линия без названия пропускается при работе и уведомлениях.
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="lineName0">Линия 1</label>
+                        <input type="text" id="lineName0" placeholder="Пусто — линия пропускается">
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="lineName1">Линия 2</label>
+                        <input type="text" id="lineName1" placeholder="Пусто — линия пропускается">
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="lineName2">Линия 3</label>
+                        <input type="text" id="lineName2" placeholder="Пусто — линия пропускается">
                     </div>
                 </div>
-                <div class="hint">Изменения применяются сразу после сохранения.</div>
-            </div>
 
-            <div class="settings-group" style="border-top: 0.125rem solid var(--border-soft); padding-top: 0.9375rem;">
-                <h3 style="font-size: 0.875rem; margin-bottom: 0.625rem;">Веса для расчёта условных окон</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
-                    <div>
-                        <label for="weightIzd" style="font-size:0.75rem;">Изделия</label>
-                        <input type="number" id="weightIzd" step="0.01" value="0.54">
+                <div class="settings-group">
+                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Шаблоны путей (с макросами)</h3>
+                    <div class="hint" style="margin-bottom: 0.5rem;">
+                        Макросы: <code>{YEAR}</code> — год, <code>{MONTH}</code> — месяц (январь...декабрь), <code>{MONTH_NUM}</code> — номер месяца (01-12).<br>
+                        Можно указать папку линии без месяца (напр. <code>\Сервер\Общая\{YEAR}\Мурат Стандарт</code>) — месяцы определяются автоматически.
                     </div>
-                    <div>
-                        <label for="weightStv" style="font-size:0.75rem;">Створки</label>
-                        <input type="number" id="weightStv" step="0.01" value="1.02">
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="folderPattern0">Линия 1</label>
+                        <input type="text" id="folderPattern0" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
                     </div>
-                    <div>
-                        <label for="weightImp" style="font-size:0.75rem;">Импосты</label>
-                        <input type="number" id="weightImp" step="0.01" value="0.42">
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="folderPattern1">Линия 2</label>
+                        <input type="text" id="folderPattern1" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
                     </div>
-                    <div>
-                        <label for="weightZap" style="font-size:0.75rem;">Заполнения</label>
-                        <input type="number" id="weightZap" step="0.01" value="0.035">
+                    <div style="margin-bottom: 0.5rem;">
+                        <label for="folderPattern2">Линия 3</label>
+                        <input type="text" id="folderPattern2" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
                     </div>
                 </div>
-                <div class="hint">Изменение весов применяется при следующем сканировании</div>
-            </div>
 
-            <div class="settings-actions">
-                <button class="btn btn-success" id="saveSettingsBtn">Сохранить</button>
-                <button class="btn btn-danger" id="closeSettingsBtn">Закрыть</button>
+                <div class="settings-section-title">Обновление и расчёты</div>
+
+                <div class="settings-group">
+                    <label for="refreshInterval">Интервал обновления данных с сервера (секунд)</label>
+                    <input type="number" id="refreshInterval" min="30" max="86400" value="600">
+                    <div class="hint">Минимум 30 секунд (по умолчанию 600 сек = 10 минут).</div>
+                </div>
+
+                <div class="settings-group">
+                    <label for="blockLimit">Количество блоков на экране</label>
+                    <input type="number" id="blockLimit" min="1" max="200" value="20">
+                    <div class="hint">Показываются самые свежие блоки по дате (по умолчанию 20).</div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Размеры шрифтов в карточках (px)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
+                        <div>
+                            <label for="fontDateTitle" style="font-size:0.75rem;">Дата (название папки)</label>
+                            <input type="number" id="fontDateTitle" min="8" max="40" value="20">
+                        </div>
+                        <div>
+                            <label for="fontWeekday" style="font-size:0.75rem;">День недели</label>
+                            <input type="number" id="fontWeekday" min="8" max="40" value="18">
+                        </div>
+                        <div>
+                            <label for="fontLineName" style="font-size:0.75rem;">Название линии</label>
+                            <input type="number" id="fontLineName" min="8" max="40" value="14">
+                        </div>
+                        <div>
+                            <label for="fontCountValue" style="font-size:0.75rem;">Значения (Ипостов, Створки, Рамы, ...)</label>
+                            <input type="number" id="fontCountValue" min="8" max="40" value="18">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Веса для расчёта условных окон</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
+                        <div>
+                            <label for="weightIzd" style="font-size:0.75rem;">Изделия</label>
+                            <input type="number" id="weightIzd" step="0.01" value="0.54">
+                        </div>
+                        <div>
+                            <label for="weightStv" style="font-size:0.75rem;">Створки</label>
+                            <input type="number" id="weightStv" step="0.01" value="1.02">
+                        </div>
+                        <div>
+                            <label for="weightImp" style="font-size:0.75rem;">Импосты</label>
+                            <input type="number" id="weightImp" step="0.01" value="0.42">
+                        </div>
+                        <div>
+                            <label for="weightZap" style="font-size:0.75rem;">Заполнения</label>
+                            <input type="number" id="weightZap" step="0.01" value="0.035">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -700,10 +782,13 @@
         <div class="file-manager-content">
             <div class="file-manager-header">
                 <h3>Выбор папки для линии <span id="fmLineIndex">1</span></h3>
-                <button class="btn" id="closeFileManagerBtn">Закрыть</button>
+                <button class="btn btn-sm" id="closeFileManagerBtn">Закрыть</button>
+            </div>
+            <div class="file-manager-toolbar">
+                <div class="current-path" id="fileManagerPath" style="margin-bottom:0;">Загрузка...</div>
+                <button class="btn btn-success" id="selectCurrentFolderBtn" style="width:100%; margin:0;">Выбрать эту папку для линии 1</button>
             </div>
             <div class="file-manager-body" id="fileManagerBody">
-                <div class="current-path" id="fileManagerPath">Загрузка...</div>
                 <div id="fileManagerContent"><div>Загрузка...</div></div>
             </div>
         </div>
@@ -789,6 +874,8 @@
         // Сохранённые блоки по каждой линии (чтобы показывать без обращения к серверу)
         let blocksByFolder = [null, null, null];
         let lastScanTime = [null, null, null];
+        // Постоянный кэш по дням: ключ "normPath(monthPath)|folder_name_lower" -> { block, savedAt }
+        let dayCache = {};
 
         let fontSizes = {
             dateTitle: 20,
@@ -797,7 +884,8 @@
             countValue: 18
         };
 
-        let showChart = true;
+        let showChart = false;
+        let autoSwitchEnabled = false;
         let notifyNewDays = true;
         let scalePercent = 100;
 
@@ -806,6 +894,7 @@
             PATTERNS: 'monitoring_folder_patterns',
             NAMES: 'monitoring_folder_names',
             SWITCH_INTERVAL: 'monitoring_switch_interval',
+            AUTO_SWITCH_ENABLED: 'monitoring_auto_switch_enabled',
             REFRESH_INTERVAL: 'monitoring_refresh_interval',
             BLOCK_LIMIT: 'monitoring_block_limit',
             WEIGHTS: 'monitoring_weights',
@@ -814,6 +903,7 @@
             SCALE: 'monitoring_scale_percent',
             CACHED_BLOCKS: 'monitoring_cached_blocks',
             CACHED_SCAN_TIME: 'monitoring_cached_scan_time',
+            DAY_CACHE: 'monitoring_day_cache_v1',
             NOTIFY_NEW_DAYS: 'monitoring_notify_new_days'
         };
 
@@ -949,6 +1039,15 @@
             document.getElementById('filesModal').style.display = 'none';
         }
 
+        function updateSwitchIntervalState() {
+            const cb = document.getElementById('autoSwitchEnabledCheckbox');
+            const grp = document.getElementById('switchIntervalGroup');
+            const inp = document.getElementById('switchInterval');
+            const enabled = cb ? cb.checked : autoSwitchEnabled;
+            if (grp) grp.classList.toggle('disabled-group', !enabled);
+            if (inp) inp.disabled = !enabled;
+        }
+
         function showSettingsModal() {
             document.getElementById('settingsModal').style.display = 'block';
             document.getElementById('switchInterval').value = switchInterval;
@@ -969,6 +1068,9 @@
             document.getElementById('folderPattern1').value = folderPatterns[1] || '';
             document.getElementById('folderPattern2').value = folderPatterns[2] || '';
             document.getElementById('showChartCheckbox').checked = showChart;
+            const autoSwCb = document.getElementById('autoSwitchEnabledCheckbox');
+            if (autoSwCb) autoSwCb.checked = autoSwitchEnabled;
+            updateSwitchIntervalState();
             const notifyCb = document.getElementById('notifyNewDaysCheckbox');
             if (notifyCb) notifyCb.checked = notifyNewDays;
             document.getElementById('scalePercent').value = scalePercent;
@@ -1072,6 +1174,7 @@
             localStorage.setItem(STORAGE_KEYS.PATTERNS, JSON.stringify(folderPatterns));
             localStorage.setItem(STORAGE_KEYS.NAMES, JSON.stringify(folderNames));
             localStorage.setItem(STORAGE_KEYS.SWITCH_INTERVAL, String(switchInterval));
+            localStorage.setItem(STORAGE_KEYS.AUTO_SWITCH_ENABLED, String(autoSwitchEnabled));
             localStorage.setItem(STORAGE_KEYS.REFRESH_INTERVAL, String(refreshInterval));
             localStorage.setItem(STORAGE_KEYS.BLOCK_LIMIT, String(blockLimit));
             localStorage.setItem(STORAGE_KEYS.WEIGHTS, JSON.stringify(WINDOW_COEFFS));
@@ -1148,7 +1251,11 @@
             const interval = localStorage.getItem(STORAGE_KEYS.SWITCH_INTERVAL);
             if (interval) {
                 const val = parseInt(interval);
-                if (!isNaN(val) && val >= 0) switchInterval = val;
+                if (!isNaN(val) && val >= 5) switchInterval = val;
+            }
+            const autoSw = localStorage.getItem(STORAGE_KEYS.AUTO_SWITCH_ENABLED);
+            if (autoSw !== null) {
+                autoSwitchEnabled = autoSw === 'true';
             }
             const refresh = localStorage.getItem(STORAGE_KEYS.REFRESH_INTERVAL);
             if (refresh) {
@@ -1207,7 +1314,63 @@
             }
         }
 
+        function saveDayCache() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.DAY_CACHE, JSON.stringify(dayCache));
+            } catch (e) {
+                console.warn('Не удалось сохранить dayCache в localStorage:', e);
+            }
+        }
+
+        function loadDayCache() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.DAY_CACHE);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        dayCache = parsed;
+                    }
+                }
+            } catch (e) {
+                dayCache = {};
+            }
+        }
+
+        function makeDayCacheKey(monthPath, folderName) {
+            return normPath(monthPath) + '|' + String(folderName || '').trim().toLowerCase();
+        }
+
+        // Возвращает true, если дата строго старше 3 дней от сегодняшнего дня (замораживается в кэше).
+        // Сегодня, последние 3 дня назад (today-3 .. today) и ВСЕ будущие даты (> today) возвращают false -> пересчитываются всегда!
+        function isDateFrozen(blockDate) {
+            if (!(blockDate instanceof Date) || isNaN(blockDate.getTime())) return false;
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const cutoffTs = todayStart - 3 * 86400000;
+            return blockDate.getTime() < cutoffTs;
+        }
+
+        function resetDataCacheOnly() {
+            dayCache = {};
+            monthCache.clear();
+            blocksByFolder = [null, null, null];
+            lastScanTime = [null, null, null];
+            currentBlocks = [];
+            chartData = [];
+            localStorage.removeItem(STORAGE_KEYS.DAY_CACHE);
+            localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
+            localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
+            if (productionChart) { productionChart.destroy(); productionChart = null; }
+            document.getElementById('chartLoading').style.display = 'block';
+            document.getElementById('chartError').style.display = 'none';
+            document.getElementById('chartSummary').innerHTML = '';
+            hideSettingsModal();
+            updateStatus('Кэш сброшен. Полный пересчёт всех дат с сервера...');
+            refreshAllFolders(true);
+        }
+
         function loadCachedData() {
+            loadDayCache();
             try {
                 const rawBlocks = localStorage.getItem(STORAGE_KEYS.CACHED_BLOCKS);
                 if (rawBlocks) {
@@ -1250,6 +1413,7 @@
             localStorage.removeItem(STORAGE_KEYS.PATTERNS);
             localStorage.removeItem(STORAGE_KEYS.NAMES);
             localStorage.removeItem(STORAGE_KEYS.SWITCH_INTERVAL);
+            localStorage.removeItem(STORAGE_KEYS.AUTO_SWITCH_ENABLED);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_INTERVAL);
             localStorage.removeItem(STORAGE_KEYS.BLOCK_LIMIT);
             localStorage.removeItem(STORAGE_KEYS.WEIGHTS);
@@ -1258,21 +1422,24 @@
             localStorage.removeItem(STORAGE_KEYS.SCALE);
             localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
             localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
+            localStorage.removeItem(STORAGE_KEYS.DAY_CACHE);
             localStorage.removeItem(STORAGE_KEYS.NOTIFY_NEW_DAYS);
             folderPaths = ['', '', ''];
             folderPatterns = ['', '', ''];
             folderNames = ['', '', ''];
             switchInterval = 30;
+            autoSwitchEnabled = false;
             refreshInterval = 600;
             blockLimit = 20;
             monthCache.clear();
+            dayCache = {};
             activeIndex = 0;
             currentDirectory = '';
             currentBlocks = [];
             blocksByFolder = [null, null, null];
             lastScanTime = [null, null, null];
             fontSizes = { dateTitle:20, weekday:18, lineName:14, countValue:18 };
-            showChart = true;
+            showChart = false;
             notifyNewDays = true;
             scalePercent = 100;
             applyFontSizes();
@@ -1305,14 +1472,27 @@
         // ==================== ТАЙМЕР ПЕРЕКЛЮЧЕНИЯ ЛИНИЙ ====================
         // Переключает активную линию и показывает уже сохранённые блоки.
         // К серверу НЕ обращается. Линии без названия ПРОПУСКАЮТСЯ.
+        function updateInfoBannerVisibility() {
+            const box = document.getElementById('autoScanInfo');
+            const swRow = document.getElementById('autoSwitchRow');
+            const refRow = document.getElementById('dataRefreshInfo');
+            if (!box) return;
+            const showSw = !!(swRow && swRow.style.display !== 'none');
+            const showRef = !!(refRow && refRow.style.display !== 'none');
+            box.style.display = (showSw || showRef) ? 'block' : 'none';
+        }
+
         function startSwitchTimer() {
             stopSwitchTimer();
             const configured = getConfiguredIndexes();
-            if (switchInterval <= 0 || configured.length === 0) {
-                document.getElementById('autoScanInfo').style.display = 'none';
+            const swRow = document.getElementById('autoSwitchRow');
+            if (!autoSwitchEnabled || switchInterval <= 0 || configured.length === 0) {
+                if (swRow) swRow.style.display = 'none';
+                updateInfoBannerVisibility();
                 return;
             }
-            document.getElementById('autoScanInfo').style.display = 'block';
+            if (swRow) swRow.style.display = 'block';
+            updateInfoBannerVisibility();
             switchCountdown = switchInterval;
             updateSwitchCountdownDisplay();
 
@@ -1419,7 +1599,7 @@
 
             if (isManualSwipe && configured.length > 1) {
                 showSwipeToast('◀ ' + lineLabel(activeIndex) + ' (' + target.posNum + '/' + configured.length + ') ▶');
-                if (switchInterval > 0) {
+                if (autoSwitchEnabled && switchInterval > 0) {
                     switchCountdown = switchInterval;
                     updateSwitchCountdownDisplay();
                 }
@@ -1492,12 +1672,13 @@
         }
 
         function restartSwitchTimer() {
-            if (switchInterval > 0 && getConfiguredIndexes().length > 0) {
+            if (autoSwitchEnabled && switchInterval > 0 && getConfiguredIndexes().length > 0) {
                 startSwitchTimer();
             } else {
                 stopSwitchTimer();
-                const info = document.getElementById('autoScanInfo');
-                if (info) info.style.display = 'none';
+                const swRow = document.getElementById('autoSwitchRow');
+                if (swRow) swRow.style.display = 'none';
+                updateInfoBannerVisibility();
             }
         }
 
@@ -1506,11 +1687,14 @@
         // Линии без названия ПРОПУСКАЮТСЯ.
         function startRefreshTimer() {
             stopRefreshTimer();
+            const refRow = document.getElementById('dataRefreshInfo');
             if (refreshInterval <= 0 || getConfiguredIndexes().length === 0) {
-                document.getElementById('dataRefreshInfo').style.display = 'none';
+                if (refRow) refRow.style.display = 'none';
+                updateInfoBannerVisibility();
                 return;
             }
-            document.getElementById('dataRefreshInfo').style.display = 'block';
+            if (refRow) refRow.style.display = 'block';
+            updateInfoBannerVisibility();
             refreshCountdown = refreshInterval;
             updateRefreshCountdownDisplay();
 
@@ -1537,16 +1721,16 @@
         }
 
         // Сканирует все настроенные папки по очереди, обновляет blocksByFolder.
-        async function refreshAllFolders() {
+        async function refreshAllFolders(forceFullRecalc = false) {
             if (isScanning) return false;
             const configured = getConfiguredIndexes();
             if (configured.length === 0) return false;
 
-            updateStatus('Обновление данных с сервера...');
+            updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Обновление данных с сервера...');
             let anySuccess = false;
             for (const idx of configured) {
                 // Сканируем конкретную папку, не переключая активную линию
-                const ok = await scanFolderByIndex(idx);
+                const ok = await scanFolderByIndex(idx, forceFullRecalc);
                 if (ok) anySuccess = true;
             }
 
@@ -1652,11 +1836,37 @@
             return [P];   // неизвестная структура — сканируем как есть
         }
 
-        // Сканирует папку месяца (с кэшем для старых месяцев). null — не удалось прочитать.
-        async function scanMonthFolder(path, allowCache) {
-            const key = normPath(path);
-            const c = monthCache.get(key);
-            if (allowCache && c && (Date.now() - c.time) < MONTH_CACHE_MS) return c.blocks;
+        // Умное сканирование папки месяца:
+        // - даты старше 3 дней, уже сохранённые в dayCache, НЕ пересчитываются;
+        // - последние 3 дня назад, сегодня и ВСЕ будущие даты пересчитываются с сервера всегда.
+        async function scanMonthFolder(path, forceFullRecalc) {
+            const hintYear = yearFromPath(path);
+            const info = await listDir(path);
+            if (!info) return null;
+
+            const subDirs = (info.items || []).filter(i => i.is_directory);
+
+            // Если внутри папки месяца все подпапки старше 3 дней И все уже есть в dayCache —
+            // вообще не вызываем /api/scan-directory на сервере!
+            if (!forceFullRecalc && subDirs.length > 0) {
+                let allFrozenAndCached = true;
+                const cachedBlocks = [];
+                for (const sub of subDirs) {
+                    const d = extractDateFromFolderName(sub.name, hintYear);
+                    const cKey = makeDayCacheKey(path, sub.name);
+                    const entry = dayCache[cKey];
+                    if (isDateFrozen(d) && entry && entry.block) {
+                        cachedBlocks.push(entry.block);
+                    } else {
+                        allFrozenAndCached = false;
+                        break;
+                    }
+                }
+                if (allFrozenAndCached) {
+                    return cachedBlocks;
+                }
+            }
+
             const resp = await fetchWithTimeout('/api/scan-directory', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -1667,9 +1877,29 @@
                 console.warn('Ошибка сканирования ' + path + ': ' + res.error);
                 return null;
             }
-            const blocks = res.blocks || [];
-            monthCache.set(key, { time: Date.now(), blocks: blocks });
-            return blocks;
+            const serverBlocks = res.blocks || [];
+            const merged = [];
+            let cacheDirty = false;
+
+            for (const b of serverBlocks) {
+                const cKey = makeDayCacheKey(path, b.folder_name);
+                const bDate = extractDateFromFolderName(b.folder_name, hintYear);
+                const cachedEntry = dayCache[cKey];
+
+                if (!forceFullRecalc && isDateFrozen(bDate) && cachedEntry && cachedEntry.block) {
+                    // Старше 3 дней и уже есть в кэше — оставляем кэшированный расчёт
+                    merged.push(cachedEntry.block);
+                } else {
+                    // В пределах 3 дней назад, сегодня, будущие даты или новая папка — берём свежий расчёт
+                    merged.push(b);
+                    dayCache[cKey] = { block: b, savedAt: Date.now() };
+                    cacheDirty = true;
+                }
+            }
+            if (cacheDirty) {
+                saveDayCache();
+            }
+            return merged;
         }
 
         // Оставляет blockLimit самых свежих блоков по дате. Блоки без даты не обрезаются.
@@ -1684,9 +1914,9 @@
         }
 
         // Сканирование конкретной линии по индексу, результат в blocksByFolder[idx]
-        async function scanFolderByIndex(idx) {
-            if (!isFolderConfigured(idx)) return;   // пропускаем линии без названия
-            if (isScanning) return;
+        async function scanFolderByIndex(idx, forceFullRecalc = false) {
+            if (!isFolderConfigured(idx)) return false;   // пропускаем линии без названия
+            if (isScanning) return false;
             isScanning = true;
             const scanBtn = document.getElementById('scanBtn');
             if (idx === activeIndex) {
@@ -1720,8 +1950,7 @@
                         seenMonths.add(k);
 
                         updateStatus('Сканирование: ' + baseName(mp) + ' (' + lineName + ')');
-                        // Самый свежий месяц — всегда с сервера, более старые — из кэша
-                        const blocks = await scanMonthFolder(mp, scannedAny);
+                        const blocks = await scanMonthFolder(mp, forceFullRecalc);
                         if (blocks === null) continue;
                         scannedAny = true;
                         blocks.forEach(b => {
@@ -1745,6 +1974,9 @@
                                   (error.message && error.message.includes('Failed to fetch'));
                 if (isNetwork) {
                     console.warn('Сервер недоступен для линии ' + (idx+1) + ', повторим при следующем обновлении');
+                    if (window.AndroidApp && typeof window.AndroidApp.onServerUnreachable === 'function') {
+                        window.AndroidApp.onServerUnreachable();
+                    }
                 } else {
                     console.warn('Ошибка сканирования линии ' + (idx+1) + ': ' + error.message);
                 }
@@ -2042,7 +2274,13 @@
         async function loadDirectoryContents(path) {
             const contentDiv = document.getElementById('fileManagerContent');
             const pathDiv = document.getElementById('fileManagerPath');
+            const selectBtn = document.getElementById('selectCurrentFolderBtn');
             contentDiv.innerHTML = '<div>Загрузка...</div>';
+            if (selectBtn) {
+                selectBtn.textContent = 'Выбрать эту папку для линии ' + (pendingFolderIndex + 1);
+                selectBtn.disabled = true;
+                selectBtn.onclick = null;
+            }
             try {
                 let url = '/api/files';
                 if (path) url = '/api/files?path=' + encodeURIComponent(path);
@@ -2062,6 +2300,9 @@
                         html += '<div class="folder-item" data-path="' + item.path + '"><span class="folder-icon">📁</span>' + item.name + '</div>';
                     }
                 });
+                if (!html) {
+                    html = '<div style="padding:1rem; color:var(--text-muted); text-align:center;">Подпапки не найдены</div>';
+                }
                 contentDiv.innerHTML = html;
                 document.querySelectorAll('.folder-item[data-path]').forEach(el => {
                     el.addEventListener('click', function() {
@@ -2069,46 +2310,43 @@
                         loadDirectoryContents(p);
                     });
                 });
-                const selectBtn = document.createElement('button');
-                selectBtn.className = 'btn btn-success';
-                selectBtn.style.marginTop = '20px';
-                selectBtn.style.width = '100%';
-                selectBtn.textContent = 'Выбрать эту папку для линии ' + (pendingFolderIndex + 1);
-                selectBtn.onclick = function() {
-                    if (data.current_path) {
-                        const selIdx = pendingFolderIndex;
-                        folderPaths[selIdx] = data.current_path;
-                        // Активной делаем линию, только если у неё указано название
-                        if (isFolderConfigured(selIdx)) {
-                            activeIndex = selIdx;
-                        } else {
-                            ensureActiveIndexValid();
-                        }
-                        currentDirectory = isFolderConfigured(activeIndex)
-                            ? (folderPatterns[activeIndex] ? resolvePath(folderPatterns[activeIndex]) : folderPaths[activeIndex])
-                            : '';
-                        updateActiveDisplay();
-                        saveAllSettings();
-                        hideFileManager();
-                        if (isFolderConfigured(selIdx)) {
-                            updateStatus('Папка выбрана для линии: ' + lineLabel(selIdx));
-                        } else {
-                            updateStatus('Папка сохранена, но у линии ' + (selIdx + 1) + ' нет названия — она пропускается. Укажите название в настройках.');
-                        }
-                        // Сразу обновляем данные для этой папки + перезапускаем таймеры
-                        setTimeout(async () => {
-                            await scanFolderByIndex(selIdx);
-                            if (isFolderConfigured(activeIndex) && blocksByFolder[activeIndex]) {
-                                currentBlocks = blocksByFolder[activeIndex];
-                                displayBlocks(currentBlocks);
-                                prepareChartDataFromBlocks(currentBlocks);
+                if (selectBtn) {
+                    selectBtn.disabled = false;
+                    selectBtn.onclick = function() {
+                        if (data.current_path) {
+                            const selIdx = pendingFolderIndex;
+                            folderPaths[selIdx] = data.current_path;
+                            // Активной делаем линию, только если у неё указано название
+                            if (isFolderConfigured(selIdx)) {
+                                activeIndex = selIdx;
+                            } else {
+                                ensureActiveIndexValid();
                             }
-                            restartSwitchTimer();
-                            startRefreshTimer();
-                        }, 300);
-                    }
-                };
-                contentDiv.appendChild(selectBtn);
+                            currentDirectory = isFolderConfigured(activeIndex)
+                                ? (folderPatterns[activeIndex] ? resolvePath(folderPatterns[activeIndex]) : folderPaths[activeIndex])
+                                : '';
+                            updateActiveDisplay();
+                            saveAllSettings();
+                            hideFileManager();
+                            if (isFolderConfigured(selIdx)) {
+                                updateStatus('Папка выбрана для линии: ' + lineLabel(selIdx));
+                            } else {
+                                updateStatus('Папка сохранена, но у линии ' + (selIdx + 1) + ' нет названия — она пропускается. Укажите название в настройках.');
+                            }
+                            // Сразу обновляем данные для этой папки + перезапускаем таймеры
+                            setTimeout(async () => {
+                                await scanFolderByIndex(selIdx);
+                                if (isFolderConfigured(activeIndex) && blocksByFolder[activeIndex]) {
+                                    currentBlocks = blocksByFolder[activeIndex];
+                                    displayBlocks(currentBlocks);
+                                    prepareChartDataFromBlocks(currentBlocks);
+                                }
+                                restartSwitchTimer();
+                                startRefreshTimer();
+                            }, 300);
+                        }
+                    };
+                }
             } catch (error) {
                 contentDiv.innerHTML = '<div class="error-message">Ошибка: ' + error.message + '</div>';
             }
@@ -2375,12 +2613,21 @@
                 }
             }
             setupTouchGestures();
+            const autoSwCheckboxEl = document.getElementById('autoSwitchEnabledCheckbox');
+            if (autoSwCheckboxEl) {
+                autoSwCheckboxEl.addEventListener('change', updateSwitchIntervalState);
+            }
+            const resetCacheBtnEl = document.getElementById('resetDataCacheBtn');
+            if (resetCacheBtnEl) {
+                resetCacheBtnEl.addEventListener('click', resetDataCacheOnly);
+            }
             document.getElementById('closeSettingsBtn').addEventListener('click', hideSettingsModal);
             document.getElementById('saveSettingsBtn').addEventListener('click', function() {
-                const interval = parseInt(document.getElementById('switchInterval').value) || 0;
-                if (interval < 0) { alert('Интервал переключения не может быть отрицательным'); return; }
-                if (interval > 0 && interval < 5) { alert('Минимальный интервал переключения - 5 секунд'); return; }
-                switchInterval = interval;
+                const autoSwChecked = autoSwCheckboxEl ? autoSwCheckboxEl.checked : false;
+                const interval = parseInt(document.getElementById('switchInterval').value) || 30;
+                if (autoSwChecked && interval < 5) { alert('Минимальный интервал переключения - 5 секунд'); return; }
+                autoSwitchEnabled = autoSwChecked;
+                if (interval >= 5) switchInterval = interval;
 
                 const refresh = parseInt(document.getElementById('refreshInterval').value) || 600;
                 if (refresh < 30) { alert('Минимальный интервал обновления с сервера - 30 секунд'); return; }
