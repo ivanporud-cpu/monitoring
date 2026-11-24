@@ -286,7 +286,7 @@
             display: block;
         }
 
-        .file-manager { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .file-manager { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2500; }
         .file-manager-content { background: var(--bg-card); margin: 3% auto; border-radius: 0.625rem; width: 90%; max-width: 50rem; max-height: 90vh; overflow: auto; display: flex; flex-direction: column; color: var(--text-primary); }
         .file-manager-header { background: #27ae60; color: white; padding: 1.25rem; border-radius: 0.625rem 0.625rem 0 0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .file-manager-body { padding: 1.25rem; flex: 1; overflow-y: auto; max-height: 70vh; }
@@ -478,8 +478,65 @@
         html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
         html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
-        .header-inner { display: flex; align-items: center; gap: 0.75rem; }
-        .header-inner h1 { flex: 1; text-align: left; }
+        .header-inner { display: flex; align-items: center; gap: 0.5rem; }
+        .header-inner h1 { flex: 1; text-align: left; font-size: 1.35rem; }
+        .header-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; }
+        .header-actions .theme-toggle { margin-left: 0; }
+        .line-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
+            justify-content: flex-start;
+        }
+        .line-tabs:empty { display: none; }
+        .line-tab-btn {
+            background: var(--bg-soft);
+            color: var(--text-muted);
+            border: 0.0625rem solid var(--border-input);
+            border-radius: 999px;
+            padding: 0.38rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .line-tab-btn:hover { color: var(--text-primary); border-color: var(--color-info); }
+        .line-tab-btn.active {
+            background: var(--color-info);
+            color: #ffffff;
+            border-color: var(--color-info);
+        }
+        .settings-line-card {
+            background: var(--bg-folder-group);
+            border: 0.125rem solid var(--border-folder-group);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .settings-line-card.active {
+            border-color: var(--border-folder-group-active);
+            background: var(--bg-folder-group-active);
+        }
+        .settings-line-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.45rem;
+        }
+        .settings-line-folder-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.45rem;
+            flex-wrap: wrap;
+        }
+        .settings-line-folder-row .folder-path {
+            flex: 1;
+            min-width: 10rem;
+            margin-top: 0;
+        }
 
         /* Pull-to-refresh индикатор */
         .ptr-indicator {
@@ -582,53 +639,32 @@
         <div class="header">
             <div class="header-inner">
                 <h1>Загрузка производства</h1>
-                <button class="theme-toggle" id="themeToggle" title="Переключить тему" aria-label="Переключить тему">
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                    </svg>
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4"/>
-                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="control-panel">
-            <div class="folder-selector-row">
-                <div class="folder-btn-group" id="folderGroup0">
-                    <button class="btn" data-index="0">Выбрать папку 1</button>
-                    <div class="folder-path" id="folderPath0">Не выбрана</div>
-                    <div class="active-label">Активна</div>
-                </div>
-                <div class="folder-btn-group" id="folderGroup1">
-                    <button class="btn" data-index="1">Выбрать папку 2</button>
-                    <div class="folder-path" id="folderPath1">Не выбрана</div>
-                    <div class="active-label">Активна</div>
-                </div>
-                <div class="folder-btn-group" id="folderGroup2">
-                    <button class="btn" data-index="2">Выбрать папку 3</button>
-                    <div class="folder-path" id="folderPath2">Не выбрана</div>
-                    <div class="active-label">Активна</div>
+                <div class="header-actions">
+                    <button class="theme-toggle" id="themeToggle" title="Переключить тему" aria-label="Переключить тему">
+                        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                        </svg>
+                    </button>
+                    <button class="theme-toggle" id="settingsBtn" title="Настройки" aria-label="Настройки">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 0.3125rem; align-items: center; margin-top: 0.625rem;">
-                <button class="btn btn-success" id="scanBtn">Сканировать активную</button>
-                <button class="btn" id="refreshBtn">Обновить</button>
-                <button class="btn btn-warning" id="settingsBtn">Настройки</button>
-                <button class="btn" id="apkServerBtn" style="display:none; background:#8e44ad;">Сервер</button>
-                <button class="btn btn-danger" id="clearStorageBtn">Сбросить</button>
-                <button class="btn" id="resolveMacrosBtn">Обновить пути по макросам</button>
-            </div>
-
-
+            <div class="line-tabs" id="lineTabs"></div>
             <div id="autoScanInfo" class="auto-scan-info" style="display: none;">
                 <span id="autoSwitchRow" style="display: none;">
                     <span id="autoScanLabel">Автопереключение линий</span>: следующее через <span id="autoScanTimer">--</span>с
                 </span>
                 <span id="dataRefreshInfo" style="display: none; margin-top: 2px; opacity: 0.85;">
-                    Обновление с сервера через: <span id="dataRefreshTimer">--</span>с
+                    Обновление через: <span id="dataRefreshTimer">--</span>с
                 </span>
             </div>
         </div>
@@ -649,7 +685,7 @@
                 <div class="chart-wrapper" id="chartWrapper">
                     <canvas id="productionChart"></canvas>
                     <div class="chart-loading" id="chartLoading">
-                        <div>Выберите папки и нажмите "Сканировать активную"</div>
+                        <div>Потяните вниз для обновления данных</div>
                     </div>
                     <div class="chart-error" id="chartError" style="display: none;"></div>
                 </div>
@@ -683,11 +719,12 @@
 
                 <div class="settings-group" id="apkServerSettingsGroup" style="display:none;">
                     <label for="apkServerUrlInput">Адрес сервера мониторинга</label>
-                    <div style="display:flex; gap:0.5rem; align-items:center;">
-                        <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1;">
+                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                        <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1; min-width:11rem;">
                         <button class="btn btn-success btn-sm" id="apkApplyServerBtn" type="button">Подключить</button>
+                        <button class="btn btn-sm" id="apkServerBtn" type="button" style="background:#8e44ad;">Сервер</button>
                     </div>
-                    <div class="hint">Сервер находится автоматически; при необходимости адрес можно задать вручную.</div>
+                    <div class="hint">Сервер находится автоматически; кнопкой «Сервер» можно запустить поиск в сети или ввести адрес вручную.</div>
                 </div>
 
                 <div class="settings-group">
@@ -769,41 +806,51 @@
                 </div>
 
                 <div class="settings-group">
-                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Названия линий</h3>
-                    <div class="hint" style="margin-bottom: 0.5rem;">
-                        Линия без названия пропускается при работе и уведомлениях.
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                        <h3 style="font-size: 0.9rem; margin:0;">Настройка линий и папок</h3>
+                        <button class="btn btn-sm" id="autoFindFoldersBtn" type="button">Найти папки автоматически</button>
                     </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="lineName0">Линия 1</label>
-                        <input type="text" id="lineName0" placeholder="Пусто — линия пропускается">
+                    <div class="hint" style="margin-bottom: 0.75rem;">
+                        По умолчанию папки находятся сами (<code>Мурат Стандарт</code>, <code>Мурат Нестандарт</code>, <code>Ламинация</code>). При необходимости измените название, выберите другую папку или задайте шаблон с <code>{YEAR}</code>, <code>{MONTH}</code>, <code>{MONTH_NUM}</code>.
                     </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="lineName1">Линия 2</label>
-                        <input type="text" id="lineName1" placeholder="Пусто — линия пропускается">
-                    </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="lineName2">Линия 3</label>
-                        <input type="text" id="lineName2" placeholder="Пусто — линия пропускается">
-                    </div>
-                </div>
 
-                <div class="settings-group">
-                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Шаблоны путей (с макросами)</h3>
-                    <div class="hint" style="margin-bottom: 0.5rem;">
-                        Макросы: <code>{YEAR}</code> — год, <code>{MONTH}</code> — месяц (январь...декабрь), <code>{MONTH_NUM}</code> — номер месяца (01-12).<br>
-                        Можно указать папку линии без месяца (напр. <code>\Сервер\Общая\{YEAR}\Мурат Стандарт</code>) — месяцы определяются автоматически.
+                    <div class="settings-line-card" id="folderGroup0">
+                        <div class="settings-line-head">
+                            <label for="lineName0" style="margin:0;">Линия 1</label>
+                            <span class="active-label">Активна</span>
+                        </div>
+                        <input type="text" id="lineName0" placeholder="Основная линия">
+                        <div class="settings-line-folder-row">
+                            <div class="folder-path" id="folderPath0">Не выбрана</div>
+                            <button class="btn btn-sm" data-index="0" type="button">Выбрать папку 1</button>
+                        </div>
+                        <input type="text" id="folderPattern0" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Стандарт" style="margin-top:0.45rem; font-size:0.85rem;">
                     </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="folderPattern0">Линия 1</label>
-                        <input type="text" id="folderPattern0" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
+
+                    <div class="settings-line-card" id="folderGroup1">
+                        <div class="settings-line-head">
+                            <label for="lineName1" style="margin:0;">Линия 2</label>
+                            <span class="active-label">Активна</span>
+                        </div>
+                        <input type="text" id="lineName1" placeholder="Не стандарт">
+                        <div class="settings-line-folder-row">
+                            <div class="folder-path" id="folderPath1">Не выбрана</div>
+                            <button class="btn btn-sm" data-index="1" type="button">Выбрать папку 2</button>
+                        </div>
+                        <input type="text" id="folderPattern1" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Нестандарт" style="margin-top:0.45rem; font-size:0.85rem;">
                     </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="folderPattern1">Линия 2</label>
-                        <input type="text" id="folderPattern1" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
-                    </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <label for="folderPattern2">Линия 3</label>
-                        <input type="text" id="folderPattern2" placeholder="Напр. \Сервер\Общая\{YEAR}\Мурат Стандарт\{MONTH}">
+
+                    <div class="settings-line-card" id="folderGroup2">
+                        <div class="settings-line-head">
+                            <label for="lineName2" style="margin:0;">Линия 3</label>
+                            <span class="active-label">Активна</span>
+                        </div>
+                        <input type="text" id="lineName2" placeholder="Ламинация">
+                        <div class="settings-line-folder-row">
+                            <div class="folder-path" id="folderPath2">Не выбрана</div>
+                            <button class="btn btn-sm" data-index="2" type="button">Выбрать папку 3</button>
+                        </div>
+                        <input type="text" id="folderPattern2" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Ламинация" style="margin-top:0.45rem; font-size:0.85rem;">
                     </div>
                 </div>
 
@@ -945,9 +992,14 @@
 
         // ==================== ПЕРЕМЕННЫЕ ПРИЛОЖЕНИЯ ====================
         const FOLDER_COUNT = 3;
+        const DEFAULT_LINES = [
+            { name: 'Основная линия', folderSuffix: 'Мурат Стандарт' },
+            { name: 'Не стандарт',    folderSuffix: 'Мурат Нестандарт' },
+            { name: 'Ламинация',      folderSuffix: 'Ламинация' }
+        ];
         let folderPaths = ['', '', ''];
         let folderPatterns = ['', '', ''];
-        let folderNames = ['', '', ''];
+        let folderNames = DEFAULT_LINES.map(l => l.name);
         let activeIndex = 0;
         let currentDirectory = '';
         let currentBlocks = [];
@@ -1164,6 +1216,249 @@
             return String(p || '').trim().replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
         }
 
+        function normalizeFolderToken(str) {
+            return String(str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function folderMatchesTarget(dirName, targetSuffix) {
+            const f = normalizeFolderToken(dirName);
+            const t = normalizeFolderToken(targetSuffix);
+            if (!f || !t) return false;
+            const fTight = f.replace(/[\s_-]+/g, '');
+            const tTight = t.replace(/[\s_-]+/g, '');
+            return f === t || fTight === tTight || f.endsWith(' ' + t) || f.endsWith('_' + t) || f.endsWith('-' + t);
+        }
+
+        function getMeaningfulEndFolder(pathStr) {
+            const norm = String(pathStr || '').trim().replace(/\\/g, '/').replace(/\/+$/, '');
+            if (!norm) return '';
+            const parts = norm.split('/').filter(Boolean);
+            for (let i = parts.length - 1; i >= 0; i--) {
+                const seg = parts[i].trim();
+                if (!seg) continue;
+                if (getMonthIndexFromName(seg) >= 0) continue;
+                if (/^20\d{2}$/.test(seg)) continue;
+                return seg;
+            }
+            return parts.length ? parts[parts.length - 1] : '';
+        }
+
+        function pathMatchesTargetSuffix(pathStr, targetSuffix) {
+            if (!pathStr || !targetSuffix) return false;
+            const norm = String(pathStr || '').trim().replace(/\\/g, '/').replace(/\/+$/, '');
+            const parts = norm.split('/').filter(Boolean);
+            if (parts.length === 0) return false;
+            const last = parts[parts.length - 1];
+            if (folderMatchesTarget(last, targetSuffix)) return true;
+            // Если конечная папка — месяц (например .../Мурат Стандарт/Ноябрь), проверяем родителя
+            if (getMonthIndexFromName(last) >= 0 && parts.length >= 2) {
+                if (folderMatchesTarget(parts[parts.length - 2], targetSuffix)) return true;
+            }
+            return false;
+        }
+
+        function buildAutoPatternFromPath(pathStr) {
+            const sep = String(pathStr || '').includes('\\') ? '\\' : '/';
+            const parts = String(pathStr || '').split(/[\\/]/);
+            const curYear = String(new Date().getFullYear());
+            let changed = false;
+            const mapped = parts.map(seg => {
+                const low = String(seg || '').trim().toLowerCase();
+                if (seg === curYear) {
+                    changed = true;
+                    return '{YEAR}';
+                }
+                if (MONTHS_RU.includes(low)) {
+                    changed = true;
+                    return '{MONTH}';
+                }
+                if (/^(0[1-9]|1[0-2])$/.test(low)) {
+                    changed = true;
+                    return '{MONTH_NUM}';
+                }
+                return seg;
+            });
+            return changed ? mapped.join(sep) : '';
+        }
+
+        function scoreDiscoveredCandidate(pathStr, hasDatesDirect) {
+            let score = 0;
+            const curYear = new Date().getFullYear();
+            const yr = yearFromPath(pathStr);
+            if (yr === curYear) score += 10000;
+            else if (yr) score += yr;
+            if (hasDatesDirect) score += 200;
+
+            const parts = String(pathStr || '').split(/[\\/]/).filter(Boolean);
+            for (let i = parts.length - 1; i >= 0; i--) {
+                const mIdx = getMonthIndexFromName(parts[i]);
+                if (mIdx >= 0) {
+                    score += (mIdx + 1) * 10;
+                    break;
+                }
+            }
+            return score;
+        }
+
+        // Автопоиск папок по умолчанию на локальном сервере (Мурат Стандарт / Мурат Нестандарт / Ламинация)
+        async function autoDiscoverFoldersFromLocalServer(forceRediscover = false) {
+            const needed = [];
+            for (let i = 0; i < FOLDER_COUNT; i++) {
+                if (forceRediscover || !folderPaths[i] || !String(folderPaths[i]).trim()) {
+                    needed.push(i);
+                }
+            }
+            if (needed.length === 0) return false;
+
+            let rootInfo;
+            try {
+                const r = await fetchWithTimeout('/api/files', {}, 6000);
+                if (!r.ok) return false;
+                rootInfo = await r.json();
+                if (!rootInfo || rootInfo.error) return false;
+            } catch (e) {
+                return false;
+            }
+
+            updateStatus('Автопоиск папок линий на сервере...');
+            const candidatesByIdx = [[], [], []];
+            const visited = new Set();
+            const curYear = new Date().getFullYear();
+            const queue = [{ info: rootInfo, path: rootInfo.current_path || '', depth: 0 }];
+            if (rootInfo.current_path) visited.add(normPath(rootInfo.current_path));
+
+            const MAX_DEPTH = 4;
+            const MAX_VISITS = 80;
+            let visits = 0;
+
+            while (queue.length > 0 && visits < MAX_VISITS) {
+                const cur = queue.shift();
+                visits++;
+                const dirs = (cur.info.items || []).filter(it => it && it.is_directory);
+
+                // Сортируем подпапки: сначала текущий год и более свежие месяцы
+                dirs.sort((a, b) => {
+                    const na = String(a.name || '').trim();
+                    const nb = String(b.name || '').trim();
+                    const ya = /^20\d{2}$/.test(na) ? parseInt(na, 10) : 0;
+                    const yb = /^20\d{2}$/.test(nb) ? parseInt(nb, 10) : 0;
+                    if (ya !== yb) return yb - ya;
+                    const ma = getMonthIndexFromName(na);
+                    const mb = getMonthIndexFromName(nb);
+                    if (ma !== mb) return mb - ma;
+                    return na.localeCompare(nb, 'ru');
+                });
+
+                for (const d of dirs) {
+                    const dName = String(d.name || '').trim();
+                    const dPath = d.path || '';
+                    if (!dName || !dPath) continue;
+                    // Не проваливаемся в папки с датами и день/ночь
+                    if (extractDateFromFolderName(dName)) continue;
+                    if (dName.toLowerCase() === 'день' || dName.toLowerCase() === 'ночь') continue;
+
+                    // Если видим старый год (< текущего года - 1), пропускаем
+                    if (/^20\d{2}$/.test(dName) && parseInt(dName, 10) < curYear - 1) continue;
+
+                    let matchedAny = false;
+                    for (const idx of needed) {
+                        if (folderMatchesTarget(dName, DEFAULT_LINES[idx].folderSuffix)) {
+                            matchedAny = true;
+                            let hasDates = false;
+                            try {
+                                const subInfo = await listDir(dPath);
+                                if (subInfo && Array.isArray(subInfo.items)) {
+                                    hasDates = subInfo.items.some(x => x.is_directory && extractDateFromFolderName(x.name));
+                                }
+                            } catch (e) {}
+                            candidatesByIdx[idx].push({
+                                path: dPath,
+                                score: scoreDiscoveredCandidate(dPath, hasDates)
+                            });
+                        }
+                    }
+
+                    if (!matchedAny && cur.depth < MAX_DEPTH) {
+                        const k = normPath(dPath);
+                        if (!visited.has(k)) {
+                            visited.add(k);
+                            try {
+                                const subInfo = await listDir(dPath);
+                                if (subInfo) {
+                                    queue.push({ info: subInfo, path: dPath, depth: cur.depth + 1 });
+                                }
+                            } catch (e) {
+                                // при обрыве связи прекращаем обход
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            let foundAny = false;
+            for (const idx of needed) {
+                const list = candidatesByIdx[idx];
+                if (list.length > 0) {
+                    list.sort((a, b) => b.score - a.score);
+                    const bestPath = list[0].path;
+                    folderPaths[idx] = bestPath;
+                    if (!getLineName(idx)) {
+                        folderNames[idx] = DEFAULT_LINES[idx].name;
+                    }
+                    const autoPat = buildAutoPatternFromPath(bestPath);
+                    if (autoPat) {
+                        folderPatterns[idx] = autoPat;
+                    }
+                    foundAny = true;
+                }
+            }
+
+            if (foundAny) {
+                ensureActiveIndexValid();
+                saveAllSettings();
+                uploadConfigToYandexDisk();
+                updateActiveDisplay();
+            }
+            return foundAny;
+        }
+
+        // Автоподстановка путей линий из app:/cache.json на Яндекс Диске при первом запуске вне цехового Wi-Fi
+        function autoDiscoverFoldersFromYandexCache(cacheObj, forceRediscover = false) {
+            if (!cacheObj || !Array.isArray(cacheObj.lines) || cacheObj.lines.length === 0) return false;
+            const remoteLines = cacheObj.lines;
+            let changed = false;
+
+            for (let i = 0; i < FOLDER_COUNT; i++) {
+                if (!forceRediscover && folderPaths[i] && String(folderPaths[i]).trim()) continue;
+                const def = DEFAULT_LINES[i];
+                const matches = remoteLines.filter(rl =>
+                    pathMatchesTargetSuffix(rl.directory, def.folderSuffix) ||
+                    folderMatchesTarget(rl.name, def.folderSuffix)
+                );
+                if (matches.length > 0) {
+                    matches.sort((a, b) =>
+                        scoreDiscoveredCandidate(b.directory, true) - scoreDiscoveredCandidate(a.directory, true)
+                    );
+                    const bestDir = matches[0].directory || '';
+                    if (bestDir) {
+                        if (!getLineName(i)) folderNames[i] = def.name;
+                        folderPaths[i] = bestDir;
+                        const autoPat = buildAutoPatternFromPath(bestDir);
+                        if (autoPat) folderPatterns[i] = autoPat;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                ensureActiveIndexValid();
+                saveAllSettings();
+                updateActiveDisplay();
+            }
+            return changed;
+        }
+
         // Загрузка данных смен из app:/cache.json на Яндекс Диске
         async function loadFromYandexDisk(showErrors) {
             if (!yandexDiskEnabled || !getEffectiveYandexToken()) return false;
@@ -1178,7 +1473,9 @@
                     throw new Error('В cache.json на Яндекс Диске нет данных линий');
                 }
 
-                // Если на телефоне ещё не настроено ни одной линии — автоматически подхватываем из cache.json
+                // Автоматически дозаполняем пустые пути для линий по умолчанию из cache.json
+                autoDiscoverFoldersFromYandexCache(cacheObj, false);
+
                 let configured = getConfiguredIndexes();
                 if (configured.length === 0) {
                     const groupedByLine = [];
@@ -1192,12 +1489,11 @@
                         }
                     }
                     groupedByLine.forEach((g, i) => {
-                        folderNames[i] = g.name;
+                        if (!getLineName(i)) folderNames[i] = g.name;
                         folderPaths[i] = g.path;
                     });
                     if (groupedByLine.length > 0) {
-                        activeIndex = 0;
-                        currentDirectory = folderPaths[0];
+                        ensureActiveIndexValid();
                         saveAllSettings();
                         updateActiveDisplay();
                         configured = getConfiguredIndexes();
@@ -1213,7 +1509,7 @@
                     const lNameLow = lName.toLowerCase();
                     const basePath = folderPatterns[idx] ? resolvePath(folderPatterns[idx]) : folderPaths[idx];
                     const normBase = normSlashPath(basePath);
-                    const hint = extractLineFolderHintJs(basePath);
+                    const targetSuffix = getMeaningfulEndFolder(basePath) || (DEFAULT_LINES[idx] ? DEFAULT_LINES[idx].folderSuffix : '');
 
                     const matchedEntries = remoteLines.filter(rl => {
                         const rDir = normSlashPath(rl.directory);
@@ -1221,10 +1517,10 @@
                         if (normBase && rDir && (rDir === normBase || rDir.startsWith(normBase + '/') || normBase.startsWith(rDir + '/'))) {
                             return true;
                         }
-                        if (hint && rDir && (rDir.includes('/' + hint + '/') || rDir.endsWith('/' + hint))) {
+                        if (targetSuffix && pathMatchesTargetSuffix(rl.directory, targetSuffix)) {
                             return true;
                         }
-                        if (lNameLow && rName && (rName === lNameLow || rName.includes(lNameLow) || lNameLow.includes(rName))) {
+                        if (lNameLow && rName && rName === lNameLow) {
                             return true;
                         }
                         return false;
@@ -1470,15 +1766,67 @@
             document.getElementById('statusMessage').textContent = msg;
         }
 
+        function renderLineTabs() {
+            const tabsEl = document.getElementById('lineTabs');
+            if (!tabsEl) return;
+            const configured = getConfiguredIndexes();
+            if (configured.length === 0) {
+                tabsEl.innerHTML = '';
+                return;
+            }
+            tabsEl.innerHTML = configured.map(idx => {
+                const activeCls = idx === activeIndex ? ' active' : '';
+                return '<button type="button" class="line-tab-btn' + activeCls + '" data-tab-idx="' + idx + '">' +
+                    escapeHtmlSimple(getLineName(idx)) + '</button>';
+            }).join('');
+
+            tabsEl.querySelectorAll('.line-tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetIdx = parseInt(this.getAttribute('data-tab-idx'), 10);
+                    if (isNaN(targetIdx) || targetIdx === activeIndex) return;
+                    const cfg = getConfiguredIndexes();
+                    const curPos = cfg.indexOf(activeIndex);
+                    const tgtPos = cfg.indexOf(targetIdx);
+                    const step = (curPos >= 0 && tgtPos >= 0 && tgtPos < curPos) ? -1 : 1;
+                    switchToSpecificFolder(targetIdx, step);
+                });
+            });
+        }
+
+        function switchToSpecificFolder(targetIdx, animDir) {
+            if (!isFolderConfigured(targetIdx)) return;
+            activeIndex = targetIdx;
+            currentDirectory = folderPaths[activeIndex];
+            updateActiveDisplay();
+            if (blocksByFolder[activeIndex]) {
+                currentBlocks = blocksByFolder[activeIndex];
+                displayBlocks(currentBlocks);
+                prepareChartDataFromBlocks(currentBlocks);
+                const timeStr = formatCacheTime(lastScanTime[activeIndex]);
+                updateStatus('Линия: ' + lineLabel(activeIndex) + ' (блоков: ' + blocksByFolder[activeIndex].length + ', данные от ' + timeStr + ')');
+            } else {
+                currentBlocks = [];
+                document.getElementById('blocksGrid').innerHTML =
+                    '<div class="status-message">Данные для линии ещё не загружены. Потяните вниз для обновления.</div>';
+                chartData = [];
+                updateChart();
+                updateStatus('Линия: ' + lineLabel(activeIndex) + ' (нет данных)');
+            }
+            if (autoSwitchEnabled && switchInterval > 0) {
+                switchCountdown = switchInterval;
+                updateSwitchCountdownDisplay();
+            }
+        }
+
         function updateActiveDisplay() {
-            // Подсветка «Активна» — только для настроенных папок
+            // Подсветка «Активна» в настройках
             for (let i = 0; i < FOLDER_COUNT; i++) {
                 const grp = document.getElementById('folderGroup' + i);
                 if (!grp) continue;
                 const isConfigured = isFolderConfigured(i);
                 grp.classList.toggle('active', (i === activeIndex) && isConfigured);
             }
-            // Отображение путей
+            // Отображение путей в настройках
             for (let i = 0; i < FOLDER_COUNT; i++) {
                 const pathDisplay = folderPatterns[i] ? resolvePath(folderPatterns[i]) : folderPaths[i];
                 const el = document.getElementById('folderPath' + i);
@@ -1499,6 +1847,7 @@
                     el.classList.remove('unconfigured');
                 }
             }
+            renderLineTabs();
         }
 
         function resolveAllPaths() {
@@ -1633,6 +1982,12 @@
                     const n = JSON.parse(names);
                     if (Array.isArray(n) && n.length === FOLDER_COUNT) folderNames = n;
                 } catch(e) {}
+            } else {
+                // Первый запуск: проставляем 3 линии по умолчанию
+                folderNames = DEFAULT_LINES.map(l => l.name);
+            }
+            if (folderNames.every(x => !x || !String(x).trim()) && folderPaths.every(x => !x || !String(x).trim())) {
+                folderNames = DEFAULT_LINES.map(l => l.name);
             }
             const interval = localStorage.getItem(STORAGE_KEYS.SWITCH_INTERVAL);
             if (interval) {
@@ -2242,6 +2597,35 @@
             if (!hasDateSubs && monthSubs.length > 0) {
                 return monthSubs.sort((a, b) => b.idx - a.idx).map(x => x.path);
             }
+
+            // Если структура вида .../<Год>/<Месяц>/<Мурат Стандарт>/<даты>, подхватываем соседние месяцы с тем же именем линии
+            if (hasDateSubs && info.parent_path) {
+                const parentMonthIdx = getMonthIndexFromName(baseName(info.parent_path));
+                if (parentMonthIdx >= 0) {
+                    const parentInfo = await listDir(info.parent_path);
+                    if (parentInfo && parentInfo.parent_path) {
+                        const grandInfo = await listDir(parentInfo.parent_path);
+                        if (grandInfo) {
+                            const lineDirName = baseName(P);
+                            const monthSibs = (grandInfo.items || [])
+                                .filter(i => i.is_directory)
+                                .map(i => ({ path: i.path, idx: getMonthIndexFromName(i.name) }))
+                                .filter(x => x.idx >= 0)
+                                .sort((a, b) => b.idx - a.idx);
+                            const resolvedSibs = [];
+                            for (const ms of monthSibs) {
+                                const mInfo = await listDir(ms.path);
+                                if (!mInfo) continue;
+                                const matchSub = (mInfo.items || []).find(
+                                    it => it.is_directory && folderMatchesTarget(it.name, lineDirName)
+                                );
+                                if (matchSub) resolvedSibs.push(matchSub.path);
+                            }
+                            if (resolvedSibs.length > 0) return resolvedSibs;
+                        }
+                    }
+                }
+            }
             return [P];   // неизвестная структура — сканируем как есть
         }
 
@@ -2328,7 +2712,7 @@
             if (isScanning) return false;
             isScanning = true;
             const scanBtn = document.getElementById('scanBtn');
-            if (idx === activeIndex) {
+            if (scanBtn && idx === activeIndex) {
                 scanBtn.disabled = true;
                 scanBtn.textContent = 'Сканирование...';
             }
@@ -2393,7 +2777,7 @@
                 return false;
             } finally {
                 isScanning = false;
-                if (idx === activeIndex) {
+                if (scanBtn && idx === activeIndex) {
                     scanBtn.disabled = false;
                     scanBtn.textContent = 'Сканировать активную';
                 }
@@ -2725,6 +3109,9 @@
                         if (data.current_path) {
                             const selIdx = pendingFolderIndex;
                             folderPaths[selIdx] = data.current_path;
+                            folderPatterns[selIdx] = '';
+                            const patInp = document.getElementById('folderPattern' + selIdx);
+                            if (patInp) patInp.value = '';
                             // Активной делаем линию, только если у неё указано название
                             if (isFolderConfigured(selIdx)) {
                                 activeIndex = selIdx;
@@ -3303,50 +3690,77 @@
                 updateStatus('Показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + '). Проверка сервера...');
             }
 
-            if (currentDirectory) {
+            const hasMissingDefaultFolders = [0, 1, 2].some(i => getLineName(i) && !folderPaths[i]);
+
+            if (currentDirectory && !hasMissingDefaultFolders) {
                 if (!blocksByFolder[activeIndex]) {
                     updateStatus('Загрузка данных с сервера...');
                 }
                 setTimeout(async () => {
-                    // Первое обновление всех папок
                     await refreshAllFolders();
-                    // Затем запускаем таймеры
                     restartSwitchTimer();
                     startRefreshTimer();
                 }, 500);
-            } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
-                updateStatus('Загрузка данных с Яндекс Диска...');
-                setTimeout(async () => {
-                    const ok = await loadFromYandexDisk(false);
-                    if (ok) {
-                        restartSwitchTimer();
-                        startRefreshTimer();
-                    } else {
-                        updateStatus('Укажите названия линий в настройках — линии без названия пропускаются');
-                    }
-                }, 400);
             } else {
-                updateStatus('Укажите названия линий в настройках — линии без названия пропускаются');
+                if (!blocksByFolder[activeIndex]) {
+                    updateStatus('Поиск папок линий...');
+                }
+                setTimeout(async () => {
+                    // При первом запуске (или если не все папки найдены) автоматически ищем Мурат Стандарт / Мурат Нестандарт / Ламинация
+                    await autoDiscoverFoldersFromLocalServer(false);
+                    ensureActiveIndexValid();
+                    updateActiveDisplay();
+
+                    if (getConfiguredIndexes().length > 0) {
+                        await refreshAllFolders();
+                    } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
+                        const ydOk = await loadFromYandexDisk(false);
+                        if (!ydOk) {
+                            updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).');
+                        }
+                    } else {
+                        updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).');
+                    }
+                    restartSwitchTimer();
+                    startRefreshTimer();
+                }, 400);
             }
 
-            document.querySelectorAll('.folder-btn-group .btn[data-index]').forEach(btn => {
+            document.querySelectorAll('#settingsModal .btn[data-index]').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const idx = parseInt(this.getAttribute('data-index'));
+                    const idx = parseInt(this.getAttribute('data-index'), 10);
                     showFileManager(idx);
                 });
             });
 
-            document.getElementById('scanBtn').addEventListener('click', function() {
-                if (isFolderConfigured(activeIndex)) {
-                    refreshData();
-                } else {
-                    alert('Нет активной линии: укажите название линии в настройках');
-                }
-            });
-            document.getElementById('refreshBtn').addEventListener('click', function() {
-                refreshAllFolders();
-            });
-            document.getElementById('clearStorageBtn').addEventListener('click', clearStorage);
+            const autoFindBtn = document.getElementById('autoFindFoldersBtn');
+            if (autoFindBtn) {
+                autoFindBtn.addEventListener('click', async function() {
+                    this.disabled = true;
+                    const oldText = this.textContent;
+                    this.textContent = 'Поиск...';
+                    try {
+                        let found = await autoDiscoverFoldersFromLocalServer(true);
+                        if (!found && yandexDiskEnabled && getEffectiveYandexToken()) {
+                            const raw = await yandexDownloadText('app:/cache.json').catch(() => '');
+                            if (raw) {
+                                const parsed = JSON.parse(raw);
+                                found = autoDiscoverFoldersFromYandexCache(parsed, true);
+                            }
+                        }
+                        if (found) {
+                            showSettingsModal();
+                            alert('Папки линий найдены и привязаны автоматически');
+                            refreshAllFolders();
+                        } else {
+                            alert('Не удалось найти папки автоматически. Проверьте подключение к серверу или выберите их вручную.');
+                        }
+                    } finally {
+                        this.disabled = false;
+                        this.textContent = oldText;
+                    }
+                });
+            }
             document.getElementById('closeFileManagerBtn').addEventListener('click', hideFileManager);
             document.getElementById('closeFilesModalBtn').addEventListener('click', hideFilesModal);
 
@@ -3406,7 +3820,6 @@
                 const srvInp = document.getElementById('apkServerUrlInput');
                 const srvApply = document.getElementById('apkApplyServerBtn');
                 if (srvBtn) {
-                    srvBtn.style.display = 'inline-block';
                     srvBtn.addEventListener('click', function() {
                         window.AndroidApp.openServerDialog();
                     });
@@ -3556,9 +3969,7 @@
                 document.getElementById('scalePercent').value = val;
             });
 
-            document.getElementById('resolveMacrosBtn').addEventListener('click', function() {
-                resolveAllPaths();
-            });
+
 
             document.getElementById('refreshChartBtn').addEventListener('click', function() {
                 refreshData();
