@@ -841,7 +841,7 @@
         <div class="topbar">
             <div class="title-block">
                 <h1>Чертежи рам, створок и изделий</h1>
-                <p>Загрузка раскроев с локального сервера или с компьютера • Рамы, импосты, створки с ручками и дренажи</p>
+                <p>Загрузка раскроев с сервера • Рамы, створки, дверные импосты, ручки и дренажи</p>
             </div>
             <div class="topbar-actions">
                 <button class="btn btn-primary" id="backToAppBtn" type="button" style="display:none; background:#8e44ad; border-color:#8e44ad;">← Назад</button>
@@ -850,9 +850,6 @@
                     <span id="serverStatusText">Сервер: проверка...</span>
                 </button>
                 <button class="btn btn-primary" id="toggleServerBtn" type="button">Файлы с сервера</button>
-                <button class="btn" id="openFileBtn" type="button">С компьютера</button>
-                <button class="btn" id="themeBtn" type="button" title="Светлая / тёмная тема">Светлая тема</button>
-                <button class="btn" id="printBtn" type="button" style="display:none;">Печать</button>
             </div>
         </div>
 
@@ -876,11 +873,9 @@
             </div>
         </div>
 
-        <input type="file" id="csvFileInput" accept=".csv,.txt" multiple style="display:none;">
-
         <div class="dropzone" id="dropzone">
-            <div class="dropzone-title" id="dropzoneTitle">Выберите файлы на сервере или перетащите раскрой сюда</div>
-            <div class="dropzone-sub" id="dropzoneSub">Поддерживается загрузка одного или сразу нескольких файлов смены</div>
+            <div class="dropzone-title" id="dropzoneTitle">Нажмите «Файлы с сервера», чтобы открыть раскрой</div>
+            <div class="dropzone-sub" id="dropzoneSub">Поддерживается загрузка одного или сразу нескольких файлов смены с сервера</div>
         </div>
 
         <div class="toolbar" id="toolbar">
@@ -939,6 +934,48 @@
         let currentServerPath = '';
         let parentServerPath = null;
         let rootServerPath = '';
+
+        const APP_THEME_STORAGE_KEY = 'monitoring_theme';
+
+        function applyAppTheme(themeName) {
+            if (themeName === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        }
+
+        function syncThemeFromMainApp() {
+            // 1. Если открыто внутри iframe основного окна — читаем атрибут data-theme родителя
+            try {
+                if (window.parent && window.parent !== window && window.parent.document && window.parent.document.documentElement) {
+                    const parentTheme = window.parent.document.documentElement.getAttribute('data-theme');
+                    if (parentTheme === 'light' || parentTheme === 'dark') {
+                        applyAppTheme(parentTheme);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Читаем сохранённую тему основного приложения из localStorage (monitoring_theme)
+            try {
+                const saved = localStorage.getItem(APP_THEME_STORAGE_KEY);
+                if (saved === 'light' || saved === 'dark') {
+                    applyAppTheme(saved);
+                    return;
+                }
+            } catch (e) {}
+
+            // 3. Системная тема по умолчанию
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyAppTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        window.addEventListener('storage', e => {
+            if (e.key === APP_THEME_STORAGE_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
+                applyAppTheme(e.newValue);
+            }
+        });
 
         const SIDE_NAMES = {
             'П': 'Правая',
@@ -1333,10 +1370,159 @@
             return { spans, matches };
         }
 
+        // Находит и рассчитывает положение импоста внутри створки/двери (когда в CSV нет DATA;05 на створке)
+        function assignDoorAndSashMullions(builtFrames, builtSashes, impostRows) {
+            if (!impostRows || impostRows.length === 0 || !builtSashes || builtSashes.length === 0) return;
+
+            const impostsByOrderItem = new Map();
+            for (const imp of impostRows) {
+                const k = imp.orderNo + '|' + imp.itemNo;
+                if (!impostsByOrderItem.has(k)) impostsByOrderItem.set(k, []);
+                impostsByOrderItem.get(k).push(imp);
+            }
+
+            // Группируем рамы по номеру заказа (для поиска соседнего окна балконного блока)
+            const framesByOrder = new Map();
+            const frameByOrderItem = new Map();
+            for (const fr of builtFrames) {
+                if (!framesByOrder.has(fr.orderNo)) framesByOrder.set(fr.orderNo, []);
+                framesByOrder.get(fr.orderNo).push(fr);
+                const k = fr.orderNo + '|' + fr.itemNo;
+                if (!frameByOrderItem.has(k)) frameByOrderItem.set(k, fr);
+            }
+
+            // Для каждого заказа/изделия отбираем импосты, которые не относятся к раме, а подходят по длине к створке
+            const usedImposts = new Set();
+
+            for (const s of builtSashes) {
+                // Если на створке уже есть точные импосты из DATA;05 — оставляем их
+                if (s.mullions && s.mullions.length > 0) continue;
+
+                const k = s.orderNo + '|' + s.itemNo;
+                const candidates = (impostsByOrderItem.get(k) || []).filter(imp => !usedImposts.has(imp));
+                if (candidates.length === 0) continue;
+
+                const parentFrame = frameByOrderItem.get(k) || null;
+                const frameHorizCount = parentFrame ? (parentFrame.mullions || []).filter(m => m.orient === 'H').length : 0;
+                const frameVertCount = parentFrame ? (parentFrame.mullions || []).filter(m => m.orient === 'V').length : 0;
+
+                // Проверяем горизонтальные импосты (ИГ) — типично для балконных и входных дверей
+                // Длина реза ИГ в створке меньше ширины створки на ~106–120 мм (допуск 85..145 мм)
+                const horizCands = candidates.filter(imp => {
+                    if (imp.orient && imp.orient !== 'H') return false;
+                    const diff = s.widthMm - imp.cutMm;
+                    return diff >= 85 && diff <= 145;
+                });
+
+                // Берём импосты сверх тех, что уже стоят в раме (если в раме нет гориз. импостов — берём все подходящие)
+                const extraHoriz = frameHorizCount === 0
+                    ? horizCands
+                    : horizCands.filter(imp => {
+                        if (!parentFrame) return true;
+                        // Если у рамы есть пролёты, отличающиеся от ширины створки, проверяем, что рез именно под створку
+                        const frameDiff = parentFrame.widthMm - imp.cutMm;
+                        return frameDiff > 145;
+                    });
+
+                if (extraHoriz.length > 0) {
+                    const chosenImp = (s.cell && extraHoriz.find(imp => imp.cell && imp.cell === s.cell)) || extraHoriz[0];
+                    usedImposts.add(chosenImp);
+
+                    const calc = calculateDoorImpostY(s, parentFrame, framesByOrder.get(s.orderNo) || []);
+                    const bottomMm = Math.round((s.heightMm - calc.yFromTop) * 10) / 10;
+
+                    s.mullions.push({
+                        orient: 'H',
+                        x1: 0,
+                        y1: calc.yFromTop,
+                        x2: s.widthMm,
+                        y2: calc.yFromTop,
+                        full: true,
+                        posMm: calc.yFromTop,
+                        cutMm: chosenImp.cutMm,
+                        bottomMm: bottomMm,
+                        estimated: true,
+                        sourceHint: calc.sourceHint,
+                        label: `Гориз. в створке (~${formatMm(bottomMm)} мм от низа, рез ${formatMm(chosenImp.cutMm)} мм)`
+                    });
+                }
+
+                // Также проверяем редкий случай вертикального импоста внутри створки (ИВ)
+                if (frameVertCount === 0) {
+                    const vertCands = candidates.filter(imp => {
+                        if (usedImposts.has(imp)) return false;
+                        if (imp.orient !== 'V') return false;
+                        const diff = s.heightMm - imp.cutMm;
+                        return diff >= 85 && diff <= 145;
+                    });
+                    if (vertCands.length > 0) {
+                        const chosenV = (s.cell && vertCands.find(imp => imp.cell && imp.cell === s.cell)) || vertCands[0];
+                        usedImposts.add(chosenV);
+                        const midX = Math.round((s.widthMm / 2) * 10) / 10;
+                        s.mullions.push({
+                            orient: 'V',
+                            x1: midX,
+                            y1: 0,
+                            x2: midX,
+                            y2: s.heightMm,
+                            full: true,
+                            posMm: midX,
+                            cutMm: chosenV.cutMm,
+                            estimated: true,
+                            sourceHint: 'по центру створки',
+                            label: `Верт. в створке (~${formatMm(midX)} мм, рез ${formatMm(chosenV.cutMm)} мм)`
+                        });
+                    }
+                }
+            }
+        }
+
+        // Расчёт высоты горизонтального импоста в створке/двери (от верха створки)
+        function calculateDoorImpostY(sash, parentFrame, orderFrames) {
+            const sashH = sash.heightMm;
+            const frameH = parentFrame ? parentFrame.heightMm : (sashH + 64);
+            const topOffset = Math.max(20, Math.round((frameH - sashH) / 2));
+
+            // 1. Ищем в том же заказе соседнее окно (балконный блок: высота рамы 1000..1750 мм и ниже двери минимум на 350 мм)
+            const curItemNum = parseInt(sash.itemNo, 10);
+            const windowCandidates = (orderFrames || []).filter(fr =>
+                fr !== parentFrame &&
+                fr.heightMm >= 1000 &&
+                fr.heightMm <= 1750 &&
+                (frameH - fr.heightMm) >= 350
+            );
+
+            if (windowCandidates.length > 0) {
+                windowCandidates.sort((a, b) => {
+                    const da = isFinite(curItemNum) && isFinite(parseInt(a.itemNo, 10))
+                        ? Math.abs(parseInt(a.itemNo, 10) - curItemNum) : 99;
+                    const db = isFinite(curItemNum) && isFinite(parseInt(b.itemNo, 10))
+                        ? Math.abs(parseInt(b.itemNo, 10) - curItemNum) : 99;
+                    return da - db;
+                });
+                const adjWin = windowCandidates[0];
+                const rawY = Math.round(adjWin.heightMm - topOffset);
+                const clampedY = Math.max(350, Math.min(sashH - 350, rawY));
+                return {
+                    yFromTop: clampedY,
+                    sourceHint: `по окну изд. ${adjWin.itemNo || ''} (В=${formatMm(adjWin.heightMm)} мм)`
+                };
+            }
+
+            // 2. Отдельная дверь: стандартная нижняя глухая часть (сэндвич) ~720 мм от низа створки
+            const bottomPanel = sashH >= 1650 ? 720 : Math.round(sashH * 0.35);
+            const yFromTop = Math.max(300, Math.min(sashH - 300, Math.round(sashH - bottomPanel)));
+            return {
+                yFromTop: yFromTop,
+                sourceHint: 'стандартный уровень двери'
+            };
+        }
+
         function parseCsvContent(text, fileName) {
             const lines = text.split(/\r?\n/);
             const frameRows = [];
             const sashRows = [];
+            const impostRows = [];
             let pendingDataOps = [];
 
             for (let i = 0; i < lines.length; i++) {
@@ -1378,6 +1564,27 @@
 
                 const isFrame = (prefix === 'P') || (!prefix && elemCode15 === 'Р');
                 const isSash = prefix.startsWith('C') || elemCode15.startsWith('С');
+                const isImpost = prefix.startsWith('I') || elemCode15.startsWith('И');
+
+                if (isImpost) {
+                    const impCutRaw = parseNumberSafe(safeCol(cols, 1));
+                    const impCutMm = isFinite(impCutRaw) && impCutRaw > 0 ? Math.round((impCutRaw / 10) * 10) / 10 : 0;
+                    if (impCutMm > 0) {
+                        const isHorizImp = elemCode15.startsWith('ИГ');
+                        const isVertImp = elemCode15.startsWith('ИВ');
+                        impostRows.push({
+                            orderNo: orderNo,
+                            itemNo: itemNo,
+                            code: prefix || elemCode15,
+                            elem: elemCode15,
+                            orient: isHorizImp ? 'H' : (isVertImp ? 'V' : ''),
+                            cutMm: impCutMm,
+                            article: safeCol(cols, 2),
+                            cell: safeCol(cols, 18)
+                        });
+                    }
+                    continue;
+                }
 
                 if (!isFrame && !isSash) {
                     continue;
@@ -1435,6 +1642,9 @@
 
             const builtFrames = buildEntitiesFromRows(frameRows, 'frame');
             const builtSashes = buildEntitiesFromRows(sashRows, 'sash');
+
+            // Расчёт импостов в створках (дверях) по строкам импостов (ИГ / ИВ) в том же заказе/изделии
+            assignDoorAndSashMullions(builtFrames, builtSashes, impostRows);
 
             // Распределяем створки по конкретным экземплярам рам (учитываем количество одинаковых изделий и номер ячейки)
             const sashesByOrderItem = new Map();
@@ -1915,9 +2125,34 @@
                     const sw = Math.max(12, sx2 - sx1);
                     const sh = Math.max(12, sy2 - sy1);
 
+                    let sashInnerMullionsSvg = '';
+                    if (s.mullions && s.mullions.length > 0 && s.widthMm > 0 && s.heightMm > 0) {
+                        const sMulThick = Math.max(3.5, Math.min(7, Math.round(sashProf * 0.85)));
+                        const sHalfMul = sMulThick / 2;
+                        for (const sm of s.mullions) {
+                            if (sm.orient === 'H') {
+                                const my = sy1 + (sm.posMm / s.heightMm) * sh;
+                                const bx = sx1 + sashProf;
+                                const bw = Math.max(4, sw - sashProf * 2);
+                                sashInnerMullionsSvg += `
+                                    <rect x="${bx.toFixed(1)}" y="${(my - sHalfMul).toFixed(1)}" width="${bw.toFixed(1)}" height="${sMulThick}" fill="var(--pvc-mullion)" stroke="var(--sash-stroke)" stroke-width="1.2"/>
+                                    ${bw >= 34 && sm.bottomMm ? `<text x="${(bx + bw / 2).toFixed(1)}" y="${(my - sHalfMul - 3).toFixed(1)}" text-anchor="middle" fill="var(--subdim-text)" font-size="8.5" font-weight="700" font-family="system-ui, sans-serif">~${formatMm(sm.bottomMm)}</text>` : ''}
+                                `;
+                            } else if (sm.orient === 'V') {
+                                const mx = sx1 + (sm.posMm / s.widthMm) * sw;
+                                const by = sy1 + sashProf;
+                                const bh = Math.max(4, sh - sashProf * 2);
+                                sashInnerMullionsSvg += `
+                                    <rect x="${(mx - sHalfMul).toFixed(1)}" y="${by.toFixed(1)}" width="${sMulThick}" height="${bh.toFixed(1)}" fill="var(--pvc-mullion)" stroke="var(--sash-stroke)" stroke-width="1.2"/>
+                                `;
+                            }
+                        }
+                    }
+
                     combinedSashesSvg += `
                         <rect x="${sx1.toFixed(1)}" y="${sy1.toFixed(1)}" width="${sw.toFixed(1)}" height="${sh.toFixed(1)}" fill="var(--sash-fill)" stroke="var(--sash-stroke)" stroke-width="1.6"/>
                         <rect x="${(sx1 + sashProf).toFixed(1)}" y="${(sy1 + sashProf).toFixed(1)}" width="${Math.max(4, sw - sashProf * 2).toFixed(1)}" height="${Math.max(4, sh - sashProf * 2).toFixed(1)}" fill="none" stroke="var(--sash-stroke)" stroke-width="0.9" opacity="0.7"/>
+                        ${sashInnerMullionsSvg}
                         ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, 'var(--sash-stroke)')}
                         ${sh >= 26 && sw >= 42 ? `<text x="${(sx1 + sw / 2).toFixed(1)}" y="${(sy1 + sh - 5).toFixed(1)}" text-anchor="middle" fill="var(--sash-stroke)" font-size="9.5" font-weight="700" font-family="system-ui, sans-serif">${formatMm(s.widthMm)}×${formatMm(s.heightMm)}</text>` : ''}
                     `;
@@ -2019,17 +2254,14 @@
             const grid = document.getElementById('framesGrid');
             const toolbar = document.getElementById('toolbar');
             const statsRow = document.getElementById('statsRow');
-            const printBtn = document.getElementById('printBtn');
 
             if (allItems.length === 0) {
                 toolbar.classList.remove('visible');
-                printBtn.style.display = 'none';
                 grid.innerHTML = '';
                 return;
             }
 
             toolbar.classList.add('visible');
-            printBtn.style.display = 'inline-flex';
 
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
             const viewMode = document.getElementById('viewModeSelect').value;
@@ -2043,8 +2275,10 @@
                 if (entityMode === 'both' && item.entityType === 'combined') return false;
 
                 if (extraFilter === 'oversize' && !item.isOversize) return false;
-                if (extraFilter === 'with_mullions' && (!item.mullions || item.mullions.length === 0)) return false;
-                if (extraFilter === 'no_mullions' && item.mullions && item.mullions.length > 0) return false;
+                const hasAnyMullions = (item.mullions && item.mullions.length > 0) ||
+                    (item.entityType === 'combined' && item.sashes && item.sashes.some(s => s.mullions && s.mullions.length > 0));
+                if (extraFilter === 'with_mullions' && !hasAnyMullions) return false;
+                if (extraFilter === 'no_mullions' && hasAnyMullions) return false;
 
                 if (!query) return true;
                 const dimStr = `${formatMm(item.widthMm)}x${formatMm(item.heightMm)} ${formatMm(item.widthMm)}×${formatMm(item.heightMm)}`;
@@ -2138,8 +2372,12 @@
                     }).join('');
                 }
 
-                const mullionTags = (item.mullions || []).map(m =>
-                    `<span class="tag mullion-tag">Импост: ${escapeHtml(m.label)}</span>`
+                const allMullionLabels = [
+                    ...(item.mullions || []).map(m => m.label),
+                    ...(isCombined && item.sashes ? item.sashes.flatMap(s => (s.mullions || []).map(m => m.label)) : [])
+                ];
+                const mullionTags = allMullionLabels.map(lbl =>
+                    `<span class="tag mullion-tag">Импост: ${escapeHtml(lbl)}</span>`
                 ).join('');
 
                 const oversizeTag = item.isOversize
@@ -2278,8 +2516,12 @@
                 `;
             }).join('');
 
-            const mullionsSummary = (item.mullions && item.mullions.length > 0)
-                ? item.mullions.map(m => m.label).join('; ')
+            const modalMullionList = [
+                ...(item.mullions || []).map(m => m.label + (m.sourceHint ? ` (${m.sourceHint})` : '')),
+                ...(isCombined && item.sashes ? item.sashes.flatMap(s => (s.mullions || []).map(m => m.label + (m.sourceHint ? ` (${m.sourceHint})` : ''))) : [])
+            ];
+            const mullionsSummary = modalMullionList.length > 0
+                ? modalMullionList.join('; ')
                 : 'нет';
 
             const handleSummary = isSash
@@ -2330,7 +2572,7 @@
             document.getElementById('dropzoneTitle').textContent =
                 `Загружено ${sourceLabel}: ${namesPreview} (рам: ${framesCnt}, створок: ${sashesCnt})`;
             document.getElementById('dropzoneSub').textContent =
-                'Выберите другой файл на сервере или перетащите новый файл сюда';
+                'Нажмите сюда или «Файлы с сервера», чтобы открыть другой раскрой';
 
             renderEntities();
         }
@@ -2354,32 +2596,11 @@
         }
 
         // Инициализация событий
-        const fileInput = document.getElementById('csvFileInput');
         const dropzone = document.getElementById('dropzone');
-
-        document.getElementById('openFileBtn').addEventListener('click', () => fileInput.click());
-        dropzone.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', e => {
-            handleLocalFiles(e.target.files);
-            fileInput.value = '';
-        });
-
-        dropzone.addEventListener('dragover', e => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        });
-
-        dropzone.addEventListener('dragleave', () => {
-            dropzone.classList.remove('dragover');
-        });
-
-        dropzone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-            if (e.dataTransfer && e.dataTransfer.files) {
-                handleLocalFiles(e.dataTransfer.files);
-            }
+        dropzone.addEventListener('click', () => {
+            const sp = document.getElementById('serverPanel');
+            sp.classList.add('open');
+            if (!currentServerPath) checkServerAndLoad(true);
         });
 
         // События панели сервера
@@ -2433,12 +2654,7 @@
         document.getElementById('extraFilterSelect').addEventListener('change', renderEntities);
         document.getElementById('sortSelect').addEventListener('change', renderEntities);
 
-        document.getElementById('themeBtn').addEventListener('click', () => {
-            const isLight = document.body.classList.toggle('light-theme');
-            document.getElementById('themeBtn').textContent = isLight ? 'Тёмная тема' : 'Светлая тема';
-        });
 
-        document.getElementById('printBtn').addEventListener('click', () => window.print());
 
         document.getElementById('closeModalBtn').addEventListener('click', () => {
             document.getElementById('detailModal').classList.remove('open');
@@ -2491,12 +2707,10 @@
                 if (payload.embedded !== false) {
                     setEmbeddedModeUI(payload.title || 'Чертежи из раскроя');
                 }
-                if (payload.theme === 'light') {
-                    document.body.classList.add('light-theme');
-                    document.getElementById('themeBtn').textContent = 'Тёмная тема';
-                } else if (payload.theme === 'dark') {
-                    document.body.classList.remove('light-theme');
-                    document.getElementById('themeBtn').textContent = 'Светлая тема';
+                if (payload.theme === 'light' || payload.theme === 'dark') {
+                    applyAppTheme(payload.theme);
+                } else {
+                    syncThemeFromMainApp();
                 }
 
                 const parsedAll = [];
@@ -2532,13 +2746,17 @@
 
         window.addEventListener('message', event => {
             const msg = event && event.data;
-            if (msg && msg.type === 'LOAD_CSV_DATA') {
+            if (!msg) return;
+            if (msg.type === 'LOAD_CSV_DATA') {
                 window.loadExternalCsvData(msg);
+            } else if (msg.type === 'THEME_CHANGE' && (msg.theme === 'light' || msg.theme === 'dark')) {
+                applyAppTheme(msg.theme);
             }
         });
 
-        // Автоинициализация: AndroidVisualizer -> iframe embedded -> URL ?file= -> обычный режим
+        // Автоинициализация: подгружаем тему основного окна -> AndroidVisualizer -> iframe embedded -> URL ?file= -> обычный режим
         window.addEventListener('DOMContentLoaded', async () => {
+            syncThemeFromMainApp();
             document.getElementById('serverUrlInput').value = getDefaultServerUrl();
 
             if (window.AndroidVisualizer && typeof window.AndroidVisualizer.getPayload === 'function') {
