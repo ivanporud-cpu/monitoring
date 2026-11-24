@@ -37,6 +37,9 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -63,6 +66,8 @@ public class MainActivity extends Activity {
             "https://api.github.com/repos/ivanporud-cpu/monitoring/releases/latest";
     private static final String PERIODIC_WORK_NAME = "new_day_periodic_check";
     private static final int REQ_POST_NOTIFICATIONS = 2001;
+    private static final int REQ_CAMERA_PERMISSION = 2002;
+    private String pendingScanTarget = "global";
 
     private FrameLayout rootContainer;
     private WebView webView;
@@ -307,6 +312,65 @@ public class MainActivity extends Activity {
                 );
             }
         }
+    }
+
+    // ==================== СКАНЕР ШТРИХ-КОДОВ ====================
+
+    private void launchBarcodeScanner(final String target) {
+        pendingScanTarget = (target != null && !target.isEmpty()) ? target : "global";
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        MainActivity.this,
+                        new String[]{android.Manifest.permission.CAMERA},
+                        REQ_CAMERA_PERMISSION
+                );
+                return;
+            }
+            openZxingScanner();
+        });
+    }
+
+    private void openZxingScanner() {
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+        integrator.setPrompt("Наведите на правый штрих-код (напр. C1/18467/8)\nКнопки громкости — фонарик");
+        integrator.setBeepEnabled(true);
+        integrator.setOrientationLocked(false);
+        integrator.initiateScan();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_CAMERA_PERMISSION) {
+            if (grantResults != null && grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openZxingScanner();
+            } else {
+                Toast.makeText(this, "Нужен доступ к камере для сканирования штрих-кода", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            String contents = result.getContents();
+            if (contents != null && !contents.trim().isEmpty() && webView != null) {
+                final String safeTarget = JSONObject.quote(pendingScanTarget != null ? pendingScanTarget : "global");
+                final String safeCode = JSONObject.quote(contents.trim());
+                runOnUiThread(() -> webView.evaluateJavascript(
+                        "if (window.__onBarcodeScanned) window.__onBarcodeScanned(" + safeTarget + ", " + safeCode + ");",
+                        null
+                ));
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void scheduleBackgroundNewDayCheck() {
@@ -686,6 +750,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openVisualizer(final String payloadJson) {
             showVisualizerOverlay(payloadJson);
+        }
+
+        @JavascriptInterface
+        public void startBarcodeScan(final String target) {
+            launchBarcodeScanner(target);
         }
 
         @JavascriptInterface
