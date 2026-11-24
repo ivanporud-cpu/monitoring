@@ -13,6 +13,9 @@
             --bg-card-warn: rgba(248, 81, 73, 0.13);
             --bg-card-warn-hover: rgba(248, 81, 73, 0.20);
             --border-card-warn: rgba(248, 81, 73, 0.55);
+            --bg-card-small-warn: rgba(210, 153, 34, 0.15);
+            --bg-card-small-warn-hover: rgba(210, 153, 34, 0.23);
+            --border-card-small-warn: rgba(210, 153, 34, 0.6);
             --bg-input: #0d1117;
             --border-color: #30363d;
             --border-accent: #388bfd;
@@ -48,6 +51,9 @@
             --bg-card-warn: #fff1f0;
             --bg-card-warn-hover: #ffe4e2;
             --border-card-warn: #ff7875;
+            --bg-card-small-warn: #fffbe6;
+            --bg-card-small-warn-hover: #fff1b8;
+            --border-card-small-warn: #faad14;
             --bg-input: #f6f8fa;
             --border-color: #d0d7de;
             --border-accent: #0969da;
@@ -421,6 +427,16 @@
             color: var(--accent-red);
         }
 
+        .stat-pill.warn-small-pill {
+            background: var(--bg-card-small-warn);
+            border-color: var(--border-card-small-warn);
+            color: var(--accent-amber);
+        }
+
+        .stat-pill.warn-small-pill strong {
+            color: var(--accent-amber);
+        }
+
         .controls-row {
             display: flex;
             flex-wrap: wrap;
@@ -544,6 +560,16 @@
             border-color: var(--accent-red);
         }
 
+        .frame-card.undersize-warn {
+            background: var(--bg-card-small-warn);
+            border-color: var(--border-card-small-warn);
+        }
+
+        .frame-card.undersize-warn:hover {
+            background: var(--bg-card-small-warn-hover);
+            border-color: var(--accent-amber);
+        }
+
         .frame-card-header {
             display: flex;
             align-items: center;
@@ -644,6 +670,10 @@
             color: var(--accent-red);
         }
 
+        .frame-card.undersize-warn .dim-summary-line {
+            color: var(--accent-amber);
+        }
+
         .meta-tags {
             display: flex;
             flex-wrap: wrap;
@@ -682,6 +712,13 @@
             background: rgba(248, 81, 73, 0.18);
             color: var(--accent-red);
             border: 1px solid rgba(248, 81, 73, 0.4);
+            font-weight: 700;
+        }
+
+        .tag.warn-small {
+            background: rgba(210, 153, 34, 0.20);
+            color: var(--accent-amber);
+            border: 1px solid rgba(210, 153, 34, 0.45);
             font-weight: 700;
         }
 
@@ -824,6 +861,10 @@
             .frame-card.oversize-warn {
                 background: #ffe8e6 !important;
                 border-color: #cf222e !important;
+            }
+            .frame-card.undersize-warn {
+                background: #fffbe6 !important;
+                border-color: #d29922 !important;
             }
             .frames-grid {
                 grid-template-columns: repeat(3, 1fr);
@@ -1237,11 +1278,25 @@
 
         function checkOversize(widthMm, heightMm) {
             const reasons = [];
-            if (widthMm > 0 && widthMm < 400) reasons.push(`ширина ${formatMm(widthMm)} < 400 мм`);
-            if (widthMm > 3100) reasons.push(`ширина ${formatMm(widthMm)} > 3100 мм`);
-            if (heightMm > 0 && heightMm < 400) reasons.push(`высота ${formatMm(heightMm)} < 400 мм`);
-            if (heightMm > 3100) reasons.push(`высота ${formatMm(heightMm)} > 3100 мм`);
-            return { isOversize: reasons.length > 0, reasons: reasons };
+            let isTooLarge = false;
+            let isTooSmall = false;
+            if (widthMm > 0 && widthMm < 400) {
+                isTooSmall = true;
+                reasons.push(`ширина ${formatMm(widthMm)} < 400 мм`);
+            }
+            if (widthMm > 3100) {
+                isTooLarge = true;
+                reasons.push(`ширина ${formatMm(widthMm)} > 3100 мм`);
+            }
+            if (heightMm > 0 && heightMm < 400) {
+                isTooSmall = true;
+                reasons.push(`высота ${formatMm(heightMm)} < 400 мм`);
+            }
+            if (heightMm > 3100) {
+                isTooLarge = true;
+                reasons.push(`высота ${formatMm(heightMm)} > 3100 мм`);
+            }
+            return { isOversize: reasons.length > 0, isTooLarge, isTooSmall, reasons };
         }
 
         // Разбиение рамы на пролёты с учётом как сквозных, так и Т-образных импостов
@@ -1687,7 +1742,9 @@
                 }
 
                 const comparison = matchSashesToFrameSpans(fr, matchedSashes);
-                const anyOversize = fr.isOversize || matchedSashes.some(s => s.isOversize);
+                const anyTooLarge = fr.isTooLarge || matchedSashes.some(s => s.isTooLarge);
+                const anyTooSmall = fr.isTooSmall || matchedSashes.some(s => s.isTooSmall);
+                const anyOversize = anyTooLarge || anyTooSmall;
                 const oversizeReasons = [
                     ...fr.oversizeReasons.map(r => `рама: ${r}`),
                     ...matchedSashes.flatMap(s => s.oversizeReasons.map(r => `${s.subCode}: ${r}`))
@@ -1713,6 +1770,8 @@
                     spanComparison: comparison,
                     bars: fr.bars,
                     isOversize: anyOversize,
+                    isTooLarge: anyTooLarge,
+                    isTooSmall: anyTooSmall,
                     oversizeReasons: oversizeReasons
                 });
             }
@@ -1804,6 +1863,8 @@
                         outerDrainages: outerDrainages,
                         hiddenDrainages: hiddenDrainages,
                         isOversize: oversize.isOversize,
+                        isTooLarge: oversize.isTooLarge,
+                        isTooSmall: oversize.isTooSmall,
                         oversizeReasons: oversize.reasons
                     });
                 });
@@ -2335,14 +2396,16 @@
 
             const framesTotal = allItems.filter(x => x.entityType === 'frame').length;
             const sashesTotal = allItems.filter(x => x.entityType === 'sash').length;
-            const oversizeTotal = filtered.filter(x => x.isOversize).length;
+            const tooLargeTotal = filtered.filter(x => x.isTooLarge).length;
+            const tooSmallTotal = filtered.filter(x => !x.isTooLarge && x.isTooSmall).length;
             const uniqueOrders = new Set(allItems.map(f => f.orderNo));
 
             statsRow.innerHTML = `
                 <div class="stat-pill">Рам: <strong>${framesTotal}</strong> • Створок: <strong>${sashesTotal}</strong></div>
                 <div class="stat-pill">Показано: <strong>${filtered.length}</strong></div>
                 <div class="stat-pill">Заказов: <strong>${uniqueOrders.size}</strong></div>
-                ${oversizeTotal > 0 ? `<div class="stat-pill warn-pill">Негабарит (&lt;400 / &gt;3100 мм): <strong>${oversizeTotal}</strong></div>` : ''}
+                ${tooLargeTotal > 0 ? `<div class="stat-pill warn-pill">Большой негабарит (&gt;3100 мм): <strong>${tooLargeTotal}</strong></div>` : ''}
+                ${tooSmallTotal > 0 ? `<div class="stat-pill warn-small-pill">Малый негабарит (&lt;400 мм): <strong>${tooSmallTotal}</strong></div>` : ''}
             `;
 
             if (filtered.length === 0) {
@@ -2406,12 +2469,16 @@
                     `<span class="tag mullion-tag">Импост: ${escapeHtml(lbl)}</span>`
                 ).join('');
 
+                const cardWarnClass = item.isTooLarge
+                    ? 'oversize-warn'
+                    : (item.isTooSmall ? 'undersize-warn' : '');
+                const tagWarnClass = item.isTooLarge ? 'warn' : 'warn-small';
                 const oversizeTag = item.isOversize
-                    ? `<span class="tag warn">Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))}</span>`
+                    ? `<span class="tag ${tagWarnClass}">Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))}</span>`
                     : '';
 
                 html += `
-                    <div class="frame-card ${item.isOversize ? 'oversize-warn' : ''}" data-item-idx="${idx}">
+                    <div class="frame-card ${cardWarnClass}" data-item-idx="${idx}">
                         <div class="frame-card-header">
                             <div>
                                 <span class="order-badge">Заказ № ${escapeHtml(item.orderNo)}</span>
@@ -2665,20 +2732,64 @@
 
         document.getElementById('loadAllFolderBtn').addEventListener('click', loadAllCsvFromCurrentFolder);
 
+        // Запоминание последнего режима и фильтров
+        const UI_PREFS_STORAGE_KEY = 'frame_visualizer_ui_prefs_v1';
+
+        function saveUiPrefs() {
+            try {
+                const prefs = {
+                    entityMode: entityMode,
+                    viewMode: document.getElementById('viewModeSelect').value,
+                    extraFilter: document.getElementById('extraFilterSelect').value,
+                    sortMode: document.getElementById('sortSelect').value
+                };
+                localStorage.setItem(UI_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+            } catch (e) {}
+        }
+
+        function restoreUiPrefs() {
+            try {
+                const raw = localStorage.getItem(UI_PREFS_STORAGE_KEY);
+                if (!raw) return;
+                const prefs = JSON.parse(raw);
+                if (!prefs || typeof prefs !== 'object') return;
+
+                if (prefs.entityMode && ['combined', 'frames', 'sashes', 'both'].includes(prefs.entityMode)) {
+                    entityMode = prefs.entityMode;
+                    document.querySelectorAll('#entityModeGroup .seg-btn').forEach(b => {
+                        b.classList.toggle('active', b.getAttribute('data-mode') === entityMode);
+                    });
+                }
+                const vm = document.getElementById('viewModeSelect');
+                if (vm && prefs.viewMode && ['flat', 'grouped'].includes(prefs.viewMode)) {
+                    vm.value = prefs.viewMode;
+                }
+                const ef = document.getElementById('extraFilterSelect');
+                if (ef && prefs.extraFilter && ['all', 'oversize', 'with_mullions', 'no_mullions'].includes(prefs.extraFilter)) {
+                    ef.value = prefs.extraFilter;
+                }
+                const sm = document.getElementById('sortSelect');
+                if (sm && prefs.sortMode && ['file', 'order', 'width_desc', 'area_desc'].includes(prefs.sortMode)) {
+                    sm.value = prefs.sortMode;
+                }
+            } catch (e) {}
+        }
+
         // Переключатели и фильтры
         document.querySelectorAll('#entityModeGroup .seg-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#entityModeGroup .seg-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 entityMode = btn.getAttribute('data-mode') || 'combined';
+                saveUiPrefs();
                 renderEntities();
             });
         });
 
         document.getElementById('searchInput').addEventListener('input', renderEntities);
-        document.getElementById('viewModeSelect').addEventListener('change', renderEntities);
-        document.getElementById('extraFilterSelect').addEventListener('change', renderEntities);
-        document.getElementById('sortSelect').addEventListener('change', renderEntities);
+        document.getElementById('viewModeSelect').addEventListener('change', () => { saveUiPrefs(); renderEntities(); });
+        document.getElementById('extraFilterSelect').addEventListener('change', () => { saveUiPrefs(); renderEntities(); });
+        document.getElementById('sortSelect').addEventListener('change', () => { saveUiPrefs(); renderEntities(); });
 
 
 
@@ -2783,6 +2894,7 @@
         // Автоинициализация: подгружаем тему основного окна -> AndroidVisualizer -> iframe embedded -> URL ?file= -> обычный режим
         window.addEventListener('DOMContentLoaded', async () => {
             syncThemeFromMainApp();
+            restoreUiPrefs();
             document.getElementById('serverUrlInput').value = getDefaultServerUrl();
 
             if (window.AndroidVisualizer && typeof window.AndroidVisualizer.getPayload === 'function') {
