@@ -25,7 +25,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -48,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 public class NewDayWorker extends Worker {
 
@@ -57,7 +63,13 @@ public class NewDayWorker extends Worker {
     public static final String KEY_NOTIFY_ENABLED = "notify_enabled";
     public static final String KEY_PENDING_DAYS = "pending_new_days";
     public static final String KEY_LAST_ALERT_MS = "last_new_day_alert_ms";
+    public static final String KEY_YANDEX_TOKEN = "yandex_oauth_token";
+    public static final String KEY_YANDEX_ENABLED = "yandex_disk_enabled";
     public static final String EXTRA_OPEN_LINE_IDX = "extra_open_line_idx";
+
+    public static final String DEFAULT_YANDEX_TOKEN =
+            "y0__wgBENuj48EGGKDzUCCm37zvGTDzmKv3CCTYq0IcMxZ4g_rmD135_SjlzCdA";
+    public static final String YANDEX_API_BASE = "https://cloud-api.yandex.net/v1/disk/resources";
 
     public static final int SCAN_PORT = 5000;
     public static final int SOCKET_TIMEOUT_MS = 450;
@@ -99,11 +111,29 @@ public class NewDayWorker extends Worker {
             return Result.success();
         }
 
+        String serverUrl = null;
+        JSONObject yandexCache = null;
+
         List<String> servers = findWorkingServers(prefs, false);
-        if (servers.isEmpty()) {
+        if (!servers.isEmpty()) {
+            serverUrl = servers.get(0);
+        } else if (prefs.getBoolean(KEY_YANDEX_ENABLED, true)) {
+            String token = prefs.getString(KEY_YANDEX_TOKEN, DEFAULT_YANDEX_TOKEN);
+            if (token == null || token.trim().isEmpty()) {
+                token = DEFAULT_YANDEX_TOKEN;
+            }
+            try {
+                String raw = downloadYandexStringOrThrow("app:/cache.json", token.trim());
+                if (raw != null && !raw.trim().isEmpty()) {
+                    yandexCache = new JSONObject(raw);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (serverUrl == null && yandexCache == null) {
             return Result.success();
         }
-        String serverUrl = servers.get(0);
 
         try {
             JSONArray lines = new JSONArray(configJson);
@@ -121,11 +151,16 @@ public class NewDayWorker extends Worker {
 
                 if (name.isEmpty()) continue;
                 String basePath = !pattern.isEmpty() ? resolveMacros(pattern) : rawPath;
-                if (basePath.isEmpty()) continue;
+                if (basePath.isEmpty() && yandexCache == null) continue;
 
                 configuredCount++;
 
-                List<String> dayFolders = fetchCurrentDayFolders(serverUrl, basePath);
+                List<String> dayFolders;
+                if (serverUrl != null) {
+                    dayFolders = fetchCurrentDayFolders(serverUrl, basePath);
+                } else {
+                    dayFolders = extractDayFoldersFromYandexCache(yandexCache, name, basePath, pattern);
+                }
                 if (dayFolders == null) {
                     continue;
                 }
@@ -175,6 +210,195 @@ public class NewDayWorker extends Worker {
         }
 
         return Result.success();
+    }
+
+    // ==================== ЯНДЕКС ДИСК: ЗАГРУЗКА И ВЫГРУЗКА ====================
+
+    public static String downloadYandexStringOrThrow(String remotePath, String token) throws IOException {
+        if (token == null || token.trim().isEmpty()) {
+            throw new IOException("Не указан OAuth-токен Яндекс Диска");
+        }
+        String encodedPath = URLEncoder.encode(remotePath, "UTF-8").replace("%3A", ":").replace("%2F", "/");
+        String metaUrl = YANDEX_API_BASE + "/download?path=" + encodedPath;
+
+        String metaResp = httpGetString(metaUrl, "OAuth " + token.trim(), 12000, 15000);
+        try {
+            JSONObject meta = new JSONObject(metaResp);
+            String href = meta.optString("href", "");
+            if (href.isEmpty()) {
+                throw new IOException("Яндекс Диск не вернул ссылку для скачивания");
+            }
+            byte[] rawBytes = httpGetBytes(href, null, 15000, 30000);
+            if (rawBytes.length >= 2 && (rawBytes[0] & 0xFF) == 0x1F && (rawBytes[1] & 0xFF) == 0x8B) {
+                rawBytes = gunzipBytes(rawBytes);
+            }
+            return new String(rawBytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Ошибка разбора ответа Яндекс Диска: " + e.getMessage(), e);
+        }
+    }
+
+    public static void uploadYandexStringOrThrow(String remotePath, String content, String token) throws IOException {
+        if (token == null || token.trim().isEmpty()) {
+            throw new IOException("Не указан OAuth-токен Яндекс Диска");
+        }
+        String encodedPath = URLEncoder.encode(remotePath, "UTF-8").replace("%3A", ":").replace("%2F", "/");
+        String metaUrl = YANDEX_API_BASE + "/upload?path=" + encodedPath + "&overwrite=true";
+
+        String metaResp = httpGetString(metaUrl, "OAuth " + token.trim(), 12000, 15000);
+        String href;
+        try {
+            JSONObject meta = new JSONObject(metaResp);
+            href = meta.optString("href", "");
+        } catch (Exception e) {
+            throw new IOException("Ошибка ответа Яндекс Диска: " + e.getMessage(), e);
+        }
+        if (href.isEmpty()) {
+            throw new IOException("Яндекс Диск не вернул ссылку для загрузки");
+        }
+
+        byte[] body = (content != null ? content : "").getBytes(StandardCharsets.UTF_8);
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(href);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(30000);
+            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            conn.setFixedLengthStreamingMode(body.length);
+
+            try (OutputStream out = conn.getOutputStream()) {
+                out.write(body);
+            }
+            int code = conn.getResponseCode();
+            if (code != 200 && code != 201 && code != 202) {
+                throw new IOException("Ошибка выгрузки на Яндекс Диск: HTTP " + code);
+            }
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    private static String httpGetString(String urlStr, String authHeader, int connectTimeout, int readTimeout) throws IOException {
+        byte[] bytes = httpGetBytes(urlStr, authHeader, connectTimeout, readTimeout);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private static byte[] httpGetBytes(String urlStr, String authHeader, int connectTimeout, int readTimeout) throws IOException {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlStr);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(connectTimeout);
+            conn.setReadTimeout(readTimeout);
+            if (authHeader != null && !authHeader.isEmpty()) {
+                conn.setRequestProperty("Authorization", authHeader);
+                conn.setRequestProperty("Accept", "application/json");
+            }
+            int code = conn.getResponseCode();
+            InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            if (is != null) {
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = is.read(buf)) != -1) {
+                    baos.write(buf, 0, n);
+                }
+                is.close();
+            }
+            if (code < 200 || code >= 300) {
+                String errTxt = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+                throw new IOException("HTTP " + code + (errTxt.isEmpty() ? "" : ": " + errTxt));
+            }
+            return baos.toByteArray();
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    private static byte[] gunzipBytes(byte[] compressed) throws IOException {
+        try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = gis.read(buf)) != -1) {
+                baos.write(buf, 0, n);
+            }
+            return baos.toByteArray();
+        }
+    }
+
+    private List<String> extractDayFoldersFromYandexCache(JSONObject cacheJson, String lineName, String basePath, String pattern) {
+        if (cacheJson == null) return null;
+        JSONArray linesArr = cacheJson.optJSONArray("lines");
+        if (linesArr == null || linesArr.length() == 0) return null;
+
+        String normBase = normalizePathForCompare(basePath);
+        String normLineName = lineName != null ? lineName.trim().toLowerCase(Locale.ROOT) : "";
+        String lineFolderHint = extractLineFolderHint(basePath, pattern);
+
+        List<String> matchedFolders = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        for (int i = 0; i < linesArr.length(); i++) {
+            JSONObject entry = linesArr.optJSONObject(i);
+            if (entry == null) continue;
+            String entryDir = normalizePathForCompare(entry.optString("directory", ""));
+            String entryName = entry.optString("name", "").trim().toLowerCase(Locale.ROOT);
+
+            boolean matches = false;
+            if (!normBase.isEmpty() && !entryDir.isEmpty()) {
+                if (entryDir.equals(normBase) || entryDir.startsWith(normBase + "/") || normBase.startsWith(entryDir + "/")) {
+                    matches = true;
+                }
+            }
+            if (!matches && !lineFolderHint.isEmpty() && entryDir.contains("/" + lineFolderHint + "/")) {
+                matches = true;
+            }
+            if (!matches && !normLineName.isEmpty() && (entryName.equals(normLineName) || entryName.contains(normLineName))) {
+                matches = true;
+            }
+
+            if (matches) {
+                JSONArray blocks = entry.optJSONArray("blocks");
+                if (blocks != null) {
+                    for (int j = 0; j < blocks.length(); j++) {
+                        JSONObject b = blocks.optJSONObject(j);
+                        if (b == null) continue;
+                        String fn = b.optString("folder_name", "").trim();
+                        if (!fn.isEmpty() && seen.add(fn.toLowerCase(Locale.ROOT))) {
+                            matchedFolders.add(fn);
+                        }
+                    }
+                }
+            }
+        }
+        return matchedFolders.isEmpty() ? null : matchedFolders;
+    }
+
+    private String normalizePathForCompare(String p) {
+        if (p == null) return "";
+        return p.trim().replace('\\', '/').replaceAll("/+$", "").toLowerCase(Locale.ROOT);
+    }
+
+    private String extractLineFolderHint(String basePath, String pattern) {
+        String candidate = normalizePathForCompare(basePath);
+        if (candidate.isEmpty()) return "";
+        String[] parts = candidate.split("/");
+        for (int i = parts.length - 1; i >= 0; i--) {
+            String seg = parts[i].trim();
+            if (seg.isEmpty()) continue;
+            if (getMonthIndexFromName(seg) >= 0) continue;
+            if (seg.matches("^20\\d{2}$")) continue;
+            return seg;
+        }
+        return "";
     }
 
     // ==================== ТИХИЙ АВТОПОИСК СЕРВЕРА С ПРОВЕРКОЙ «СВОЙ/ЧУЖОЙ» ====================
@@ -311,7 +535,7 @@ public class NewDayWorker extends Worker {
         return u;
     }
 
-    // ==================== УВЕДОМЛЕНИЯ О НОВЫХ ДНЯХ ====================
+    // ==================== УВЕДОМЛЕНИЯ О НОВЫХ СМЕНАХ ====================
 
     private static class NewDayEvent {
         final int lineIdx;
@@ -390,17 +614,17 @@ public class NewDayWorker extends Worker {
             String fName = o.optString("folderName", "");
             if (firstLineIdx < 0) firstLineIdx = lIdx;
             inlineParts.add(lName + ": " + fName);
-            inboxStyle.addLine(lName + " — " + fName);
+            inboxStyle.addLine(lName + " — смена " + fName);
         }
 
         if (count == 1) {
             JSONObject single = pending.optJSONObject(0);
             String lName = single != null ? single.optString("lineName", "Линия") : "Линия";
             String fName = single != null ? single.optString("folderName", "") : "";
-            title = "Новый день: " + lName;
-            summaryText = "Появилась папка " + fName;
+            title = "Новая смена: " + lName;
+            summaryText = "Появилась смена " + fName;
         } else {
-            title = "Новые дни на производстве (" + count + ")";
+            title = "Новые смены на производстве (" + count + ")";
             summaryText = joinStrings(" • ", inlineParts);
             inboxStyle.setBigContentTitle(title);
         }
@@ -662,10 +886,10 @@ public class NewDayWorker extends Worker {
             if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
                 NotificationChannel channel = new NotificationChannel(
                         CHANNEL_ID,
-                        "Новые дни на производстве",
+                        "Новые смены на производстве",
                         NotificationManager.IMPORTANCE_HIGH
                 );
-                channel.setDescription("Уведомления о появлении новых папок смен на сервере");
+                channel.setDescription("Уведомления о появлении новых смен на сервере и Яндекс Диске");
                 nm.createNotificationChannel(channel);
             }
         }
