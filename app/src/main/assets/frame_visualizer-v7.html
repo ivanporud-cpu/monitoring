@@ -102,17 +102,35 @@
         }
 
         .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 500;
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 14px 18px;
-            margin-bottom: 14px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
             box-shadow: var(--shadow);
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
+        }
+
+        .disclaimer-banner {
+            background: var(--bg-card-small-warn);
+            border: 1px solid var(--border-card-small-warn);
+            color: var(--accent-amber);
+            border-radius: 10px;
+            padding: 9px 14px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .title-block h1 {
@@ -892,6 +910,11 @@
                 </button>
                 <button class="btn btn-primary" id="toggleServerBtn" type="button">Файлы с сервера</button>
             </div>
+        </div>
+
+        <div class="disclaimer-banner" role="note">
+            <span>⚠</span>
+            <span>Справочная визуализация. Возможны неточности — не использовать в качестве рабочего чертежа.</span>
         </div>
 
         <!-- Проводник файлов сервера (работает с 2new.py) -->
