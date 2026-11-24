@@ -2841,6 +2841,14 @@
             window.history.back();
         }
 
+        function formatDisplayTitle(rawTitle) {
+            return String(rawTitle || '')
+                .replace(/\.csv\b/gi, '')
+                .replace(/_/g, ' ')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+        }
+
         function setEmbeddedModeUI(titleText) {
             isEmbeddedLaunch = true;
             const backBtn = document.getElementById('backToAppBtn');
@@ -2851,9 +2859,11 @@
             if (toggleSrvBtn) toggleSrvBtn.style.display = 'none';
             const dz = document.getElementById('dropzone');
             if (dz) dz.style.display = 'none';
+            const subtitle = document.querySelector('.title-block p');
+            if (subtitle) subtitle.style.display = 'none';
             if (titleText) {
                 const h1 = document.querySelector('.title-block h1');
-                if (h1) h1.textContent = titleText;
+                if (h1) h1.textContent = formatDisplayTitle(titleText);
             }
         }
 
@@ -2888,11 +2898,14 @@
                 }
 
                 const subtitle = document.querySelector('.title-block p');
-                if (subtitle && names.length > 0) {
-                    const preview = names.length > 2 ? `${names.slice(0, 2).join(', ')} (+${names.length - 2})` : names.join(', ');
-                    subtitle.textContent = payload.initialQuery
-                        ? `Заказ: ${payload.initialQuery} • Файлы: ${preview}`
-                        : `Файлы: ${preview}`;
+                if (subtitle) {
+                    if (payload.initialQuery) {
+                        subtitle.textContent = `Заказ: ${payload.initialQuery}`;
+                        subtitle.style.display = '';
+                    } else {
+                        subtitle.textContent = '';
+                        subtitle.style.display = 'none';
+                    }
                 }
 
                 applyLoadedItems(parsedAll, names, 'из мониторинга');
