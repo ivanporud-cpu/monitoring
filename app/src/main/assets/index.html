@@ -640,6 +640,12 @@
             <div class="header-inner">
                 <h1>Загрузка производства</h1>
                 <div class="header-actions">
+                    <button class="theme-toggle" id="globalSearchBtn" title="Поиск заказа по всем датам и линиям" aria-label="Глобальный поиск заказа">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </button>
                     <button class="theme-toggle" id="themeToggle" title="Переключить тему" aria-label="Переключить тему">
                         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -946,6 +952,25 @@
             </div>
             <div class="modal-body">
                 <div id="filesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="globalSearchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Поиск заказа по всем датам</h3>
+                <button class="btn btn-sm" id="closeGlobalSearchBtn" type="button">Закрыть</button>
+            </div>
+            <div class="files-search-bar">
+                <div class="files-search-row">
+                    <input type="text" id="globalOrderSearchInput" class="files-search-input" placeholder="Номер заказа (напр. 34930)..." inputmode="search">
+                    <button class="btn btn-success btn-sm" id="openGlobalAllBtn" type="button" style="display:none;">📐 Все чертежи</button>
+                </div>
+                <div class="files-search-status" id="globalOrderSearchStatus">Введите номер заказа для поиска по всем загруженным линиям и сменам</div>
+            </div>
+            <div class="modal-body">
+                <div id="globalOrderSearchResults"></div>
             </div>
         </div>
     </div>
@@ -3576,6 +3601,161 @@
             }
         });
 
+
+        // ==================== ГЛОБАЛЬНЫЙ ПОИСК ЗАКАЗА ПО ВСЕМ ДАТАМ И ЛИНИЯМ ====================
+        let lastGlobalSearchMatches = [];
+
+        function showGlobalSearchModal() {
+            const modal = document.getElementById('globalSearchModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            const inp = document.getElementById('globalOrderSearchInput');
+            if (inp) {
+                setTimeout(() => inp.focus(), 60);
+                runGlobalOrderSearch(inp.value);
+            }
+        }
+
+        function hideGlobalSearchModal() {
+            const modal = document.getElementById('globalSearchModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function runGlobalOrderSearch(rawQuery) {
+            const q = String(rawQuery || '').trim();
+            const qLow = q.toLowerCase();
+            const statusEl = document.getElementById('globalOrderSearchStatus');
+            const resultsEl = document.getElementById('globalOrderSearchResults');
+            const openAllBtn = document.getElementById('openGlobalAllBtn');
+            lastGlobalSearchMatches = [];
+
+            if (!q || q.length < 2) {
+                if (statusEl) statusEl.textContent = 'Введите минимум 2 символа номера заказа для поиска по всем линиям и сменам';
+                if (resultsEl) resultsEl.innerHTML = '';
+                if (openAllBtn) openAllBtn.style.display = 'none';
+                return;
+            }
+
+            const matches = [];
+            const configured = getConfiguredIndexes();
+            const lineIndices = configured.length > 0 ? configured : [activeIndex];
+
+            for (const idx of lineIndices) {
+                const blocks = blocksByFolder[idx];
+                if (!Array.isArray(blocks) || blocks.length === 0) continue;
+                const lName = getLineName(idx) || ('Линия ' + (idx + 1));
+
+                for (const block of blocks) {
+                    if (!block || !Array.isArray(block.processed_files)) continue;
+                    const bDate = getBlockDate(block);
+                    const ts = bDate ? bDate.getTime() : 0;
+
+                    for (const file of block.processed_files) {
+                        const matchedOrders = getMatchingOrdersForFile(file, qLow);
+                        const nameHit = String(file.filename || '').toLowerCase().includes(qLow);
+                        if (matchedOrders.length > 0 || nameHit) {
+                            matches.push({
+                                lineIdx: idx,
+                                lineName: block.lineName || lName,
+                                block: block,
+                                file: file,
+                                matchedOrders: matchedOrders,
+                                ts: ts
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Сначала самые свежие смены
+            matches.sort((a, b) => (b.ts - a.ts) || a.lineName.localeCompare(b.lineName, 'ru'));
+            lastGlobalSearchMatches = matches;
+
+            if (matches.length === 0) {
+                if (statusEl) statusEl.textContent = 'Заказ «' + q + '» не найден в загруженных сменах';
+                if (resultsEl) resultsEl.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Совпадений не найдено</div>';
+                if (openAllBtn) openAllBtn.style.display = 'none';
+                return;
+            }
+
+            if (statusEl) {
+                statusEl.textContent = 'Найдено файлов с заказом «' + q + '»: ' + matches.length + ' — нажмите на любой для просмотра чертежей';
+            }
+            if (openAllBtn) {
+                openAllBtn.style.display = matches.length > 1 ? 'inline-block' : 'none';
+                openAllBtn.textContent = '📐 Все (' + matches.length + ')';
+            }
+
+            let resHtml = '';
+            matches.forEach((m, idx) => {
+                resHtml += '<div class="file-item" data-global-idx="' + idx + '">';
+                resHtml += '<div class="file-item-top">';
+                resHtml += '<strong>' + escapeHtmlSimple(m.file.filename) + '</strong>';
+                resHtml += '<span class="file-open-hint">📐 Чертеж</span>';
+                resHtml += '</div>';
+                resHtml += '<div class="file-counts">';
+                resHtml += '<span class="count-badge" style="background:#8e44ad; color:#fff;">' + escapeHtmlSimple(m.lineName) + '</span>';
+                resHtml += '<span class="count-badge" style="background:#3498db; color:#fff;">' + escapeHtmlSimple(m.block.folder_name || '') + ' ' + escapeHtmlSimple(m.block.day_night || '') + '</span>';
+                if (m.matchedOrders.length > 0) {
+                    resHtml += '<span class="order-match-badge">Заказ: ' + escapeHtmlSimple(m.matchedOrders.slice(0, 4).join(', ')) + '</span>';
+                }
+                resHtml += '</div></div>';
+            });
+
+            resultsEl.innerHTML = resHtml;
+
+            resultsEl.querySelectorAll('.file-item[data-global-idx]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = parseInt(this.getAttribute('data-global-idx'), 10);
+                    const m = lastGlobalSearchMatches[idx];
+                    if (m) {
+                        const title = 'Заказ ' + q + ' • ' + (m.block.folder_name || '') + ' (' + m.lineName + ')';
+                        openFilesInVisualizer(m.block, [m.file], q, title);
+                    }
+                });
+            });
+        }
+
+        async function openAllGlobalMatchesInVisualizer() {
+            if (!lastGlobalSearchMatches || lastGlobalSearchMatches.length === 0) return;
+            const q = (document.getElementById('globalOrderSearchInput')?.value || '').trim();
+            const statusEl = document.getElementById('globalOrderSearchStatus');
+            const prevStatus = statusEl ? statusEl.textContent : '';
+            if (statusEl) statusEl.textContent = 'Загрузка всех найденных файлов (' + lastGlobalSearchMatches.length + ')...';
+
+            try {
+                const filesPayload = [];
+                let lastErrMsg = '';
+                for (const m of lastGlobalSearchMatches) {
+                    try {
+                        const content = await fetchCsvContentForFile(m.block, m.file);
+                        if (content) {
+                            const labelName = (m.block.folder_name ? (m.block.folder_name + ' / ') : '') + (m.file.filename || 'file.csv');
+                            filesPayload.push({ name: labelName, content: content });
+                        }
+                    } catch (e) {
+                        lastErrMsg = e.message || String(e);
+                    }
+                }
+                if (filesPayload.length === 0) {
+                    throw new Error(lastErrMsg || 'Не удалось загрузить файлы раскроя');
+                }
+                const curTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                launchVisualizerPayload({
+                    type: 'LOAD_CSV_DATA',
+                    files: filesPayload,
+                    initialQuery: q,
+                    title: 'Заказ ' + q + ' (все найденные)',
+                    embedded: true,
+                    theme: curTheme
+                });
+            } catch (e) {
+                alert(e.message || 'Ошибка открытия чертежей');
+            } finally {
+                if (statusEl) statusEl.textContent = prevStatus;
+            }
+        }
+
         // ==================== ПРОКРУТКА ====================
         function scrollToTodayOrTomorrowBlock() {
             const blocks = document.querySelectorAll('.date-block[data-folder]');
@@ -3814,6 +3994,19 @@
             }
 
             document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
+
+            const globalSearchBtn = document.getElementById('globalSearchBtn');
+            if (globalSearchBtn) globalSearchBtn.addEventListener('click', showGlobalSearchModal);
+            const closeGlobalBtn = document.getElementById('closeGlobalSearchBtn');
+            if (closeGlobalBtn) closeGlobalBtn.addEventListener('click', hideGlobalSearchModal);
+            const globalSearchInp = document.getElementById('globalOrderSearchInput');
+            if (globalSearchInp) {
+                globalSearchInp.addEventListener('input', function() {
+                    runGlobalOrderSearch(this.value);
+                });
+            }
+            const openGlobalAllBtn = document.getElementById('openGlobalAllBtn');
+            if (openGlobalAllBtn) openGlobalAllBtn.addEventListener('click', openAllGlobalMatchesInVisualizer);
             if (window.AndroidApp) {
                 const srvBtn = document.getElementById('apkServerBtn');
                 const srvGrp = document.getElementById('apkServerSettingsGroup');
@@ -3982,6 +4175,7 @@
                 if (e.target.id === 'fileManager') hideFileManager();
                 if (e.target.id === 'filesModal') hideFilesModal();
                 if (e.target.id === 'settingsModal') hideSettingsModal();
+                if (e.target.id === 'globalSearchModal') hideGlobalSearchModal();
             });
 
             window.addEventListener('resize', function() {
@@ -3993,7 +4187,7 @@
 
         // ==================== ЖЕСТЫ: PULL-TO-REFRESH И СВАЙП МЕЖДУ ЛИНИЯМИ ====================
         function isAnyModalOpen() {
-            const ids = ['fileManager', 'filesModal', 'settingsModal'];
+            const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal'];
             return ids.some(id => {
                 const el = document.getElementById(id);
                 return el && el.style.display === 'block';
