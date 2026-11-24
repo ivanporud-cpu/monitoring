@@ -1815,6 +1815,7 @@
         }
 
         function showFilesModal() {
+            initBarcodeScanButtons();
             document.getElementById('filesModal').style.display = 'block';
             updateBodyScrollLock();
         }
@@ -1871,22 +1872,6 @@
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
             if (window.AndroidApp) {
-                if (typeof window.AndroidApp.startBarcodeScan === 'function') {
-                    const scanGlobalBtn = document.getElementById('scanGlobalBarcodeBtn');
-                    if (scanGlobalBtn) {
-                        scanGlobalBtn.style.display = 'inline-flex';
-                        scanGlobalBtn.addEventListener('click', function() {
-                            window.AndroidApp.startBarcodeScan('global');
-                        });
-                    }
-                    const scanDateBtn = document.getElementById('scanDateBarcodeBtn');
-                    if (scanDateBtn) {
-                        scanDateBtn.style.display = 'inline-flex';
-                        scanDateBtn.addEventListener('click', function() {
-                            window.AndroidApp.startBarcodeScan('date');
-                        });
-                    }
-                }
                 const srvInp = document.getElementById('apkServerUrlInput');
                 if (srvInp) srvInp.value = window.AndroidApp.getServerUrl() || '';
             }
@@ -3717,6 +3702,7 @@
         let lastGlobalSearchMatches = [];
 
         function showGlobalSearchModal() {
+            initBarcodeScanButtons();
             const modal = document.getElementById('globalSearchModal');
             if (!modal) return;
             modal.style.display = 'block';
@@ -3991,8 +3977,33 @@
         }
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        function initBarcodeScanButtons() {
+            const scanGlobalBtn = document.getElementById('scanGlobalBarcodeBtn');
+            const scanDateBtn = document.getElementById('scanDateBarcodeBtn');
+            const hasNativeScan = !!(window.AndroidApp && typeof window.AndroidApp.startBarcodeScan === 'function');
+            if (scanGlobalBtn) {
+                scanGlobalBtn.style.display = hasNativeScan ? 'inline-flex' : 'none';
+                if (hasNativeScan && !scanGlobalBtn.dataset.bound) {
+                    scanGlobalBtn.dataset.bound = '1';
+                    scanGlobalBtn.addEventListener('click', function() {
+                        window.AndroidApp.startBarcodeScan('global');
+                    });
+                }
+            }
+            if (scanDateBtn) {
+                scanDateBtn.style.display = hasNativeScan ? 'inline-flex' : 'none';
+                if (hasNativeScan && !scanDateBtn.dataset.bound) {
+                    scanDateBtn.dataset.bound = '1';
+                    scanDateBtn.addEventListener('click', function() {
+                        window.AndroidApp.startBarcodeScan('date');
+                    });
+                }
+            }
+        }
+
         function initializeApp() {
             initTheme();
+            initBarcodeScanButtons();
 
             document.getElementById('themeToggle').addEventListener('click', function() {
                 const cur = document.documentElement.getAttribute('data-theme') || 'light';
