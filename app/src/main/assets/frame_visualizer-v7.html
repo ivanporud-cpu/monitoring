@@ -1876,15 +1876,19 @@
                     const distFromBarStartMm = Math.max(0, (op.valRaw - weldRaw) / 10);
 
                     if (side === 'В') {
-                        const x = Math.round(distFromBarStartMm * 10) / 10;
+                        // Верхняя заготовка идёт справа налево (против часовой стрелки при виде изнутри)
+                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
                         if (x > 5 && x < widthMm - 5) topXs.push({ x: x, side: 'В' });
                     } else if (side === 'Н') {
-                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
+                        // Нижняя заготовка идёт слева направо
+                        const x = Math.round(distFromBarStartMm * 10) / 10;
                         if (x > 5 && x < widthMm - 5) botXs.push({ x: x, side: 'Н' });
                     } else if (side === 'Л') {
+                        // Левая заготовка идёт сверху вниз
                         const y = Math.round(distFromBarStartMm * 10) / 10;
                         if (y > 5 && y < heightMm - 5) leftYs.push({ y: y, side: 'Л' });
                     } else if (side === 'П') {
+                        // Правая заготовка идёт снизу вверх
                         const y = Math.round((heightMm - distFromBarStartMm) * 10) / 10;
                         if (y > 5 && y < heightMm - 5) rightYs.push({ y: y, side: 'П' });
                     }
@@ -2166,7 +2170,10 @@
 
             let bottomSubDimsSvg = '';
             if (vertMullions.length > 0) {
-                const uniqueXs = Array.from(new Set(vertMullions.map(m => m.posMm))).sort((a, b) => a - b);
+                const botTouchVerts = vertMullions.filter(m => m.y2 >= h - 1);
+                const topOnlyVerts = vertMullions.filter(m => m.y1 <= 1 && m.y2 < h - 1);
+                const primaryVerts = botTouchVerts.length > 0 ? botTouchVerts : vertMullions;
+                const uniqueXs = Array.from(new Set(primaryVerts.map(m => m.posMm))).sort((a, b) => a - b);
                 const points = [0, ...uniqueXs, w];
                 const dimBotY = rectY + drawH + 13;
 
@@ -2186,11 +2193,30 @@
                         `;
                     }
                 }
+
+                // Если сверху есть отдельные Т-импосты, отличающиеся от нижних (как в 34419/2 или 34306/1), подписываем верхние сегменты отдельно
+                if (topOnlyVerts.length > 0 && botTouchVerts.length > 0) {
+                    const topTouchVerts = vertMullions.filter(m => m.y1 <= 1);
+                    const topXs = Array.from(new Set(topTouchVerts.map(m => m.posMm))).sort((a, b) => a - b);
+                    const topPts = [0, ...topXs, w];
+                    const topZoneY2 = Math.min(...topOnlyVerts.map(m => m.y2));
+                    const topLabelY = innerY + Math.min(14, Math.max(9, ((topZoneY2 / h) * drawH - profileThick) / 2 + 3));
+                    for (let i = 0; i < topPts.length - 1; i++) {
+                        const px = rectX + (topPts[i] / w) * drawW;
+                        const nextPx = rectX + (topPts[i + 1] / w) * drawW;
+                        const segMm = Math.round((topPts[i + 1] - topPts[i]) * 10) / 10;
+                        if (nextPx - px >= 28) {
+                            bottomSubDimsSvg += `<text x="${((px + nextPx) / 2).toFixed(1)}" y="${topLabelY.toFixed(1)}" text-anchor="middle" fill="var(--subdim-text)" font-size="10" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${formatMm(segMm)}</text>`;
+                        }
+                    }
+                }
             }
 
             let leftSubDimsSvg = '';
             if (horizMullions.length > 0) {
-                const uniqueYs = Array.from(new Set(horizMullions.map(m => m.posMm))).sort((a, b) => a - b);
+                const leftTouchHoriz = horizMullions.filter(m => m.x1 <= 1);
+                const primaryHoriz = leftTouchHoriz.length > 0 ? leftTouchHoriz : horizMullions;
+                const uniqueYs = Array.from(new Set(primaryHoriz.map(m => m.posMm))).sort((a, b) => a - b);
                 const points = [0, ...uniqueYs, h];
                 const dimLeftX = rectX - 13;
 
