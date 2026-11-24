@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -21,6 +23,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -60,15 +64,22 @@ public class MainActivity extends Activity {
     private static final String PERIODIC_WORK_NAME = "new_day_periodic_check";
     private static final int REQ_POST_NOTIFICATIONS = 2001;
 
+    private FrameLayout rootContainer;
     private WebView webView;
+    private WebView visualizerWebView;
+    private boolean visualizerPageReady = false;
+    private volatile String pendingVisualizerPayload = "";
+
     private SharedPreferences prefs;
     private String cachedHtml;
+    private String cachedVisualizerHtml;
     private String activeBaseUrl = "";
     private long lastBackPressMs = 0L;
     private int pendingOpenLineIdx = -1;
 
     private final AtomicBoolean isAutoDiscovering = new AtomicBoolean(false);
     private volatile long lastAutoDiscoveryMs = 0L;
+    private final ConcurrentHashMap<String, String> asyncResults = new ConcurrentHashMap<>();
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -82,30 +93,31 @@ public class MainActivity extends Activity {
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
+        // Инициализируем токен Яндекс Диска по умолчанию, если он ещё не сохранён
+        if (!prefs.contains(NewDayWorker.KEY_YANDEX_TOKEN)) {
+            prefs.edit()
+                    .putString(NewDayWorker.KEY_YANDEX_TOKEN, NewDayWorker.DEFAULT_YANDEX_TOKEN)
+                    .putBoolean(NewDayWorker.KEY_YANDEX_ENABLED, true)
+                    .apply();
+        }
+
         handleNotificationIntent(getIntent());
         NewDayWorker.ensureNotificationChannel(this);
         NewDayWorker.clearPendingNotifications(this);
         requestNotificationPermissionIfNeeded();
         scheduleBackgroundNewDayCheck();
 
+        rootContainer = new FrameLayout(this);
+        rootContainer.setBackgroundColor(Color.parseColor("#0f1626"));
+        setContentView(rootContainer);
+
         webView = new WebView(this);
         webView.setBackgroundColor(Color.parseColor("#0f1626"));
-        setContentView(webView);
-
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
-        s.setUseWideViewPort(true);
-        s.setLoadWithOverviewMode(true);
-        s.setSupportZoom(true);
-        s.setBuiltInZoomControls(true);
-        s.setDisplayZoomControls(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        }
+        configureWebViewSettings(webView);
+        rootContainer.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
 
         webView.addJavascriptInterface(new AndroidBridge(), "AndroidApp");
 
@@ -155,12 +167,108 @@ public class MainActivity extends Activity {
         checkForAppUpdate();
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
+    private void configureWebViewSettings(WebView wv) {
+        WebSettings s = wv.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+        s.setUseWideViewPort(true);
+        s.setLoadWithOverviewMode(true);
+        s.setSupportZoom(true);
+        s.setBuiltInZoomControls(true);
+        s.setDisplayZoomControls(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+    }
+
+    // ==================== ВСТРОЕННЫЙ ВИЗУАЛИЗАТОР ЧЕРТЕЖЕЙ ====================
+
+    private void showVisualizerOverlay(final String payloadJson) {
+        pendingVisualizerPayload = payloadJson != null ? payloadJson : "";
+
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+
+            if (visualizerWebView == null) {
+                if (cachedVisualizerHtml == null) {
+                    cachedVisualizerHtml = readAssetHtml("frame_visualizer-v7.html");
+                }
+                visualizerWebView = new WebView(MainActivity.this);
+                visualizerWebView.setBackgroundColor(Color.parseColor("#0d1117"));
+                configureWebViewSettings(visualizerWebView);
+                visualizerWebView.addJavascriptInterface(new VisualizerBridge(), "AndroidVisualizer");
+
+                visualizerWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        visualizerPageReady = true;
+                        view.evaluateJavascript(
+                                "if (window.loadExternalCsvData && window.AndroidVisualizer) {" +
+                                        "var p = window.AndroidVisualizer.getPayload();" +
+                                        "if (p) window.loadExternalCsvData(p);" +
+                                        "}",
+                                null
+                        );
+                    }
+                });
+                visualizerWebView.setWebChromeClient(new WebChromeClient());
+
+                rootContainer.addView(visualizerWebView, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+
+                String base = (activeBaseUrl != null && !activeBaseUrl.isEmpty()) ? activeBaseUrl : "http://localhost/";
+                visualizerPageReady = false;
+                visualizerWebView.loadDataWithBaseURL(base, cachedVisualizerHtml, "text/html", "UTF-8", base);
+            } else {
+                visualizerWebView.setVisibility(View.VISIBLE);
+                visualizerWebView.bringToFront();
+                if (visualizerPageReady) {
+                    visualizerWebView.evaluateJavascript(
+                            "if (window.loadExternalCsvData && window.AndroidVisualizer) {" +
+                                    "var p = window.AndroidVisualizer.getPayload();" +
+                                    "if (p) window.loadExternalCsvData(p);" +
+                                    "}",
+                            null
+                    );
+                }
+            }
+        });
+    }
+
+    private void hideVisualizerOverlay() {
+        runOnUiThread(() -> {
+            if (visualizerWebView != null) {
+                visualizerWebView.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private class VisualizerBridge {
+        @JavascriptInterface
+        public String getPayload() {
+            return pendingVisualizerPayload;
+        }
+
+        @JavascriptInterface
+        public void close() {
+            hideVisualizerOverlay();
+        }
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         handleNotificationIntent(intent);
         NewDayWorker.clearPendingNotifications(this);
+        hideVisualizerOverlay();
         if (webView != null && pendingOpenLineIdx >= 0) {
             final int idx = pendingOpenLineIdx;
             pendingOpenLineIdx = -1;
@@ -408,7 +516,7 @@ public class MainActivity extends Activity {
                 sb.append(line).append('\n');
             }
         } catch (Exception e) {
-            return "<html><body style='background:#111;color:#fff;font-family:sans-serif;padding:24px;'>Ошибка загрузки index.html: " + e.getMessage() + "</body></html>";
+            return "<html><body style='background:#111;color:#fff;font-family:sans-serif;padding:24px;'>Ошибка загрузки " + assetName + ": " + e.getMessage() + "</body></html>";
         }
         return sb.toString();
     }
@@ -528,6 +636,18 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
+    private void dispatchAsyncCallback(final String callbackId, final boolean success, final String payloadOrError) {
+        asyncResults.put(callbackId, payloadOrError != null ? payloadOrError : "");
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || webView == null) return;
+            String safeId = JSONObject.quote(callbackId);
+            webView.evaluateJavascript(
+                    "if (window.__onAndroidAsyncResult) window.__onAndroidAsyncResult(" + safeId + ", " + success + ");",
+                    null
+            );
+        });
+    }
+
     private class AndroidBridge {
         @JavascriptInterface
         public String getServerUrl() {
@@ -553,7 +673,6 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void onServerUnreachable() {
-            // При обрыве связи запускаем тихий фоновый поиск нового IP сервера
             silentDiscoverServer(true);
         }
 
@@ -562,6 +681,67 @@ public class MainActivity extends Activity {
             int val = pendingOpenLineIdx;
             pendingOpenLineIdx = -1;
             return val;
+        }
+
+        @JavascriptInterface
+        public void openVisualizer(final String payloadJson) {
+            showVisualizerOverlay(payloadJson);
+        }
+
+        @JavascriptInterface
+        public String getYandexToken() {
+            String t = prefs.getString(NewDayWorker.KEY_YANDEX_TOKEN, NewDayWorker.DEFAULT_YANDEX_TOKEN);
+            return (t == null || t.trim().isEmpty()) ? NewDayWorker.DEFAULT_YANDEX_TOKEN : t.trim();
+        }
+
+        @JavascriptInterface
+        public boolean isYandexEnabled() {
+            return prefs.getBoolean(NewDayWorker.KEY_YANDEX_ENABLED, true);
+        }
+
+        @JavascriptInterface
+        public void syncYandexConfig(final String token, final boolean enabled) {
+            String cleanToken = (token != null) ? token.trim() : "";
+            prefs.edit()
+                    .putString(NewDayWorker.KEY_YANDEX_TOKEN, cleanToken.isEmpty() ? NewDayWorker.DEFAULT_YANDEX_TOKEN : cleanToken)
+                    .putBoolean(NewDayWorker.KEY_YANDEX_ENABLED, enabled)
+                    .apply();
+        }
+
+        @JavascriptInterface
+        public void yandexDownloadAsync(final String remotePath, final String token, final String callbackId) {
+            final String effectiveToken = (token != null && !token.trim().isEmpty())
+                    ? token.trim()
+                    : getYandexToken();
+            new Thread(() -> {
+                try {
+                    String data = NewDayWorker.downloadYandexStringOrThrow(remotePath, effectiveToken);
+                    dispatchAsyncCallback(callbackId, true, data);
+                } catch (Exception e) {
+                    dispatchAsyncCallback(callbackId, false, e.getMessage() != null ? e.getMessage() : "Ошибка загрузки");
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void yandexUploadAsync(final String remotePath, final String content, final String token, final String callbackId) {
+            final String effectiveToken = (token != null && !token.trim().isEmpty())
+                    ? token.trim()
+                    : getYandexToken();
+            new Thread(() -> {
+                try {
+                    NewDayWorker.uploadYandexStringOrThrow(remotePath, content, effectiveToken);
+                    dispatchAsyncCallback(callbackId, true, "OK");
+                } catch (Exception e) {
+                    dispatchAsyncCallback(callbackId, false, e.getMessage() != null ? e.getMessage() : "Ошибка выгрузки");
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
+        public String consumeAsyncResult(final String callbackId) {
+            String res = asyncResults.remove(callbackId);
+            return res != null ? res : "";
         }
 
         @JavascriptInterface
@@ -618,6 +798,10 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (visualizerWebView != null && visualizerWebView.getVisibility() == View.VISIBLE) {
+            hideVisualizerOverlay();
+            return;
+        }
         long now = System.currentTimeMillis();
         if (now - lastBackPressMs < 2000L) {
             super.onBackPressed();
