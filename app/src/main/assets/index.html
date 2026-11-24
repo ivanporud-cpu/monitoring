@@ -206,9 +206,85 @@
         .modal-content { background: var(--bg-card); margin: 5% auto; border-radius: 0.625rem; width: 90%; max-width: 37.5rem; max-height: 80vh; overflow: auto; color: var(--text-primary); }
         .modal-header { background: #3498db; color: white; padding: 1.25rem; border-radius: 0.625rem 0.625rem 0 0; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 1.25rem; }
-        .file-item { padding: 0.75rem; border-bottom: 0.0625rem solid var(--border-soft); color: var(--text-primary); }
-        .file-counts { display: flex; gap: 0.625rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; }
+        .file-item {
+            padding: 0.75rem;
+            border-bottom: 0.0625rem solid var(--border-soft);
+            color: var(--text-primary);
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+        .file-item:hover { background: var(--bg-soft); }
+        .file-item:active { transform: scale(0.99); }
+        .file-item-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+        .file-open-hint {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--color-info);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .file-counts { display: flex; gap: 0.45rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; }
         .count-badge { background: var(--bg-muted); padding: 0.125rem 0.5rem; border-radius: 0.625rem; color: var(--text-primary); }
+        .order-match-badge {
+            background: rgba(39, 174, 96, 0.18);
+            color: var(--color-success);
+            border: 0.0625rem solid rgba(39, 174, 96, 0.4);
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.625rem;
+            font-weight: bold;
+        }
+        .files-search-bar {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: var(--bg-card);
+            padding: 0.75rem 1.25rem;
+            border-bottom: 0.125rem solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .files-search-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .files-search-input {
+            flex: 1;
+            min-width: 10rem;
+            padding: 0.55rem 0.75rem;
+            border: 0.125rem solid var(--border-input);
+            border-radius: 0.5rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+        }
+        .files-search-input:focus { border-color: var(--color-info); outline: none; }
+        .files-search-status {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .visualizer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3500;
+            background: #0d1117;
+        }
+        .visualizer-overlay iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
 
         .file-manager { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
         .file-manager-content { background: var(--bg-card); margin: 3% auto; border-radius: 0.625rem; width: 90%; max-width: 50rem; max-height: 90vh; overflow: auto; display: flex; flex-direction: column; color: var(--text-primary); }
@@ -615,6 +691,20 @@
                 </div>
 
                 <div class="settings-group">
+                    <div class="checkbox-group" style="margin-bottom:0.5rem;">
+                        <input type="checkbox" id="yandexDiskEnabledCheckbox" checked>
+                        <label for="yandexDiskEnabledCheckbox" style="font-weight: bold; margin:0;">Подгрузка с Яндекс Диска (вне цехового Wi-Fi)</label>
+                    </div>
+                    <label for="yandexTokenInput">OAuth-токен Яндекс Диска</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                        <input type="password" id="yandexTokenInput" placeholder="y0_..." style="flex:1; min-width:12rem; padding:0.625rem; border:0.125rem solid var(--border-input); border-radius:0.375rem; font-size:0.95rem; background:var(--bg-input); color:var(--text-primary);">
+                        <button class="btn btn-sm" id="toggleYandexTokenBtn" type="button" style="background:var(--bg-muted); color:var(--text-primary); border:1px solid var(--border-input);">Показать</button>
+                        <button class="btn btn-success btn-sm" id="yandexLoadNowBtn" type="button">Загрузить сейчас</button>
+                    </div>
+                    <div class="hint">Когда локальный сервер недоступен, приложение автоматически подгружает смены и чертежи с Яндекс Диска.</div>
+                </div>
+
+                <div class="settings-group">
                     <label>Кэш сменных данных</label>
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
                         <span style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
@@ -673,7 +763,7 @@
                 <div class="settings-group" id="apkNotifySettingsGroup">
                     <div class="checkbox-group">
                         <input type="checkbox" id="notifyNewDaysCheckbox" checked>
-                        <label for="notifyNewDaysCheckbox" style="font-weight: bold; margin:0;">Уведомлять о появлении нового дня</label>
+                        <label for="notifyNewDaysCheckbox" style="font-weight: bold; margin:0;">Уведомлять о появлении новой смены</label>
                     </div>
                     <div class="hint">Фоновая проверка выбранных линий (приходит одно общее уведомление на телефон).</div>
                 </div>
@@ -798,12 +888,23 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="filesModalTitle">Детали файлов</h3>
-                <button class="btn" id="closeFilesModalBtn">Закрыть</button>
+                <button class="btn btn-sm" id="closeFilesModalBtn">Закрыть</button>
+            </div>
+            <div class="files-search-bar">
+                <div class="files-search-row">
+                    <input type="text" id="orderSearchInput" class="files-search-input" placeholder="Поиск по номеру заказа за всю дату (напр. 28775)...">
+                    <button class="btn btn-success btn-sm" id="openOrderInVisualizerBtn" type="button">📐 Чертежи</button>
+                </div>
+                <div class="files-search-status" id="orderSearchStatus">Нажмите на любой файл, чтобы открыть чертежи рам и створок</div>
             </div>
             <div class="modal-body">
                 <div id="filesList"></div>
             </div>
         </div>
+    </div>
+
+    <div class="visualizer-overlay" id="browserVisualizerOverlay">
+        <iframe id="browserVisualizerFrame" title="Чертежи рам и створок"></iframe>
     </div>
 
     <script>
@@ -889,6 +990,19 @@
         let notifyNewDays = true;
         let scalePercent = 100;
 
+        const DEFAULT_YANDEX_TOKEN = 'y0__wgBENuj48EGGKDzUCCm37zvGTDzmKv3CCTYq0IcMxZ4g_rmD135_SjlzCdA';
+        let yandexDiskEnabled = true;
+        let yandexToken = DEFAULT_YANDEX_TOKEN;
+        let lastDataSource = 'local'; // 'local' | 'yandex'
+        let lastYandexCache = null;
+
+        let currentModalBlock = null;
+        let isIndexingModalOrders = false;
+        const csvContentCache = new Map();       // fileKeyOrPath -> csvText
+        const yandexPackCache = new Map();       // pack_id -> { files: { file_key: csvText } }
+        const androidAsyncCallbacks = new Map();
+        let androidAsyncSeq = 0;
+
         const STORAGE_KEYS = {
             PATHS: 'monitoring_folder_paths',
             PATTERNS: 'monitoring_folder_patterns',
@@ -904,8 +1018,266 @@
             CACHED_BLOCKS: 'monitoring_cached_blocks',
             CACHED_SCAN_TIME: 'monitoring_cached_scan_time',
             DAY_CACHE: 'monitoring_day_cache_v1',
-            NOTIFY_NEW_DAYS: 'monitoring_notify_new_days'
+            NOTIFY_NEW_DAYS: 'monitoring_notify_new_days',
+            YANDEX_ENABLED: 'monitoring_yandex_enabled',
+            YANDEX_TOKEN: 'monitoring_yandex_token'
         };
+
+        window.__onAndroidAsyncResult = function(callbackId, success) {
+            const entry = androidAsyncCallbacks.get(callbackId);
+            if (!entry) return;
+            androidAsyncCallbacks.delete(callbackId);
+            let payload = '';
+            try {
+                if (window.AndroidApp && typeof window.AndroidApp.consumeAsyncResult === 'function') {
+                    payload = window.AndroidApp.consumeAsyncResult(callbackId);
+                }
+            } catch (e) {}
+            if (success) entry.resolve(payload);
+            else entry.reject(new Error(payload || 'Ошибка запроса'));
+        };
+
+        function getEffectiveYandexToken() {
+            const t = String(yandexToken || '').trim();
+            return t || DEFAULT_YANDEX_TOKEN;
+        }
+
+        async function yandexDownloadText(remotePath) {
+            const token = getEffectiveYandexToken();
+            if (!token) throw new Error('Не указан OAuth-токен Яндекс Диска');
+
+            if (window.AndroidApp && typeof window.AndroidApp.yandexDownloadAsync === 'function') {
+                return new Promise((resolve, reject) => {
+                    const cbId = 'yd_dl_' + (++androidAsyncSeq) + '_' + Date.now();
+                    const timer = setTimeout(() => {
+                        if (androidAsyncCallbacks.has(cbId)) {
+                            androidAsyncCallbacks.delete(cbId);
+                            reject(new Error('Таймаут загрузки с Яндекс Диска'));
+                        }
+                    }, 35000);
+                    androidAsyncCallbacks.set(cbId, {
+                        resolve: (val) => { clearTimeout(timer); resolve(val); },
+                        reject: (err) => { clearTimeout(timer); reject(err); }
+                    });
+                    window.AndroidApp.yandexDownloadAsync(remotePath, token, cbId);
+                });
+            }
+
+            // Резервный вариант для обычного браузера
+            const encPath = encodeURIComponent(remotePath).replace(/%3A/g, ':').replace(/%2F/g, '/');
+            const metaResp = await fetchWithTimeout(
+                'https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encPath,
+                { headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' } },
+                15000
+            );
+            if (!metaResp.ok) throw new Error('Яндекс Диск HTTP ' + metaResp.status);
+            const meta = await metaResp.json();
+            if (!meta.href) throw new Error('Не получена ссылка на скачивание');
+
+            const fileResp = await fetchWithTimeout(meta.href, {}, 30000);
+            if (!fileResp.ok) throw new Error('Ошибка скачивания HTTP ' + fileResp.status);
+            const buf = await fileResp.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            if (bytes.length >= 2 && bytes[0] === 0x1F && bytes[1] === 0x8B && typeof DecompressionStream !== 'undefined') {
+                const ds = new DecompressionStream('gzip');
+                const decompressed = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
+                return decompressed;
+            }
+            return new TextDecoder('utf-8').decode(bytes);
+        }
+
+        async function yandexUploadText(remotePath, content) {
+            const token = getEffectiveYandexToken();
+            if (!token) return;
+
+            if (window.AndroidApp && typeof window.AndroidApp.yandexUploadAsync === 'function') {
+                return new Promise((resolve, reject) => {
+                    const cbId = 'yd_ul_' + (++androidAsyncSeq) + '_' + Date.now();
+                    const timer = setTimeout(() => {
+                        if (androidAsyncCallbacks.has(cbId)) {
+                            androidAsyncCallbacks.delete(cbId);
+                            reject(new Error('Таймаут выгрузки на Яндекс Диск'));
+                        }
+                    }, 25000);
+                    androidAsyncCallbacks.set(cbId, {
+                        resolve: (val) => { clearTimeout(timer); resolve(val); },
+                        reject: (err) => { clearTimeout(timer); reject(err); }
+                    });
+                    window.AndroidApp.yandexUploadAsync(remotePath, content, token, cbId);
+                });
+            }
+
+            const encPath = encodeURIComponent(remotePath).replace(/%3A/g, ':').replace(/%2F/g, '/');
+            const metaResp = await fetchWithTimeout(
+                'https://cloud-api.yandex.net/v1/disk/resources/upload?path=' + encPath + '&overwrite=true',
+                { headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' } },
+                15000
+            );
+            if (!metaResp.ok) return;
+            const meta = await metaResp.json();
+            if (!meta.href) return;
+            await fetchWithTimeout(meta.href, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                body: content
+            }, 25000);
+        }
+
+        function uploadConfigToYandexDisk() {
+            if (!yandexDiskEnabled || !getEffectiveYandexToken()) return;
+            const lines = [];
+            for (let i = 0; i < FOLDER_COUNT; i++) {
+                if (!isFolderConfigured(i)) continue;
+                const resolved = folderPatterns[i] ? resolvePath(folderPatterns[i]) : folderPaths[i];
+                if (resolved) {
+                    lines.push({
+                        name: getLineName(i),
+                        directory: resolved.replace(/\\/g, '/')
+                    });
+                }
+            }
+            if (lines.length === 0) return;
+            const payload = {
+                version: 1,
+                updated_at: new Date().toISOString(),
+                lines: lines
+            };
+            yandexUploadText('app:/config.json', JSON.stringify(payload)).catch(e => {
+                console.warn('Не удалось выгрузить config.json на Яндекс Диск:', e);
+            });
+        }
+
+        function extractLineFolderHintJs(pathStr) {
+            const norm = String(pathStr || '').trim().replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+            if (!norm) return '';
+            const parts = norm.split('/').filter(Boolean);
+            for (let i = parts.length - 1; i >= 0; i--) {
+                const seg = parts[i];
+                if (getMonthIndexFromName(seg) >= 0) continue;
+                if (/^20\d{2}$/.test(seg)) continue;
+                return seg;
+            }
+            return '';
+        }
+
+        function normSlashPath(p) {
+            return String(p || '').trim().replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+        }
+
+        // Загрузка данных смен из app:/cache.json на Яндекс Диске
+        async function loadFromYandexDisk(showErrors) {
+            if (!yandexDiskEnabled || !getEffectiveYandexToken()) return false;
+            try {
+                updateStatus('Загрузка данных с Яндекс Диска...');
+                const rawText = await yandexDownloadText('app:/cache.json');
+                if (!rawText) throw new Error('Пустой ответ cache.json');
+                const cacheObj = JSON.parse(rawText);
+                lastYandexCache = cacheObj;
+                const remoteLines = Array.isArray(cacheObj.lines) ? cacheObj.lines : [];
+                if (remoteLines.length === 0) {
+                    throw new Error('В cache.json на Яндекс Диске нет данных линий');
+                }
+
+                // Если на телефоне ещё не настроено ни одной линии — автоматически подхватываем из cache.json
+                let configured = getConfiguredIndexes();
+                if (configured.length === 0) {
+                    const groupedByLine = [];
+                    const seenGroup = new Set();
+                    for (const rl of remoteLines) {
+                        const hint = extractLineFolderHintJs(rl.directory) || rl.name || 'Линия';
+                        const key = hint.toLowerCase();
+                        if (!seenGroup.has(key) && groupedByLine.length < FOLDER_COUNT) {
+                            seenGroup.add(key);
+                            groupedByLine.push({ name: rl.name || hint, path: rl.directory || '' });
+                        }
+                    }
+                    groupedByLine.forEach((g, i) => {
+                        folderNames[i] = g.name;
+                        folderPaths[i] = g.path;
+                    });
+                    if (groupedByLine.length > 0) {
+                        activeIndex = 0;
+                        currentDirectory = folderPaths[0];
+                        saveAllSettings();
+                        updateActiveDisplay();
+                        configured = getConfiguredIndexes();
+                    }
+                }
+
+                let matchedAny = false;
+                const scanStamp = cacheObj.updated_iso ? new Date(cacheObj.updated_iso) : new Date();
+                const validStamp = isNaN(scanStamp.getTime()) ? new Date() : scanStamp;
+
+                for (const idx of configured) {
+                    const lName = getLineName(idx);
+                    const lNameLow = lName.toLowerCase();
+                    const basePath = folderPatterns[idx] ? resolvePath(folderPatterns[idx]) : folderPaths[idx];
+                    const normBase = normSlashPath(basePath);
+                    const hint = extractLineFolderHintJs(basePath);
+
+                    const matchedEntries = remoteLines.filter(rl => {
+                        const rDir = normSlashPath(rl.directory);
+                        const rName = String(rl.name || '').trim().toLowerCase();
+                        if (normBase && rDir && (rDir === normBase || rDir.startsWith(normBase + '/') || normBase.startsWith(rDir + '/'))) {
+                            return true;
+                        }
+                        if (hint && rDir && (rDir.includes('/' + hint + '/') || rDir.endsWith('/' + hint))) {
+                            return true;
+                        }
+                        if (lNameLow && rName && (rName === lNameLow || rName.includes(lNameLow) || lNameLow.includes(rName))) {
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    // Если линия всего 1 и не совпала по имени/пути — пробуем взять все данные из cache.json
+                    const effectiveEntries = (matchedEntries.length > 0)
+                        ? matchedEntries
+                        : (configured.length === 1 ? remoteLines : []);
+
+                    if (effectiveEntries.length === 0) continue;
+
+                    const collected = [];
+                    for (const ent of effectiveEntries) {
+                        const blks = Array.isArray(ent.blocks) ? ent.blocks : [];
+                        for (const b of blks) {
+                            collected.push(Object.assign({}, b, {
+                                lineName: lName,
+                                sourcePath: ent.directory || basePath || ''
+                            }));
+                        }
+                    }
+
+                    blocksByFolder[idx] = trimToFreshest(collected, blockLimit);
+                    lastScanTime[idx] = validStamp;
+                    syncAndroidKnownFoldersForLine(idx, collected);
+                    matchedAny = true;
+                }
+
+                if (matchedAny) {
+                    lastDataSource = 'yandex';
+                    saveCachedData();
+                    if (blocksByFolder[activeIndex]) {
+                        currentBlocks = blocksByFolder[activeIndex];
+                        displayBlocks(currentBlocks);
+                        prepareChartDataFromBlocks(currentBlocks);
+                    }
+                    const upd = cacheObj.updated_at || formatCacheTime(validStamp);
+                    updateStatus('Данные загружены с Яндекс Диска (обновлено ' + upd + ')');
+                    return true;
+                }
+                if (showErrors) {
+                    updateStatus('Яндекс Диск: не найдено подходящих линий в cache.json');
+                }
+                return false;
+            } catch (e) {
+                console.warn('Ошибка загрузки с Яндекс Диска:', e);
+                if (showErrors) {
+                    updateStatus('Ошибка Яндекс Диска: ' + e.message);
+                }
+                return false;
+            }
+        }
 
         const MONTHS_RU = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 
@@ -1073,6 +1445,15 @@
             updateSwitchIntervalState();
             const notifyCb = document.getElementById('notifyNewDaysCheckbox');
             if (notifyCb) notifyCb.checked = notifyNewDays;
+            const ydEnCb = document.getElementById('yandexDiskEnabledCheckbox');
+            if (ydEnCb) ydEnCb.checked = yandexDiskEnabled;
+            const ydTokInp = document.getElementById('yandexTokenInput');
+            if (ydTokInp) {
+                ydTokInp.value = yandexToken || DEFAULT_YANDEX_TOKEN;
+                ydTokInp.type = 'password';
+            }
+            const toggleYdBtn = document.getElementById('toggleYandexTokenBtn');
+            if (toggleYdBtn) toggleYdBtn.textContent = 'Показать';
             document.getElementById('scalePercent').value = scalePercent;
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
@@ -1182,7 +1563,12 @@
             localStorage.setItem(STORAGE_KEYS.SHOW_CHART, String(showChart));
             localStorage.setItem(STORAGE_KEYS.SCALE, String(scalePercent));
             localStorage.setItem(STORAGE_KEYS.NOTIFY_NEW_DAYS, String(notifyNewDays));
+            localStorage.setItem(STORAGE_KEYS.YANDEX_ENABLED, String(yandexDiskEnabled));
+            localStorage.setItem(STORAGE_KEYS.YANDEX_TOKEN, getEffectiveYandexToken());
             syncAndroidNotificationConfig(false);
+            if (window.AndroidApp && typeof window.AndroidApp.syncYandexConfig === 'function') {
+                try { window.AndroidApp.syncYandexConfig(getEffectiveYandexToken(), !!yandexDiskEnabled); } catch (e) {}
+            }
         }
 
         function syncAndroidNotificationConfig(resetAll) {
@@ -1302,6 +1688,22 @@
             if (notifySaved !== null) {
                 notifyNewDays = notifySaved === 'true';
             }
+            const ydEnSaved = localStorage.getItem(STORAGE_KEYS.YANDEX_ENABLED);
+            if (ydEnSaved !== null) {
+                yandexDiskEnabled = ydEnSaved === 'true';
+            } else if (window.AndroidApp && typeof window.AndroidApp.isYandexEnabled === 'function') {
+                try { yandexDiskEnabled = !!window.AndroidApp.isYandexEnabled(); } catch (e) {}
+            }
+            const ydTokSaved = localStorage.getItem(STORAGE_KEYS.YANDEX_TOKEN);
+            if (ydTokSaved && ydTokSaved.trim()) {
+                yandexToken = ydTokSaved.trim();
+            } else if (window.AndroidApp && typeof window.AndroidApp.getYandexToken === 'function') {
+                try {
+                    const t = window.AndroidApp.getYandexToken();
+                    if (t && t.trim()) yandexToken = t.trim();
+                } catch (e) {}
+            }
+            if (!yandexToken) yandexToken = DEFAULT_YANDEX_TOKEN;
         }
 
         function saveCachedData() {
@@ -1735,11 +2137,18 @@
             }
 
             if (anySuccess) {
+                lastDataSource = 'local';
                 updateStatus('Данные обновлены: ' + new Date().toLocaleTimeString('ru-RU'));
-            } else if (blocksByFolder[activeIndex]) {
-                updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
             } else {
-                updateStatus('Нет связи с сервером — сохранённых данных пока нет');
+                // Локальный сервер недоступен — пробуем автоматически подгрузить с Яндекс Диска
+                const ydOk = (yandexDiskEnabled && getEffectiveYandexToken()) ? await loadFromYandexDisk(false) : false;
+                if (ydOk) {
+                    anySuccess = true;
+                } else if (blocksByFolder[activeIndex]) {
+                    updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
+                } else {
+                    updateStatus('Нет связи с сервером и Яндекс Диском');
+                }
             }
 
             // Показать актуальные (или сохранённые) блоки для текущей активной линии
@@ -2424,27 +2833,352 @@
                     const sourcePath = this.getAttribute('data-source');
                     const blockData = currentBlocks.find(b => b.folder_name === folderName && (!sourcePath || b.sourcePath === sourcePath));
                     if (blockData) {
-                        document.getElementById('filesModalTitle').textContent = folderName + ' ' + (blockData.day_night || '');
-                        let fileHtml = '';
-                        if (blockData.processed_files && blockData.processed_files.length > 0) {
-                            blockData.processed_files.forEach(file => {
-                                fileHtml += '<div class="file-item">';
-                                fileHtml += '<div><strong>' + file.filename + '</strong></div>';
-                                fileHtml += '<div class="file-counts">';
-                                fileHtml += '<span class="count-badge">И: ' + (file.counts?.Ипостов || 0) + '</span>';
-                                fileHtml += '<span class="count-badge">С: ' + Math.floor((file.counts?.Створки || 0) / 4) + '</span>';
-                                fileHtml += '<span class="count-badge">Р: ' + Math.floor((file.counts?.Рамы || 0) / 4) + '</span>';
-                                fileHtml += '</div></div>';
-                            });
-                        } else {
-                            fileHtml = '<div>Файлы не найдены</div>';
-                        }
-                        document.getElementById('filesList').innerHTML = fileHtml;
-                        showFilesModal();
+                        openDateFilesModal(blockData);
                     }
                 });
             });
         }
+
+
+        // ==================== МОДАЛКА ФАЙЛОВ, ПОИСК ПО ЗАКАЗУ И ВИЗУАЛИЗАТОР ====================
+        function escapeHtmlSimple(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function extractOrdersFromCsvText(csvText) {
+            const orders = new Set();
+            if (!csvText) return [];
+            const lines = csvText.split(/\r?\n/);
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line) continue;
+                if (line.length < 8 || line.slice(0, 7).toUpperCase() !== 'BARCODE') continue;
+                const cols = line.split(';');
+                if (cols.length > 7 && cols[7]) {
+                    const parts = cols[7].trim().split('/');
+                    if (parts.length > 1 && parts[1].trim()) {
+                        orders.add(parts[1].trim());
+                    }
+                }
+            }
+            return Array.from(orders).sort();
+        }
+
+        async function loadYandexPackForBlock(blockData) {
+            if (!blockData || !blockData.pack_id) return null;
+            const packId = blockData.pack_id;
+            if (yandexPackCache.has(packId)) return yandexPackCache.get(packId);
+            if (!yandexDiskEnabled || !getEffectiveYandexToken()) return null;
+
+            const raw = await yandexDownloadText('app:/packs/' + packId + '.json.gz');
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            yandexPackCache.set(packId, parsed);
+            return parsed;
+        }
+
+        async function fetchCsvContentForFile(blockData, fileObj) {
+            const cacheKey = (blockData && blockData.pack_id ? blockData.pack_id + '|' : '') +
+                             (fileObj.file_key || fileObj.file_path || fileObj.filename);
+            if (csvContentCache.has(cacheKey)) {
+                return csvContentCache.get(cacheKey);
+            }
+
+            // 1. Если мы сейчас подключены к локальному серверу — пробуем прочитать напрямую
+            if (lastDataSource !== 'yandex' && fileObj.file_path) {
+                try {
+                    const resp = await fetchWithTimeout(
+                        '/api/read-file?path=' + encodeURIComponent(fileObj.file_path),
+                        {},
+                        6000
+                    );
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && data.content) {
+                            csvContentCache.set(cacheKey, data.content);
+                            if (!Array.isArray(fileObj.orders)) {
+                                fileObj.orders = extractOrdersFromCsvText(data.content);
+                            }
+                            return data.content;
+                        }
+                    }
+                } catch (e) {
+                    // перейдём к запасному чтению с Яндекс Диска
+                }
+            }
+
+            // 2. Пробуем взять из сжатого пакета смены на Яндекс Диске
+            if (blockData && blockData.pack_id) {
+                try {
+                    const pack = await loadYandexPackForBlock(blockData);
+                    if (pack && pack.files) {
+                        const fKey = fileObj.file_key || String(fileObj.filename || '').replace(/\\/g, '/');
+                        let text = pack.files[fKey] || pack.files[fileObj.filename];
+                        if (!text) {
+                            const targetBase = baseName(fKey).toLowerCase();
+                            for (const [k, v] of Object.entries(pack.files)) {
+                                if (baseName(k).toLowerCase() === targetBase) {
+                                    text = v;
+                                    break;
+                                }
+                            }
+                        }
+                        if (text) {
+                            csvContentCache.set(cacheKey, text);
+                            if (!Array.isArray(fileObj.orders)) {
+                                fileObj.orders = extractOrdersFromCsvText(text);
+                            }
+                            return text;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Не удалось прочитать пакет с Яндекс Диска:', e);
+                }
+            }
+
+            // 3. Последняя попытка — локальный сервер (если lastDataSource был 'yandex', но сервер снова в сети)
+            if (lastDataSource === 'yandex' && fileObj.file_path) {
+                const resp = await fetchWithTimeout(
+                    '/api/read-file?path=' + encodeURIComponent(fileObj.file_path),
+                    {},
+                    6000
+                );
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.content) {
+                        csvContentCache.set(cacheKey, data.content);
+                        if (!Array.isArray(fileObj.orders)) {
+                            fileObj.orders = extractOrdersFromCsvText(data.content);
+                        }
+                        return data.content;
+                    }
+                }
+            }
+
+            throw new Error('Не удалось загрузить файл раскроя (проверьте связь с сервером или обновите cache.json на сервере)');
+        }
+
+        function getMatchingOrdersForFile(fileObj, query) {
+            if (!query) return [];
+            const q = query.trim().toLowerCase();
+            if (!q || !Array.isArray(fileObj.orders)) return [];
+            return fileObj.orders.filter(o => String(o).toLowerCase().includes(q));
+        }
+
+        function getFilteredModalFiles(blockData, query) {
+            const files = (blockData && Array.isArray(blockData.processed_files)) ? blockData.processed_files : [];
+            const q = String(query || '').trim().toLowerCase();
+            if (!q) return files;
+            return files.filter(f => {
+                if (String(f.filename || '').toLowerCase().includes(q)) return true;
+                return getMatchingOrdersForFile(f, q).length > 0;
+            });
+        }
+
+        async function ensureOrdersIndexedForBlock(blockData) {
+            const files = (blockData && Array.isArray(blockData.processed_files)) ? blockData.processed_files : [];
+            const missing = files.filter(f => !Array.isArray(f.orders));
+            if (missing.length === 0 || isIndexingModalOrders) return;
+
+            isIndexingModalOrders = true;
+            const statusEl = document.getElementById('orderSearchStatus');
+            if (statusEl) statusEl.textContent = 'Индексация заказов по всем файлам смены (0/' + missing.length + ')...';
+
+            try {
+                // Если есть пакет на Яндекс Диске и мы не в локальной сети — одним запросом загрузим все файлы смены
+                if (lastDataSource === 'yandex' && blockData.pack_id) {
+                    await loadYandexPackForBlock(blockData);
+                }
+
+                let done = 0;
+                for (const f of missing) {
+                    try {
+                        const txt = await fetchCsvContentForFile(blockData, f);
+                        f.orders = extractOrdersFromCsvText(txt);
+                    } catch (e) {
+                        f.orders = [];
+                    }
+                    done++;
+                    if (statusEl && currentModalBlock === blockData) {
+                        statusEl.textContent = 'Индексация заказов (' + done + '/' + missing.length + ')...';
+                    }
+                }
+            } finally {
+                isIndexingModalOrders = false;
+                if (currentModalBlock === blockData) {
+                    const q = (document.getElementById('orderSearchInput')?.value || '').trim();
+                    renderDateModalFiles(blockData, q);
+                }
+            }
+        }
+
+        function openDateFilesModal(blockData) {
+            currentModalBlock = blockData;
+            document.getElementById('filesModalTitle').textContent =
+                (blockData.folder_name || '') + ' ' + (blockData.day_night || '');
+            const searchInp = document.getElementById('orderSearchInput');
+            if (searchInp) searchInp.value = '';
+            renderDateModalFiles(blockData, '');
+            showFilesModal();
+        }
+
+        function renderDateModalFiles(blockData, query) {
+            const listDiv = document.getElementById('filesList');
+            const statusEl = document.getElementById('orderSearchStatus');
+            const openAllBtn = document.getElementById('openOrderInVisualizerBtn');
+            const allFiles = (blockData && Array.isArray(blockData.processed_files)) ? blockData.processed_files : [];
+            const q = String(query || '').trim();
+
+            if (allFiles.length === 0) {
+                listDiv.innerHTML = '<div>Файлы не найдены</div>';
+                if (statusEl) statusEl.textContent = 'В этой смене нет файлов раскроя';
+                if (openAllBtn) openAllBtn.disabled = true;
+                return;
+            }
+
+            if (openAllBtn) {
+                openAllBtn.disabled = false;
+                openAllBtn.textContent = q ? ('📐 Заказ ' + q) : '📐 Вся смена';
+            }
+
+            const needIndex = q && allFiles.some(f => !Array.isArray(f.orders));
+            if (needIndex && !isIndexingModalOrders) {
+                ensureOrdersIndexedForBlock(blockData);
+            }
+
+            const filtered = getFilteredModalFiles(blockData, q);
+
+            if (statusEl && !isIndexingModalOrders) {
+                if (q) {
+                    statusEl.textContent = filtered.length > 0
+                        ? ('Найдено файлов с заказом «' + q + '»: ' + filtered.length + ' из ' + allFiles.length + ' — нажмите на файл или кнопку «📐»')
+                        : ('Заказ «' + q + '» за эту дату не найден');
+                } else {
+                    statusEl.textContent = 'Файлов в смене: ' + allFiles.length + ' — нажмите на файл для просмотра чертежей';
+                }
+            }
+
+            if (filtered.length === 0) {
+                listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Совпадений по запросу «' + escapeHtmlSimple(q) + '» не найдено</div>';
+                return;
+            }
+
+            let fileHtml = '';
+            filtered.forEach((file, idx) => {
+                const matchedOrders = q ? getMatchingOrdersForFile(file, q) : [];
+                const ordersCnt = Array.isArray(file.orders) ? file.orders.length : 0;
+                fileHtml += '<div class="file-item" data-file-idx="' + idx + '">';
+                fileHtml += '<div class="file-item-top">';
+                fileHtml += '<strong>' + escapeHtmlSimple(file.filename) + '</strong>';
+                fileHtml += '<span class="file-open-hint">📐 Чертеж</span>';
+                fileHtml += '</div>';
+                fileHtml += '<div class="file-counts">';
+                fileHtml += '<span class="count-badge">И: ' + (file.counts?.Ипостов || 0) + '</span>';
+                fileHtml += '<span class="count-badge">С: ' + Math.floor((file.counts?.Створки || 0) / 4) + '</span>';
+                fileHtml += '<span class="count-badge">Р: ' + Math.floor((file.counts?.Рамы || 0) / 4) + '</span>';
+                if (ordersCnt > 0) {
+                    fileHtml += '<span class="count-badge">Заказов: ' + ordersCnt + '</span>';
+                }
+                if (matchedOrders.length > 0) {
+                    fileHtml += '<span class="order-match-badge">Заказ: ' + escapeHtmlSimple(matchedOrders.slice(0, 4).join(', ')) + '</span>';
+                }
+                fileHtml += '</div></div>';
+            });
+
+            listDiv.innerHTML = fileHtml;
+
+            listDiv.querySelectorAll('.file-item[data-file-idx]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = parseInt(this.getAttribute('data-file-idx'), 10);
+                    const targetFile = filtered[idx];
+                    if (targetFile) {
+                        const curQuery = (document.getElementById('orderSearchInput')?.value || '').trim();
+                        openFilesInVisualizer(blockData, [targetFile], curQuery, targetFile.filename);
+                    }
+                });
+            });
+        }
+
+        async function openFilesInVisualizer(blockData, fileObjs, initialQuery, titleText) {
+            const statusEl = document.getElementById('orderSearchStatus');
+            const prevStatus = statusEl ? statusEl.textContent : '';
+            if (statusEl) statusEl.textContent = 'Загрузка чертежей (' + fileObjs.length + ' файл.)...';
+
+            try {
+                const filesPayload = [];
+                for (const f of fileObjs) {
+                    try {
+                        const content = await fetchCsvContentForFile(blockData, f);
+                        if (content) {
+                            filesPayload.push({ name: f.filename || 'file.csv', content: content });
+                        }
+                    } catch (e) {
+                        console.warn('Ошибка чтения файла ' + f.filename + ':', e);
+                    }
+                }
+
+                if (filesPayload.length === 0) {
+                    throw new Error('Не удалось загрузить содержимое раскроя');
+                }
+
+                const curTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                const payload = {
+                    type: 'LOAD_CSV_DATA',
+                    files: filesPayload,
+                    initialQuery: initialQuery || '',
+                    title: titleText || ((blockData.folder_name || 'Смена') + (initialQuery ? (' • Заказ ' + initialQuery) : '')),
+                    embedded: true,
+                    theme: curTheme
+                };
+
+                launchVisualizerPayload(payload);
+            } catch (e) {
+                alert(e.message || 'Ошибка открытия чертежей');
+            } finally {
+                if (statusEl) statusEl.textContent = prevStatus;
+            }
+        }
+
+        let pendingBrowserVisualizerPayload = null;
+
+        function launchVisualizerPayload(payload) {
+            if (window.AndroidApp && typeof window.AndroidApp.openVisualizer === 'function') {
+                window.AndroidApp.openVisualizer(JSON.stringify(payload));
+                return;
+            }
+
+            // Веб-браузер (без APK): открываем frame_visualizer-v7.html во встроенном fullscreen iframe
+            const overlay = document.getElementById('browserVisualizerOverlay');
+            const frame = document.getElementById('browserVisualizerFrame');
+            if (!overlay || !frame) return;
+
+            pendingBrowserVisualizerPayload = payload;
+            overlay.style.display = 'block';
+
+            if (!frame.getAttribute('src')) {
+                frame.setAttribute('src', '/frame_visualizer-v7.html?embedded=1');
+            } else if (frame.contentWindow) {
+                frame.contentWindow.postMessage(payload, '*');
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            const msg = event && event.data;
+            if (!msg) return;
+            if (msg.type === 'VISUALIZER_READY' && pendingBrowserVisualizerPayload) {
+                const frame = document.getElementById('browserVisualizerFrame');
+                if (frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage(pendingBrowserVisualizerPayload, '*');
+                }
+            } else if (msg.type === 'CLOSE_VISUALIZER') {
+                const overlay = document.getElementById('browserVisualizerOverlay');
+                if (overlay) overlay.style.display = 'none';
+            }
+        });
 
         // ==================== ПРОКРУТКА ====================
         function scrollToTodayOrTomorrowBlock() {
@@ -2493,11 +3227,17 @@
                 prepareChartDataFromBlocks(currentBlocks);
             }
             if (ok) {
+                lastDataSource = 'local';
                 updateStatus('Линия ' + lineLabel(idx) + ' обновлена: ' + new Date().toLocaleTimeString('ru-RU'));
-            } else if (blocksByFolder[idx]) {
-                updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[idx]) + ')');
             } else {
-                updateStatus('Нет связи с сервером');
+                const ydOk = (yandexDiskEnabled && getEffectiveYandexToken()) ? await loadFromYandexDisk(false) : false;
+                if (!ydOk) {
+                    if (blocksByFolder[idx]) {
+                        updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[idx]) + ')');
+                    } else {
+                        updateStatus('Нет связи с сервером');
+                    }
+                }
             }
             // Сбрасываем счётчик обновления, чтобы следующее автообновление было через полный интервал
             refreshCountdown = refreshInterval;
@@ -2565,6 +3305,17 @@
                     restartSwitchTimer();
                     startRefreshTimer();
                 }, 500);
+            } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
+                updateStatus('Загрузка данных с Яндекс Диска...');
+                setTimeout(async () => {
+                    const ok = await loadFromYandexDisk(false);
+                    if (ok) {
+                        restartSwitchTimer();
+                        startRefreshTimer();
+                    } else {
+                        updateStatus('Укажите названия линий в настройках — линии без названия пропускаются');
+                    }
+                }, 400);
             } else {
                 updateStatus('Укажите названия линий в настройках — линии без названия пропускаются');
             }
@@ -2589,6 +3340,55 @@
             document.getElementById('clearStorageBtn').addEventListener('click', clearStorage);
             document.getElementById('closeFileManagerBtn').addEventListener('click', hideFileManager);
             document.getElementById('closeFilesModalBtn').addEventListener('click', hideFilesModal);
+
+            const orderSearchInp = document.getElementById('orderSearchInput');
+            if (orderSearchInp) {
+                orderSearchInp.addEventListener('input', function() {
+                    if (currentModalBlock) {
+                        renderDateModalFiles(currentModalBlock, this.value);
+                    }
+                });
+            }
+            const openOrderVisBtn = document.getElementById('openOrderInVisualizerBtn');
+            if (openOrderVisBtn) {
+                openOrderVisBtn.addEventListener('click', async function() {
+                    if (!currentModalBlock) return;
+                    const q = (document.getElementById('orderSearchInput')?.value || '').trim();
+                    if (q) {
+                        await ensureOrdersIndexedForBlock(currentModalBlock);
+                    }
+                    const targets = getFilteredModalFiles(currentModalBlock, q);
+                    if (targets.length === 0) {
+                        alert(q ? ('Заказ «' + q + '» за эту дату не найден') : 'В этой смене нет файлов');
+                        return;
+                    }
+                    const title = q
+                        ? ('Заказ ' + q + ' (' + (currentModalBlock.folder_name || '') + ')')
+                        : ('Смена ' + (currentModalBlock.folder_name || ''));
+                    openFilesInVisualizer(currentModalBlock, targets, q, title);
+                });
+            }
+
+            const toggleYdTokBtn = document.getElementById('toggleYandexTokenBtn');
+            const ydTokField = document.getElementById('yandexTokenInput');
+            if (toggleYdTokBtn && ydTokField) {
+                toggleYdTokBtn.addEventListener('click', function() {
+                    const isPass = ydTokField.type === 'password';
+                    ydTokField.type = isPass ? 'text' : 'password';
+                    toggleYdTokBtn.textContent = isPass ? 'Скрыть' : 'Показать';
+                });
+            }
+            const ydLoadNowBtn = document.getElementById('yandexLoadNowBtn');
+            if (ydLoadNowBtn) {
+                ydLoadNowBtn.addEventListener('click', async function() {
+                    const ydEnSave = document.getElementById('yandexDiskEnabledCheckbox');
+                    if (ydEnSave) yandexDiskEnabled = ydEnSave.checked;
+                    if (ydTokField && ydTokField.value.trim()) yandexToken = ydTokField.value.trim();
+                    saveAllSettings();
+                    hideSettingsModal();
+                    await loadFromYandexDisk(true);
+                });
+            }
 
             document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
             if (window.AndroidApp) {
@@ -2672,6 +3472,14 @@
                 const notifyCbSave = document.getElementById('notifyNewDaysCheckbox');
                 if (notifyCbSave) notifyNewDays = notifyCbSave.checked;
 
+                const ydEnSave = document.getElementById('yandexDiskEnabledCheckbox');
+                if (ydEnSave) yandexDiskEnabled = ydEnSave.checked;
+                const ydTokSave = document.getElementById('yandexTokenInput');
+                if (ydTokSave) {
+                    const rawT = ydTokSave.value.trim();
+                    yandexToken = rawT || DEFAULT_YANDEX_TOKEN;
+                }
+
                 const wantDark = document.getElementById('darkThemeCheckbox').checked;
                 const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
                 const wantTheme = wantDark ? 'dark' : 'light';
@@ -2684,6 +3492,7 @@
                 applyScale();
 
                 saveAllSettings();
+                uploadConfigToYandexDisk();
                 hideSettingsModal();
 
                 // Если активная линия осталась без названия — переключаемся на первую настроенную
