@@ -1960,12 +1960,12 @@
                     const distFromBarStartMm = Math.max(0, (op.valRaw - weldRaw) / 10);
 
                     if (side === 'В') {
-                        // Верхняя заготовка идёт слева направо
-                        const x = Math.round(distFromBarStartMm * 10) / 10;
+                        // Верхняя заготовка идёт справа налево (против часовой стрелки при виде изнутри)
+                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
                         if (x > 5 && x < widthMm - 5) topXs.push({ x: x, side: 'В' });
                     } else if (side === 'Н') {
-                        // Нижняя заготовка идёт справа налево
-                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
+                        // Нижняя заготовка идёт слева направо
+                        const x = Math.round(distFromBarStartMm * 10) / 10;
                         if (x > 5 && x < widthMm - 5) botXs.push({ x: x, side: 'Н' });
                     } else if (side === 'Л') {
                         // Левая заготовка идёт сверху вниз
