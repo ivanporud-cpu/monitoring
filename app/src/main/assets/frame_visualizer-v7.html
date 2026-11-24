@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Визуализатор рам, створок и изделий</title>
+    <style>
+        :root {
+            --bg-main: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #1c222b;
+            --bg-card-hover: #222934;
+            --bg-card-warn: rgba(248, 81, 73, 0.13);
+            --bg-card-warn-hover: rgba(248, 81, 73, 0.20);
+            --border-card-warn: rgba(248, 81, 73, 0.55);
+            --bg-input: #0d1117;
+            --border-color: #30363d;
+            --border-accent: #388bfd;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #388bfd;
+            --accent-cyan: #39c5cf;
+            --accent-green: #3fb950;
+            --accent-amber: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --pvc-fill: #243447;
+            --pvc-mullion: #2d425b;
+            --pvc-stroke: #58a6ff;
+            --sash-fill: rgba(63, 185, 80, 0.16);
+            --sash-stroke: #3fb950;
+            --handle-fill: #f0883e;
+            --handle-stroke: #ffd8b5;
+            --pvc-inner: #162230;
+            --dim-color: #39c5cf;
+            --dim-text: #79c0ff;
+            --subdim-color: #d29922;
+            --subdim-text: #e3b341;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        body.light-theme {
+            --bg-main: #f3f5f8;
+            --bg-panel: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --bg-card-warn: #fff1f0;
+            --bg-card-warn-hover: #ffe4e2;
+            --border-card-warn: #ff7875;
+            --bg-input: #f6f8fa;
+            --border-color: #d0d7de;
+            --border-accent: #0969da;
+            --text-primary: #1f2328;
+            --text-secondary: #59636e;
+            --text-muted: #818b98;
+            --accent-blue: #0969da;
+            --accent-cyan: #0550ae;
+            --accent-green: #1a7f37;
+            --accent-amber: #9a6700;
+            --accent-red: #cf222e;
+            --accent-purple: #8250df;
+            --pvc-fill: #e6f0fa;
+            --pvc-mullion: #d4e6f8;
+            --pvc-stroke: #0969da;
+            --sash-fill: rgba(26, 127, 55, 0.14);
+            --sash-stroke: #1a7f37;
+            --handle-fill: #d97706;
+            --handle-stroke: #78350f;
+            --pvc-inner: #ffffff;
+            --dim-color: #cf222e;
+            --dim-text: #cf222e;
+            --subdim-color: #9a6700;
+            --subdim-text: #9a6700;
+            --shadow: 0 2px 10px rgba(31, 35, 40, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .topbar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .title-block h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .title-block p {
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 13px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            background: var(--accent-blue);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            filter: brightness(1.08);
+            background: var(--accent-green);
+        }
+
+        .server-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .server-status-pill.online {
+            border-color: rgba(63, 185, 80, 0.45);
+            color: var(--accent-green);
+        }
+
+        .server-status-pill.offline {
+            border-color: rgba(248, 81, 73, 0.4);
+            color: var(--accent-red);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Панель проводника сервера */
+        .server-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .server-panel.open {
+            display: flex;
+        }
+
+        .server-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .server-url-input {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 7px 11px;
+            font-size: 0.88rem;
+            min-width: 240px;
+            flex: 1;
+            outline: none;
+        }
+
+        .server-url-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .server-path-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .server-path-text {
+            color: var(--text-secondary);
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .server-path-text strong {
+            color: var(--text-primary);
+        }
+
+        .server-list {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-input);
+        }
+
+        .server-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.12s ease;
+            font-size: 0.88rem;
+        }
+
+        .server-item:last-child {
+            border-bottom: none;
+        }
+
+        .server-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .server-item-left {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .server-item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .server-item.is-dir .server-item-name {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .server-item-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .server-msg {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        .server-msg.error {
+            color: var(--accent-red);
+        }
+
+        /* Зона загрузки локального файла */
+        .dropzone {
+            background: var(--bg-panel);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 18px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 14px;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: var(--accent-blue);
+            background: rgba(56, 139, 253, 0.06);
+        }
+
+        .dropzone.compact {
+            padding: 11px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .dropzone-title {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .dropzone-sub {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        /* Панель фильтров */
+        .toolbar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .toolbar.visible {
+            display: flex;
+        }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stat-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-pill strong {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .stat-pill.warn-pill {
+            background: var(--bg-card-warn);
+            border-color: var(--border-card-warn);
+            color: var(--accent-red);
+        }
+
+        .stat-pill.warn-pill strong {
+            color: var(--accent-red);
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .segmented-control {
+            display: inline-flex;
+            flex-wrap: wrap;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .seg-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .seg-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .seg-btn.active {
+            background: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .search-input,
+        .select-input {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-input:focus,
+        .select-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        /* Сетка карточек */
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(335px, 1fr));
+            gap: 16px;
+        }
+
+        .order-group-header {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 10px;
+            padding: 11px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .order-group-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .order-group-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .frame-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+            cursor: pointer;
+            break-inside: avoid;
+        }
+
+        .frame-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+        }
+
+        .frame-card.oversize-warn {
+            background: var(--bg-card-warn);
+            border-color: var(--border-card-warn);
+        }
+
+        .frame-card.oversize-warn:hover {
+            background: var(--bg-card-warn-hover);
+            border-color: var(--accent-red);
+        }
+
+        .frame-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-badge {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .kind-badge {
+            display: inline-block;
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
+        .kind-badge.frame-kind {
+            background: rgba(56, 139, 253, 0.16);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 139, 253, 0.35);
+        }
+
+        .kind-badge.sash-kind {
+            background: rgba(63, 185, 80, 0.16);
+            color: var(--accent-green);
+            border: 1px solid rgba(63, 185, 80, 0.38);
+        }
+
+        .kind-badge.combined-kind {
+            background: rgba(163, 113, 247, 0.18);
+            color: var(--accent-purple);
+            border: 1px solid rgba(163, 113, 247, 0.4);
+        }
+
+        .item-subbadge {
+            display: inline-block;
+            background: rgba(139, 148, 158, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid rgba(139, 148, 158, 0.3);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .frame-index {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .svg-stage {
+            width: 100%;
+            height: 270px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            background: rgba(127, 127, 127, 0.04);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .svg-stage svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .frame-card-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.83rem;
+        }
+
+        .dim-summary-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+        }
+
+        .frame-card.oversize-warn .dim-summary-line {
+            color: var(--accent-red);
+        }
+
+        .meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag {
+            background: rgba(139, 148, 158, 0.12);
+            color: var(--text-secondary);
+            border-radius: 5px;
+            padding: 2px 7px;
+            font-size: 0.76rem;
+        }
+
+        .tag.mullion-tag {
+            background: rgba(210, 153, 34, 0.16);
+            color: var(--accent-amber);
+            border: 1px solid rgba(210, 153, 34, 0.32);
+            font-weight: 600;
+        }
+
+        .tag.handle-tag {
+            background: rgba(240, 136, 62, 0.18);
+            color: #f0883e;
+            border: 1px solid rgba(240, 136, 62, 0.38);
+            font-weight: 700;
+        }
+
+        body.light-theme .tag.handle-tag {
+            color: #b45309;
+            background: rgba(217, 119, 6, 0.14);
+            border-color: rgba(217, 119, 6, 0.35);
+        }
+
+        .tag.warn {
+            background: rgba(248, 81, 73, 0.18);
+            color: var(--accent-red);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            font-weight: 700;
+        }
+
+        /* Модальное окно деталей */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 760px;
+            max-height: 88vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-body {
+            padding: 16px 18px;
+            overflow-y: auto;
+        }
+
+        .section-box {
+            margin: 10px 0 12px 0;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            font-size: 0.86rem;
+            line-height: 1.5;
+        }
+
+        .drainage-callout.has-outer {
+            border-color: rgba(56, 139, 253, 0.45);
+            background: rgba(56, 139, 253, 0.10);
+        }
+
+        .drainage-callout.has-hidden {
+            border-color: rgba(163, 113, 247, 0.5);
+            background: rgba(163, 113, 247, 0.12);
+        }
+
+        .drainage-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-right: 6px;
+        }
+
+        .drainage-badge.outer {
+            background: rgba(56, 139, 253, 0.22);
+            color: var(--accent-blue);
+        }
+
+        .drainage-badge.hidden {
+            background: rgba(163, 113, 247, 0.22);
+            color: var(--accent-purple);
+        }
+
+        .drainage-badge.none {
+            background: rgba(139, 148, 158, 0.18);
+            color: var(--text-secondary);
+        }
+
+        table.bars-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+            margin-top: 8px;
+        }
+
+        table.bars-table th,
+        table.bars-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        table.bars-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0;
+            }
+            .topbar-actions,
+            .server-panel,
+            .dropzone,
+            .controls-row,
+            .modal-backdrop {
+                display: none !important;
+            }
+            .topbar,
+            .toolbar,
+            .frame-card,
+            .order-group-header {
+                background: #ffffff !important;
+                color: #000000 !important;
+                border-color: #999999 !important;
+                box-shadow: none !important;
+            }
+            .frame-card.oversize-warn {
+                background: #ffe8e6 !important;
+                border-color: #cf222e !important;
+            }
+            .frames-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            .svg-stage {
+                height: 210px;
+                background: #ffffff !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="topbar">
+            <div class="title-block">
+                <h1>Чертежи рам, створок и изделий</h1>
+                <p>Загрузка раскроев с локального сервера или с компьютера • Рамы, импосты, створки с ручками и дренажи</p>
+            </div>
+            <div class="topbar-actions">
+                <button class="btn btn-primary" id="backToAppBtn" type="button" style="display:none; background:#8e44ad; border-color:#8e44ad;">← Назад</button>
+                <button class="server-status-pill" id="serverStatusPill" type="button" title="Открыть проводник сервера">
+                    <span class="status-dot"></span>
+                    <span id="serverStatusText">Сервер: проверка...</span>
+                </button>
+                <button class="btn btn-primary" id="toggleServerBtn" type="button">Файлы с сервера</button>
+                <button class="btn" id="openFileBtn" type="button">С компьютера</button>
+                <button class="btn" id="themeBtn" type="button" title="Светлая / тёмная тема">Светлая тема</button>
+                <button class="btn" id="printBtn" type="button" style="display:none;">Печать</button>
+            </div>
+        </div>
+
+        <!-- Проводник файлов сервера (работает с 2new.py) -->
+        <div class="server-panel" id="serverPanel">
+            <div class="server-bar">
+                <input type="text" class="server-url-input" id="serverUrlInput" placeholder="Адрес сервера, например http://192.168.57.10:5000">
+                <button class="btn btn-primary" id="connectServerBtn" type="button">Подключиться</button>
+                <button class="btn" id="closeServerPanelBtn" type="button">Скрыть</button>
+            </div>
+            <div class="server-path-row">
+                <div class="server-path-text">Папка: <strong id="serverCurrentPath">—</strong></div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn" id="serverUpBtn" type="button" disabled style="padding:5px 10px; font-size:0.82rem;">Вверх</button>
+                    <button class="btn" id="serverRootBtn" type="button" disabled style="padding:5px 10px; font-size:0.82rem;">В корень</button>
+                    <button class="btn btn-success" id="loadAllFolderBtn" type="button" disabled style="padding:5px 11px; font-size:0.82rem;">Загрузить всю папку</button>
+                </div>
+            </div>
+            <div class="server-list" id="serverList">
+                <div class="server-msg">Нажмите «Подключиться», чтобы открыть папки сервера</div>
+            </div>
+        </div>
+
+        <input type="file" id="csvFileInput" accept=".csv,.txt" multiple style="display:none;">
+
+        <div class="dropzone" id="dropzone">
+            <div class="dropzone-title" id="dropzoneTitle">Выберите файлы на сервере или перетащите раскрой сюда</div>
+            <div class="dropzone-sub" id="dropzoneSub">Поддерживается загрузка одного или сразу нескольких файлов смены</div>
+        </div>
+
+        <div class="toolbar" id="toolbar">
+            <div class="stats-row" id="statsRow"></div>
+            <div class="controls-row">
+                <div class="segmented-control" id="entityModeGroup" role="group" aria-label="Режим отображения">
+                    <button type="button" class="seg-btn active" data-mode="combined">Рама + створка (изделие)</button>
+                    <button type="button" class="seg-btn" data-mode="frames">Рамы</button>
+                    <button type="button" class="seg-btn" data-mode="sashes">Створки</button>
+                    <button type="button" class="seg-btn" data-mode="both">Отдельно рамы и створки</button>
+                </div>
+
+                <input type="text" class="search-input" id="searchInput" placeholder="Поиск по заказу, заказчику, размеру или стороне ручки...">
+
+                <select class="select-input" id="viewModeSelect">
+                    <option value="flat">Единый список</option>
+                    <option value="grouped">Группировать по заказам</option>
+                </select>
+
+                <select class="select-input" id="extraFilterSelect">
+                    <option value="all">Все изделия</option>
+                    <option value="oversize">Только негабарит (&lt;400 или &gt;3100 мм)</option>
+                    <option value="with_mullions">Только с импостами</option>
+                    <option value="no_mullions">Без импостов</option>
+                </select>
+
+                <select class="select-input" id="sortSelect">
+                    <option value="file">Порядок из файла</option>
+                    <option value="order">По номеру заказа</option>
+                    <option value="width_desc">По ширине (убыв.)</option>
+                    <option value="area_desc">По площади (убыв.)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="frames-grid" id="framesGrid"></div>
+    </div>
+
+    <div class="modal-backdrop" id="detailModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <strong id="modalTitle">Детали изделия</strong>
+                <button class="btn" id="closeModalBtn" type="button" style="padding:5px 10px;">Закрыть</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let allItems = [];
+        let entityMode = 'combined'; // 'combined' | 'frames' | 'sashes' | 'both'
+
+        // Настройки подключения к серверу (2new.py)
+        const SERVER_STORAGE_KEY = 'frame_visualizer_server_url';
+        let serverBaseUrl = '';
+        let currentServerPath = '';
+        let parentServerPath = null;
+        let rootServerPath = '';
+
+        const SIDE_NAMES = {
+            'П': 'Правая',
+            'Л': 'Левая',
+            'В': 'Верхняя',
+            'Н': 'Нижняя'
+        };
+
+        const HANDLE_SIDE_LABELS = {
+            'П': 'Справа',
+            'Л': 'Слева',
+            'В': 'Сверху',
+            'Н': 'Снизу'
+        };
+
+        function getDefaultServerUrl() {
+            const saved = localStorage.getItem(SERVER_STORAGE_KEY);
+            if (saved) return saved;
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                return window.location.origin;
+            }
+            return 'http://localhost:5000';
+        }
+
+        function normalizeServerUrl(url) {
+            return String(url || '').trim().replace(/\/+$/, '');
+        }
+
+        function setServerStatus(online, text) {
+            const pill = document.getElementById('serverStatusPill');
+            const label = document.getElementById('serverStatusText');
+            pill.classList.remove('online', 'offline');
+            if (online === true) pill.classList.add('online');
+            else if (online === false) pill.classList.add('offline');
+            label.textContent = text;
+        }
+
+        async function checkServerAndLoad(openPanelOnSuccess = false) {
+            const inputVal = normalizeServerUrl(document.getElementById('serverUrlInput').value);
+            serverBaseUrl = inputVal || getDefaultServerUrl();
+            document.getElementById('serverUrlInput').value = serverBaseUrl;
+            localStorage.setItem(SERVER_STORAGE_KEY, serverBaseUrl);
+
+            setServerStatus(null, 'Сервер: подключение...');
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 3500);
+                const resp = await fetch(`${serverBaseUrl}/api/root-info`, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+
+                rootServerPath = data.root_path || '';
+                setServerStatus(true, `Сервер: подключён`);
+                await loadServerDirectory(rootServerPath);
+                if (openPanelOnSuccess) {
+                    document.getElementById('serverPanel').classList.add('open');
+                }
+            } catch (err) {
+                setServerStatus(false, 'Сервер: недоступен');
+                document.getElementById('serverList').innerHTML =
+                    `<div class="server-msg error">Не удалось подключиться к ${escapeHtml(serverBaseUrl)}. Проверьте, запущен ли сервер и правильный ли IP/порт.</div>`;
+                document.getElementById('serverUpBtn').disabled = true;
+                document.getElementById('serverRootBtn').disabled = true;
+                document.getElementById('loadAllFolderBtn').disabled = true;
+            }
+        }
+
+        async function loadServerDirectory(path) {
+            const listEl = document.getElementById('serverList');
+            listEl.innerHTML = '<div class="server-msg">Загрузка списка папок и файлов...</div>';
+            try {
+                const url = path
+                    ? `${serverBaseUrl}/api/files?path=${encodeURIComponent(path)}`
+                    : `${serverBaseUrl}/api/files`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+
+                currentServerPath = data.current_path || '';
+                parentServerPath = data.parent_path || null;
+                if (data.root_path) rootServerPath = data.root_path;
+
+                document.getElementById('serverCurrentPath').textContent = currentServerPath || 'Корень';
+                document.getElementById('serverUpBtn').disabled = !parentServerPath;
+                document.getElementById('serverRootBtn').disabled = !!data.is_root;
+                document.getElementById('loadAllFolderBtn').disabled = !currentServerPath;
+
+                const items = (data.items || []).filter(it =>
+                    it.is_directory || /\.(csv|txt)$/i.test(it.name || '')
+                );
+
+                if (items.length === 0) {
+                    listEl.innerHTML = '<div class="server-msg">В этой папке нет подпапок и файлов раскроя</div>';
+                    return;
+                }
+
+                listEl.innerHTML = items.map((it, idx) => {
+                    const icon = it.is_directory ? '📁' : '📄';
+                    const sizeStr = it.is_directory ? 'Папка' : formatFileSize(it.size);
+                    return `
+                        <div class="server-item ${it.is_directory ? 'is-dir' : 'is-file'}" data-idx="${idx}">
+                            <div class="server-item-left">
+                                <span>${icon}</span>
+                                <span class="server-item-name">${escapeHtml(it.name)}</span>
+                            </div>
+                            <span class="server-item-meta">${sizeStr}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                listEl.querySelectorAll('.server-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const idx = parseInt(el.getAttribute('data-idx'), 10);
+                        const item = items[idx];
+                        if (!item) return;
+                        if (item.is_directory) {
+                            loadServerDirectory(item.path);
+                        } else {
+                            loadSingleFileFromServer(item.path, item.name);
+                        }
+                    });
+                });
+            } catch (err) {
+                listEl.innerHTML = `<div class="server-msg error">Ошибка чтения папки: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function loadSingleFileFromServer(filePath, displayName) {
+            const dz = document.getElementById('dropzone');
+            dz.classList.add('compact');
+            document.getElementById('dropzoneTitle').textContent = `Загрузка с сервера: ${displayName}...`;
+            document.getElementById('dropzoneSub').textContent = 'Подождите немного';
+
+            try {
+                const resp = await fetch(`${serverBaseUrl}/api/read-file?path=${encodeURIComponent(filePath)}`);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+
+                const items = parseCsvContent(data.content || '', data.file_name || displayName);
+                applyLoadedItems(items, [data.file_name || displayName], 'с сервера');
+                document.getElementById('serverPanel').classList.remove('open');
+            } catch (err) {
+                document.getElementById('dropzoneTitle').textContent = `Ошибка загрузки файла: ${err.message}`;
+                document.getElementById('dropzoneSub').textContent = 'Проверьте подключение к серверу';
+            }
+        }
+
+        async function loadAllCsvFromCurrentFolder() {
+            if (!currentServerPath) return;
+            const btn = document.getElementById('loadAllFolderBtn');
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+
+            const dz = document.getElementById('dropzone');
+            dz.classList.add('compact');
+            document.getElementById('dropzoneTitle').textContent = 'Поиск файлов в папке на сервере...';
+            document.getElementById('dropzoneSub').textContent = currentServerPath;
+
+            try {
+                const resp = await fetch(`${serverBaseUrl}/api/find-csv-files?folder_path=${encodeURIComponent(currentServerPath)}`);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+
+                const files = data.files || [];
+                if (files.length === 0) {
+                    document.getElementById('dropzoneTitle').textContent = 'В выбранной папке файлы раскроя не найдены';
+                    document.getElementById('dropzoneSub').textContent = 'Выберите другую папку на сервере';
+                    return;
+                }
+
+                const parsedAll = [];
+                const loadedNames = [];
+
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    document.getElementById('dropzoneTitle').textContent = `Загрузка с сервера (${i + 1}/${files.length}): ${f.name}`;
+                    try {
+                        const r = await fetch(`${serverBaseUrl}/api/read-file?path=${encodeURIComponent(f.path)}`);
+                        if (!r.ok) continue;
+                        const fileData = await r.json();
+                        if (fileData.content) {
+                            const items = parseCsvContent(fileData.content, fileData.file_name || f.name);
+                            parsedAll.push(...items);
+                            loadedNames.push(fileData.file_name || f.name);
+                        }
+                    } catch (e) {
+                        // пропускаем недоступный файл
+                    }
+                }
+
+                applyLoadedItems(parsedAll, loadedNames, 'с сервера');
+                document.getElementById('serverPanel').classList.remove('open');
+            } catch (err) {
+                document.getElementById('dropzoneTitle').textContent = `Ошибка загрузки папки: ${err.message}`;
+                document.getElementById('dropzoneSub').textContent = 'Проверьте подключение к серверу';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Загрузить всю папку';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes || bytes <= 0) return '0 Б';
+            if (bytes < 1024) return `${bytes} Б`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
+        }
+
+        function decodeCsvBuffer(buffer) {
+            const bytes = new Uint8Array(buffer);
+            if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+                return new TextDecoder('utf-8').decode(bytes);
+            }
+            try {
+                return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {
+                return new TextDecoder('windows-1251').decode(bytes);
+            }
+        }
+
+        function safeCol(cols, index) {
+            if (!cols || index < 0 || index >= cols.length) return '';
+            const v = cols[index];
+            return v === undefined || v === null ? '' : String(v).trim();
+        }
+
+        function parseNumberSafe(str) {
+            if (!str) return NaN;
+            const cleaned = str.replace(',', '.').replace(/[^0-9.\-]/g, '');
+            return cleaned ? parseFloat(cleaned) : NaN;
+        }
+
+        function extractDimsFromEncodedCol(encodedStr) {
+            const m = String(encodedStr || '').match(/(\d{6})(\d{6})$/);
+            if (!m) return null;
+            const w = parseInt(m[1], 10);
+            const h = parseInt(m[2], 10);
+            if (w > 0 && h > 0) return { widthRaw: w, heightRaw: h };
+            return null;
+        }
+
+        function formatMm(val) {
+            if (!isFinite(val) || val <= 0) return '0';
+            return Number.isInteger(val) ? String(val) : val.toFixed(1).replace(/\.0$/, '');
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function checkOversize(widthMm, heightMm) {
+            const reasons = [];
+            if (widthMm > 0 && widthMm < 400) reasons.push(`ширина ${formatMm(widthMm)} < 400 мм`);
+            if (widthMm > 3100) reasons.push(`ширина ${formatMm(widthMm)} > 3100 мм`);
+            if (heightMm > 0 && heightMm < 400) reasons.push(`высота ${formatMm(heightMm)} < 400 мм`);
+            if (heightMm > 3100) reasons.push(`высота ${formatMm(heightMm)} > 3100 мм`);
+            return { isOversize: reasons.length > 0, reasons: reasons };
+        }
+
+        // Разбиение рамы на пролёты с учётом как сквозных, так и Т-образных импостов
+        function computeFrameSpans(widthMm, heightMm, mullions) {
+            if (widthMm <= 0 || heightMm <= 0) return [];
+            let rects = [{ x1: 0, y1: 0, x2: widthMm, y2: heightMm }];
+
+            const ordered = [
+                ...(mullions || []).filter(m => m.full),
+                ...(mullions || []).filter(m => !m.full)
+            ];
+
+            for (const m of ordered) {
+                const nextRects = [];
+                for (const r of rects) {
+                    if (m.orient === 'V') {
+                        const mx = m.x1;
+                        const overlapY = Math.min(r.y2, m.y2) - Math.max(r.y1, m.y1);
+                        if (mx > r.x1 + 5 && mx < r.x2 - 5 && overlapY > (r.y2 - r.y1) * 0.6) {
+                            nextRects.push({ x1: r.x1, y1: r.y1, x2: mx, y2: r.y2 });
+                            nextRects.push({ x1: mx, y1: r.y1, x2: r.x2, y2: r.y2 });
+                        } else {
+                            nextRects.push(r);
+                        }
+                    } else {
+                        const my = m.y1;
+                        const overlapX = Math.min(r.x2, m.x2) - Math.max(r.x1, m.x1);
+                        if (my > r.y1 + 5 && my < r.y2 - 5 && overlapX > (r.x2 - r.x1) * 0.6) {
+                            nextRects.push({ x1: r.x1, y1: r.y1, x2: r.x2, y2: my });
+                            nextRects.push({ x1: r.x1, y1: my, x2: r.x2, y2: r.y2 });
+                        } else {
+                            nextRects.push(r);
+                        }
+                    }
+                }
+                rects = nextRects;
+            }
+
+            rects.sort((a, b) => (Math.round(a.y1) - Math.round(b.y1)) || (Math.round(a.x1) - Math.round(b.x1)));
+
+            return rects.map(r => ({
+                x1: r.x1,
+                y1: r.y1,
+                x2: r.x2,
+                y2: r.y2,
+                spanW: Math.round((r.x2 - r.x1) * 10) / 10,
+                spanH: Math.round((r.y2 - r.y1) * 10) / 10,
+                leftIsFrame: r.x1 <= 1.0,
+                rightIsFrame: r.x2 >= widthMm - 1.0,
+                topIsFrame: r.y1 <= 1.0,
+                botIsFrame: r.y2 >= heightMm - 1.0,
+                assignedSash: null
+            }));
+        }
+
+        // Оценка соответствия створки конкретному пролёту с учётом границ (рама/импост) и стороны ручки
+        function scoreSashForSpan(sash, sp, frameW) {
+            const expW = (sp.leftIsFrame ? 33 : 11.5) + (sp.rightIsFrame ? 33 : 11.5);
+            const expH = (sp.topIsFrame ? 33 : 11.5) + (sp.botIsFrame ? 33 : 11.5);
+
+            const diffW = sp.spanW - sash.widthMm;
+            const diffH = sp.spanH - sash.heightMm;
+
+            if (diffW < 5 || diffH < 5) {
+                return 10000 + Math.abs(diffW - expW) + Math.abs(diffH - expH);
+            }
+
+            const sizeErr = Math.abs(diffW - expW) + Math.abs(diffH - expH);
+
+            // Логика ручки: створка открывается от импоста к краю рамы
+            // Ручка справа (П) -> предпочтительно левый пролёт (справа импост, слева рама)
+            // Ручка слева (Л) -> предпочтительно правый пролёт (слева импост, справа рама)
+            let handleAdjust = 0;
+            const hs = sash.handleSide;
+            if (hs === 'П') {
+                if (!sp.rightIsFrame) handleAdjust -= 8;
+                if (sp.leftIsFrame) handleAdjust -= 4;
+                if (frameW > 0) handleAdjust += (sp.x1 / frameW) * 1.5;
+            } else if (hs === 'Л') {
+                if (!sp.leftIsFrame) handleAdjust -= 8;
+                if (sp.rightIsFrame) handleAdjust -= 4;
+                if (frameW > 0) handleAdjust += ((frameW - sp.x2) / frameW) * 1.5;
+            } else if (hs === 'В') {
+                if (sp.topIsFrame) handleAdjust -= 4;
+            }
+
+            return sizeErr + handleAdjust;
+        }
+
+        // Сопоставление створок с пролётами рамы
+        function matchSashesToFrameSpans(frameItem, sashItems) {
+            const spans = computeFrameSpans(frameItem.widthMm, frameItem.heightMm, frameItem.mullions);
+            const matches = [];
+
+            if (!sashItems || sashItems.length === 0 || spans.length === 0) {
+                return { spans, matches };
+            }
+
+            const usedSpans = new Set();
+            const sortedSashes = sashItems.slice().sort((a, b) => a.subCode.localeCompare(b.subCode, 'ru', { numeric: true }));
+
+            for (const s of sortedSashes) {
+                let bestIdx = -1;
+                let bestScore = Infinity;
+
+                for (let i = 0; i < spans.length; i++) {
+                    if (usedSpans.has(i)) continue;
+                    const score = scoreSashForSpan(s, spans[i], frameItem.widthMm);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestIdx = i;
+                    }
+                }
+
+                if (bestIdx >= 0) {
+                    usedSpans.add(bestIdx);
+                    const sp = spans[bestIdx];
+                    const info = { sash: s, span: sp };
+                    sp.assignedSash = info;
+                    matches.push(info);
+                } else {
+                    matches.push({ sash: s, span: null });
+                }
+            }
+
+            return { spans, matches };
+        }
+
+        function parseCsvContent(text, fileName) {
+            const lines = text.split(/\r?\n/);
+            const frameRows = [];
+            const sashRows = [];
+            let pendingDataOps = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const rawLine = lines[i];
+                if (!rawLine || !rawLine.trim()) continue;
+
+                const delimiter = rawLine.includes(';') ? ';' : ',';
+                const cols = rawLine.split(delimiter);
+                const rowType = safeCol(cols, 0).toUpperCase();
+
+                if (rowType === 'PROFILE') {
+                    pendingDataOps = [];
+                    continue;
+                }
+
+                if (rowType === 'DATA') {
+                    pendingDataOps.push({
+                        op: safeCol(cols, 1),
+                        valStr: safeCol(cols, 2),
+                        valRaw: parseNumberSafe(safeCol(cols, 2))
+                    });
+                    continue;
+                }
+
+                if (rowType !== 'BARCODE') {
+                    continue;
+                }
+
+                const currentData = pendingDataOps;
+                pendingDataOps = [];
+
+                const code7 = safeCol(cols, 7);
+                const elemCode15 = safeCol(cols, 15).toUpperCase();
+                const tokens = code7.split('/').map(t => t.trim());
+                const prefix = (tokens[0] || '').toUpperCase();
+
+                const orderNo = (tokens.length > 1 && tokens[1]) ? tokens[1] : (tokens[0] || 'Без номера');
+                const itemNo = (tokens.length > 2 && tokens[2]) ? tokens[2] : '';
+
+                const isFrame = (prefix === 'P') || (!prefix && elemCode15 === 'Р');
+                const isSash = prefix.startsWith('C') || elemCode15.startsWith('С');
+
+                if (!isFrame && !isSash) {
+                    continue;
+                }
+
+                let wRaw = parseNumberSafe(safeCol(cols, 3));
+                let hRaw = parseNumberSafe(safeCol(cols, 4));
+
+                if (!isFinite(wRaw) || wRaw <= 0 || !isFinite(hRaw) || hRaw <= 0) {
+                    const fallback = extractDimsFromEncodedCol(safeCol(cols, 14));
+                    if (fallback) {
+                        if (!isFinite(wRaw) || wRaw <= 0) wRaw = fallback.widthRaw;
+                        if (!isFinite(hRaw) || hRaw <= 0) hRaw = fallback.heightRaw;
+                    }
+                }
+
+                const widthMm = isFinite(wRaw) && wRaw > 0 ? Math.round((wRaw / 10) * 10) / 10 : 0;
+                const heightMm = isFinite(hRaw) && hRaw > 0 ? Math.round((hRaw / 10) * 10) / 10 : 0;
+                const cutRaw = parseNumberSafe(safeCol(cols, 1));
+                const cutMm = isFinite(cutRaw) && cutRaw > 0 ? Math.round((cutRaw / 10) * 10) / 10 : 0;
+
+                const mullionOps = currentData.filter(d => d.op === '05' && isFinite(d.valRaw) && d.valRaw > 0);
+                const outerDrainageOps = currentData.filter(d => d.op === '02');
+                const hiddenDrainageOps = currentData.filter(d => d.op === '07');
+                const handlePosOps = currentData.filter(d => (d.op === '12' || d.op === '13') && isFinite(d.valRaw) && d.valRaw > 0);
+                const hasHandleRPlus = cols.some(c => String(c || '').trim().toUpperCase() === 'R+');
+
+                const rowObj = {
+                    entityType: isFrame ? 'frame' : 'sash',
+                    subCode: isSash ? (prefix || elemCode15 || 'C1') : 'P',
+                    fileName: fileName,
+                    orderNo: orderNo,
+                    itemNo: itemNo,
+                    wRaw: isFinite(wRaw) ? wRaw : widthMm * 10,
+                    hRaw: isFinite(hRaw) ? hRaw : heightMm * 10,
+                    cutRaw: isFinite(cutRaw) ? cutRaw : 0,
+                    widthMm: widthMm,
+                    heightMm: heightMm,
+                    cutMm: cutMm,
+                    article: safeCol(cols, 2),
+                    client: safeCol(cols, 8),
+                    steel: safeCol(cols, 12),
+                    side: safeCol(cols, 16).toUpperCase(),
+                    cell: safeCol(cols, 18),
+                    hasHandleRPlus: hasHandleRPlus,
+                    mullionOps: mullionOps,
+                    outerDrainageOps: outerDrainageOps,
+                    hiddenDrainageOps: hiddenDrainageOps,
+                    handlePosOps: handlePosOps
+                };
+
+                if (isFrame) frameRows.push(rowObj);
+                else sashRows.push(rowObj);
+            }
+
+            const builtFrames = buildEntitiesFromRows(frameRows, 'frame');
+            const builtSashes = buildEntitiesFromRows(sashRows, 'sash');
+
+            // Распределяем створки по конкретным экземплярам рам (учитываем количество одинаковых изделий и номер ячейки)
+            const sashesByOrderItem = new Map();
+            for (const s of builtSashes) {
+                const k = s.orderNo + '|' + s.itemNo;
+                if (!sashesByOrderItem.has(k)) sashesByOrderItem.set(k, []);
+                sashesByOrderItem.get(k).push(s);
+            }
+
+            const usedSashSet = new Set();
+            const builtCombined = [];
+
+            for (const fr of builtFrames) {
+                const k = fr.orderNo + '|' + fr.itemNo;
+                const candidates = (sashesByOrderItem.get(k) || []).filter(s => !usedSashSet.has(s));
+
+                // Берём по 1 экземпляру каждого subCode (C1, C2, C3...), предпочитая совпадение по ячейке или порядковому номеру копии
+                const subCodeGroups = new Map();
+                for (const s of candidates) {
+                    if (!subCodeGroups.has(s.subCode)) subCodeGroups.set(s.subCode, []);
+                    subCodeGroups.get(s.subCode).push(s);
+                }
+
+                const matchedSashes = [];
+                for (const [subCode, list] of subCodeGroups.entries()) {
+                    let chosen = null;
+                    if (fr.cell) {
+                        chosen = list.find(s => s.cell && s.cell === fr.cell) || null;
+                    }
+                    if (!chosen && fr.duplicateIndex > 0) {
+                        chosen = list.find(s => s.duplicateIndex === fr.duplicateIndex) || null;
+                    }
+                    if (!chosen) {
+                        chosen = list[0];
+                    }
+                    if (chosen) {
+                        usedSashSet.add(chosen);
+                        matchedSashes.push(chosen);
+                    }
+                }
+
+                const comparison = matchSashesToFrameSpans(fr, matchedSashes);
+                const anyOversize = fr.isOversize || matchedSashes.some(s => s.isOversize);
+                const oversizeReasons = [
+                    ...fr.oversizeReasons.map(r => `рама: ${r}`),
+                    ...matchedSashes.flatMap(s => s.oversizeReasons.map(r => `${s.subCode}: ${r}`))
+                ];
+
+                builtCombined.push({
+                    entityType: 'combined',
+                    fileName: fr.fileName,
+                    orderNo: fr.orderNo,
+                    itemNo: fr.itemNo,
+                    duplicateIndex: fr.duplicateIndex,
+                    duplicateTotal: fr.duplicateTotal,
+                    widthMm: fr.widthMm,
+                    heightMm: fr.heightMm,
+                    article: fr.article,
+                    client: fr.client,
+                    cell: fr.cell,
+                    frame: fr,
+                    sashes: matchedSashes,
+                    mullions: fr.mullions,
+                    outerDrainages: fr.outerDrainages,
+                    hiddenDrainages: fr.hiddenDrainages,
+                    spanComparison: comparison,
+                    bars: fr.bars,
+                    isOversize: anyOversize,
+                    oversizeReasons: oversizeReasons
+                });
+            }
+
+            return [...builtCombined, ...builtFrames, ...builtSashes];
+        }
+
+        function buildEntitiesFromRows(rows, entityType) {
+            const buckets = new Map();
+            const bucketOrder = [];
+
+            for (const row of rows) {
+                const subKey = entityType === 'sash' ? row.subCode : 'P';
+                const key = `${entityType}||${row.orderNo}||${row.itemNo}||${subKey}||${row.widthMm}||${row.heightMm}`;
+                if (!buckets.has(key)) {
+                    buckets.set(key, []);
+                    bucketOrder.push(key);
+                }
+                buckets.get(key).push(row);
+            }
+
+            const result = [];
+            for (const key of bucketOrder) {
+                const groupRows = buckets.get(key);
+                const subEntities = splitRowsIntoQuadruples(groupRows);
+                const subTotal = subEntities.length;
+
+                subEntities.forEach((bars, subIdx) => {
+                    const first = bars[0];
+                    const mullions = computeMullionsForEntity(bars, first.widthMm, first.heightMm);
+                    const oversize = checkOversize(first.widthMm, first.heightMm);
+
+                    let handleSide = '';
+                    let handlePosMm = null;
+                    for (const b of bars) {
+                        if (b.hasHandleRPlus && b.side) {
+                            handleSide = b.side;
+                            if (b.handlePosOps && b.handlePosOps.length > 0) {
+                                handlePosMm = Math.round((b.handlePosOps[0].valRaw / 10) * 10) / 10;
+                            }
+                            break;
+                        }
+                    }
+
+                    const outerDrainages = [];
+                    const hiddenDrainages = [];
+                    for (const b of bars) {
+                        for (const op of (b.outerDrainageOps || [])) {
+                            outerDrainages.push({
+                                side: b.side || '—',
+                                valStr: op.valStr,
+                                mm: isFinite(op.valRaw) ? Math.round((op.valRaw / 10) * 10) / 10 : null
+                            });
+                        }
+                        for (const op of (b.hiddenDrainageOps || [])) {
+                            hiddenDrainages.push({
+                                side: b.side || '—',
+                                valStr: op.valStr,
+                                mm: isFinite(op.valRaw) ? Math.round((op.valRaw / 10) * 10) / 10 : null
+                            });
+                        }
+                    }
+
+                    let cellValue = '';
+                    for (const b of bars) {
+                        if (b.cell && b.cell.toUpperCase() !== 'R+') {
+                            cellValue = b.cell;
+                            break;
+                        }
+                    }
+
+                    result.push({
+                        entityType: entityType,
+                        subCode: first.subCode,
+                        fileName: first.fileName,
+                        orderNo: first.orderNo,
+                        itemNo: first.itemNo,
+                        duplicateIndex: subTotal > 1 ? (subIdx + 1) : 0,
+                        duplicateTotal: subTotal,
+                        widthMm: first.widthMm,
+                        heightMm: first.heightMm,
+                        article: first.article,
+                        client: first.client,
+                        cell: cellValue,
+                        bars: bars,
+                        mullions: mullions,
+                        handleSide: handleSide,
+                        handlePosMm: handlePosMm,
+                        outerDrainages: outerDrainages,
+                        hiddenDrainages: hiddenDrainages,
+                        isOversize: oversize.isOversize,
+                        oversizeReasons: oversize.reasons
+                    });
+                });
+            }
+
+            return result;
+        }
+
+        function splitRowsIntoQuadruples(rows) {
+            const entities = [];
+            const remaining = rows.slice();
+
+            while (remaining.length > 0) {
+                const currentBars = [];
+                const usedSides = new Set();
+
+                // Если у заготовок указана ячейка (кроме R+), стараемся собирать 4 стороны одной ячейки вместе
+                const seedCell = remaining.find(r => r.cell && r.cell.toUpperCase() !== 'R+')?.cell || '';
+
+                if (seedCell) {
+                    for (let i = 0; i < remaining.length && currentBars.length < 4; ) {
+                        const r = remaining[i];
+                        const sameCellOrHandle = (r.cell === seedCell) || (r.cell.toUpperCase() === 'R+');
+                        if (sameCellOrHandle && r.side && !usedSides.has(r.side)) {
+                            usedSides.add(r.side);
+                            currentBars.push(remaining.splice(i, 1)[0]);
+                        } else {
+                            i++;
+                        }
+                    }
+                }
+
+                for (let i = 0; i < remaining.length && currentBars.length < 4; ) {
+                    const s = remaining[i].side;
+                    if (s && !usedSides.has(s)) {
+                        usedSides.add(s);
+                        currentBars.push(remaining.splice(i, 1)[0]);
+                    } else {
+                        i++;
+                    }
+                }
+
+                while (currentBars.length < 4 && remaining.length > 0) {
+                    currentBars.push(remaining.shift());
+                }
+
+                entities.push(currentBars);
+            }
+
+            return entities;
+        }
+
+        function computeMullionsForEntity(bars, widthMm, heightMm) {
+            if (widthMm <= 0 || heightMm <= 0) return [];
+
+            const topXs = [];
+            const botXs = [];
+            const leftYs = [];
+            const rightYs = [];
+
+            for (const bar of bars) {
+                if (!bar.mullionOps || bar.mullionOps.length === 0) continue;
+                const side = bar.side;
+                const isHorizBar = (side === 'В' || side === 'Н');
+                const nominalRaw = (isHorizBar ? widthMm : heightMm) * 10;
+                const cutRaw = bar.cutRaw > 0 ? bar.cutRaw : (nominalRaw + 60);
+                const weldRaw = Math.max(0, (cutRaw - nominalRaw) / 2);
+
+                for (const op of bar.mullionOps) {
+                    const distFromBarStartMm = Math.max(0, (op.valRaw - weldRaw) / 10);
+
+                    if (side === 'В') {
+                        const x = Math.round(distFromBarStartMm * 10) / 10;
+                        if (x > 5 && x < widthMm - 5) topXs.push({ x: x, side: 'В' });
+                    } else if (side === 'Н') {
+                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
+                        if (x > 5 && x < widthMm - 5) botXs.push({ x: x, side: 'Н' });
+                    } else if (side === 'Л') {
+                        const y = Math.round(distFromBarStartMm * 10) / 10;
+                        if (y > 5 && y < heightMm - 5) leftYs.push({ y: y, side: 'Л' });
+                    } else if (side === 'П') {
+                        const y = Math.round((heightMm - distFromBarStartMm) * 10) / 10;
+                        if (y > 5 && y < heightMm - 5) rightYs.push({ y: y, side: 'П' });
+                    }
+                }
+            }
+
+            const mullions = [];
+            const TOL = 6.0;
+
+            const usedBot = new Set();
+            const partialTop = [];
+            for (const t of topXs) {
+                let matchIdx = -1;
+                for (let i = 0; i < botXs.length; i++) {
+                    if (!usedBot.has(i) && Math.abs(t.x - botXs[i].x) <= TOL) {
+                        matchIdx = i;
+                        break;
+                    }
+                }
+                if (matchIdx >= 0) {
+                    usedBot.add(matchIdx);
+                    const avgX = Math.round(((t.x + botXs[matchIdx].x) / 2) * 10) / 10;
+                    mullions.push({
+                        orient: 'V', x1: avgX, y1: 0, x2: avgX, y2: heightMm,
+                        full: true, posMm: avgX, label: `Верт. ${formatMm(avgX)} мм`
+                    });
+                } else {
+                    partialTop.push(t);
+                }
+            }
+            const partialBot = botXs.filter((_, i) => !usedBot.has(i));
+
+            const usedRight = new Set();
+            const partialLeft = [];
+            for (const l of leftYs) {
+                let matchIdx = -1;
+                for (let i = 0; i < rightYs.length; i++) {
+                    if (!usedRight.has(i) && Math.abs(l.y - rightYs[i].y) <= TOL) {
+                        matchIdx = i;
+                        break;
+                    }
+                }
+                if (matchIdx >= 0) {
+                    usedRight.add(matchIdx);
+                    const avgY = Math.round(((l.y + rightYs[matchIdx].y) / 2) * 10) / 10;
+                    mullions.push({
+                        orient: 'H', x1: 0, y1: avgY, x2: widthMm, y2: avgY,
+                        full: true, posMm: avgY, label: `Гориз. ${formatMm(avgY)} мм`
+                    });
+                } else {
+                    partialLeft.push(l);
+                }
+            }
+            const partialRight = rightYs.filter((_, i) => !usedRight.has(i));
+
+            const horizYs = mullions.filter(m => m.orient === 'H').map(m => m.y1).sort((a, b) => a - b);
+            for (const t of partialTop) {
+                const hasTarget = horizYs.length > 0;
+                const targetY = hasTarget ? horizYs[0] : heightMm;
+                mullions.push({
+                    orient: 'V', x1: t.x, y1: 0, x2: t.x, y2: targetY,
+                    full: !hasTarget, posMm: t.x, label: `Верт.${hasTarget ? ' (верх)' : ''} ${formatMm(t.x)} мм`
+                });
+            }
+            for (const bt of partialBot) {
+                const hasTarget = horizYs.length > 0;
+                const targetY = hasTarget ? horizYs[horizYs.length - 1] : 0;
+                mullions.push({
+                    orient: 'V', x1: bt.x, y1: targetY, x2: bt.x, y2: heightMm,
+                    full: !hasTarget, posMm: bt.x, label: `Верт.${hasTarget ? ' (низ)' : ''} ${formatMm(bt.x)} мм`
+                });
+            }
+
+            const vertXs = mullions.filter(m => m.orient === 'V').map(m => m.x1).sort((a, b) => a - b);
+            for (const l of partialLeft) {
+                const hasTarget = vertXs.length > 0;
+                const targetX = hasTarget ? vertXs[0] : widthMm;
+                mullions.push({
+                    orient: 'H', x1: 0, y1: l.y, x2: targetX, y2: l.y,
+                    full: !hasTarget, posMm: l.y, label: `Гориз.${hasTarget ? ' (лево)' : ''} ${formatMm(l.y)} мм`
+                });
+            }
+            for (const rt of partialRight) {
+                const hasTarget = vertXs.length > 0;
+                const targetX = hasTarget ? vertXs[vertXs.length - 1] : 0;
+                mullions.push({
+                    orient: 'H', x1: targetX, y1: rt.y, x2: widthMm, y2: rt.y,
+                    full: !hasTarget, posMm: rt.y, label: `Гориз.${hasTarget ? ' (право)' : ''} ${formatMm(rt.y)} мм`
+                });
+            }
+
+            return mullions;
+        }
+
+        function renderSashHandleOverlay(x, y, w, h, profThick, handleSide, strokeColor) {
+            if (!handleSide || w <= 10 || h <= 10) return '';
+            const midProf = profThick / 2;
+            const handleLen = Math.max(12, Math.min(20, Math.round(Math.min(w, h) * 0.22)));
+            const iX = x + profThick;
+            const iY = y + profThick;
+            const iW = Math.max(6, w - profThick * 2);
+            const iH = Math.max(6, h - profThick * 2);
+
+            if (handleSide === 'П') {
+                const hx = x + w - midProf;
+                const hy = y + h / 2;
+                return `
+                    <line x1="${iX.toFixed(1)}" y1="${iY.toFixed(1)}" x2="${(iX + iW).toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <line x1="${iX.toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${(iX + iW).toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <rect x="${(hx - 2.8).toFixed(1)}" y="${(hy - 6).toFixed(1)}" width="5.6" height="12" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="4" height="${handleLen}" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                `;
+            }
+            if (handleSide === 'Л') {
+                const hx = x + midProf;
+                const hy = y + h / 2;
+                return `
+                    <line x1="${(iX + iW).toFixed(1)}" y1="${iY.toFixed(1)}" x2="${iX.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <line x1="${(iX + iW).toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${iX.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <rect x="${(hx - 2.8).toFixed(1)}" y="${(hy - 6).toFixed(1)}" width="5.6" height="12" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="4" height="${handleLen}" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                `;
+            }
+            if (handleSide === 'В') {
+                const hx = x + w / 2;
+                const hy = y + midProf;
+                return `
+                    <line x1="${iX.toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${hx.toFixed(1)}" y2="${iY.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <line x1="${(iX + iW).toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${hx.toFixed(1)}" y2="${iY.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <rect x="${(hx - 6).toFixed(1)}" y="${(hy - 2.8).toFixed(1)}" width="12" height="5.6" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="${handleLen}" height="4" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                `;
+            }
+            if (handleSide === 'Н') {
+                const hx = x + w / 2;
+                const hy = y + h - midProf;
+                return `
+                    <line x1="${iX.toFixed(1)}" y1="${iY.toFixed(1)}" x2="${hx.toFixed(1)}" y2="${(iY + iH).toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <line x1="${(iX + iW).toFixed(1)}" y1="${iY.toFixed(1)}" x2="${hx.toFixed(1)}" y2="${(iY + iH).toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
+                    <rect x="${(hx - 6).toFixed(1)}" y="${(hy - 2.8).toFixed(1)}" width="12" height="5.6" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="${handleLen}" height="4" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                `;
+            }
+            return '';
+        }
+
+        function createEntitySvg(item) {
+            const svgW = 360;
+            const svgH = 270;
+
+            const w = item.widthMm > 0 ? item.widthMm : 1000;
+            const h = item.heightMm > 0 ? item.heightMm : 1000;
+            const isSash = item.entityType === 'sash';
+            const isCombined = item.entityType === 'combined';
+
+            const mullions = item.mullions || [];
+            const vertMullions = mullions.filter(m => m.orient === 'V');
+            const horizMullions = mullions.filter(m => m.orient === 'H');
+
+            const padLeft = horizMullions.length > 0 ? 46 : 26;
+            const padTop = 44;
+            const padRight = 84;
+            const padBottom = vertMullions.length > 0 ? 34 : 22;
+
+            const availW = svgW - padLeft - padRight;
+            const availH = svgH - padTop - padBottom;
+
+            const scale = Math.min(availW / w, availH / h);
+            const drawW = Math.max(40, Math.round(w * scale));
+            const drawH = Math.max(40, Math.round(h * scale));
+
+            const rectX = padLeft + Math.round((availW - drawW) / 2);
+            const rectY = padTop + Math.round((availH - drawH) / 2);
+
+            const profileThick = Math.max(5.5, Math.min(11, Math.round(Math.min(drawW, drawH) * 0.085)));
+            const mullionThick = Math.max(4, Math.min(9, Math.round(profileThick * 0.82)));
+            const halfMul = mullionThick / 2;
+
+            const innerX = rectX + profileThick;
+            const innerY = rectY + profileThick;
+            const innerW = Math.max(10, drawW - profileThick * 2);
+            const innerH = Math.max(10, drawH - profileThick * 2);
+
+            const fillVar = isSash ? 'var(--sash-fill)' : 'var(--pvc-fill)';
+            const strokeVar = isSash ? 'var(--sash-stroke)' : 'var(--pvc-stroke)';
+
+            const wText = formatMm(item.widthMm) + ' мм';
+            const hText = formatMm(item.heightMm) + ' мм';
+            const dimTopY = rectY - 15;
+            const topMidX = rectX + drawW / 2;
+            const dimRightX = rectX + drawW + 15;
+            const rightMidY = rectY + drawH / 2;
+
+            const orderedMullions = [
+                ...mullions.filter(m => m.full),
+                ...mullions.filter(m => !m.full)
+            ];
+
+            let mullionsSvg = '';
+            for (const m of orderedMullions) {
+                if (m.orient === 'V') {
+                    const mx = rectX + (m.x1 / w) * drawW;
+                    const rawY1 = rectY + (m.y1 / h) * drawH;
+                    const rawY2 = rectY + (m.y2 / h) * drawH;
+                    const yTop = m.y1 <= 1 ? innerY : (rawY1 + halfMul);
+                    const yBot = m.y2 >= h - 1 ? (innerY + innerH) : (rawY2 - halfMul);
+                    const barH = Math.max(2, yBot - yTop);
+                    const xLeft = mx - halfMul;
+
+                    mullionsSvg += `<rect x="${xLeft.toFixed(1)}" y="${yTop.toFixed(1)}" width="${mullionThick}" height="${barH.toFixed(1)}" fill="var(--pvc-mullion)" stroke="${strokeVar}" stroke-width="1.3"/>`;
+                } else {
+                    const my = rectY + (m.y1 / h) * drawH;
+                    const rawX1 = rectX + (m.x1 / w) * drawW;
+                    const rawX2 = rectX + (m.x2 / w) * drawW;
+                    const xLeft = m.x1 <= 1 ? innerX : (rawX1 + halfMul);
+                    const xRight = m.x2 >= w - 1 ? (innerX + innerW) : (rawX2 - halfMul);
+                    const barW = Math.max(2, xRight - xLeft);
+                    const yTop = my - halfMul;
+
+                    mullionsSvg += `<rect x="${xLeft.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${mullionThick}" fill="var(--pvc-mullion)" stroke="${strokeVar}" stroke-width="1.3"/>`;
+                }
+            }
+
+            // Створки внутри пролётов рамы в режиме «Рама + створка»
+            let combinedSashesSvg = '';
+            if (isCombined && item.spanComparison && item.spanComparison.matches) {
+                const sashProf = Math.max(4, Math.min(8, Math.round(profileThick * 0.72)));
+                for (const mInfo of item.spanComparison.matches) {
+                    if (!mInfo.span) continue;
+                    const sp = mInfo.span;
+                    const s = mInfo.sash;
+
+                    const sx1 = rectX + (sp.x1 / w) * drawW + (sp.x1 <= 0.5 ? profileThick : halfMul) + 1.5;
+                    const sx2 = rectX + (sp.x2 / w) * drawW - (sp.x2 >= w - 0.5 ? profileThick : halfMul) - 1.5;
+                    const sy1 = rectY + (sp.y1 / h) * drawH + (sp.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
+                    const sy2 = rectY + (sp.y2 / h) * drawH - (sp.y2 >= h - 0.5 ? profileThick : halfMul) - 1.5;
+
+                    const sw = Math.max(12, sx2 - sx1);
+                    const sh = Math.max(12, sy2 - sy1);
+
+                    combinedSashesSvg += `
+                        <rect x="${sx1.toFixed(1)}" y="${sy1.toFixed(1)}" width="${sw.toFixed(1)}" height="${sh.toFixed(1)}" fill="var(--sash-fill)" stroke="var(--sash-stroke)" stroke-width="1.6"/>
+                        <rect x="${(sx1 + sashProf).toFixed(1)}" y="${(sy1 + sashProf).toFixed(1)}" width="${Math.max(4, sw - sashProf * 2).toFixed(1)}" height="${Math.max(4, sh - sashProf * 2).toFixed(1)}" fill="none" stroke="var(--sash-stroke)" stroke-width="0.9" opacity="0.7"/>
+                        ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, 'var(--sash-stroke)')}
+                        ${sh >= 26 && sw >= 42 ? `<text x="${(sx1 + sw / 2).toFixed(1)}" y="${(sy1 + sh - 5).toFixed(1)}" text-anchor="middle" fill="var(--sash-stroke)" font-size="9.5" font-weight="700" font-family="system-ui, sans-serif">${formatMm(s.widthMm)}×${formatMm(s.heightMm)}</text>` : ''}
+                    `;
+                }
+            }
+
+            let sashHandleSvg = '';
+            if (isSash && item.handleSide) {
+                sashHandleSvg = renderSashHandleOverlay(rectX, rectY, drawW, drawH, profileThick, item.handleSide, strokeVar);
+            }
+
+            let bottomSubDimsSvg = '';
+            if (vertMullions.length > 0) {
+                const uniqueXs = Array.from(new Set(vertMullions.map(m => m.posMm))).sort((a, b) => a - b);
+                const points = [0, ...uniqueXs, w];
+                const dimBotY = rectY + drawH + 13;
+
+                for (let i = 0; i < points.length; i++) {
+                    const px = rectX + (points[i] / w) * drawW;
+                    bottomSubDimsSvg += `<line x1="${px.toFixed(1)}" y1="${rectY + drawH + 2}" x2="${px.toFixed(1)}" y2="${dimBotY + 4}" stroke="var(--subdim-color)" stroke-width="1.1" opacity="0.85"/>`;
+                    if (i < points.length - 1) {
+                        const nextPx = rectX + (points[i + 1] / w) * drawW;
+                        const segMm = Math.round((points[i + 1] - points[i]) * 10) / 10;
+                        const segW = nextPx - px;
+                        const midX = (px + nextPx) / 2;
+                        bottomSubDimsSvg += `
+                            <line x1="${px.toFixed(1)}" y1="${dimBotY}" x2="${nextPx.toFixed(1)}" y2="${dimBotY}" stroke="var(--subdim-color)" stroke-width="1.2"/>
+                            <circle cx="${px.toFixed(1)}" cy="${dimBotY}" r="1.8" fill="var(--subdim-color)"/>
+                            <circle cx="${nextPx.toFixed(1)}" cy="${dimBotY}" r="1.8" fill="var(--subdim-color)"/>
+                            ${segW >= 24 ? `<text x="${midX.toFixed(1)}" y="${dimBotY + 12}" text-anchor="middle" fill="var(--subdim-text)" font-size="11" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${formatMm(segMm)}</text>` : ''}
+                        `;
+                    }
+                }
+            }
+
+            let leftSubDimsSvg = '';
+            if (horizMullions.length > 0) {
+                const uniqueYs = Array.from(new Set(horizMullions.map(m => m.posMm))).sort((a, b) => a - b);
+                const points = [0, ...uniqueYs, h];
+                const dimLeftX = rectX - 13;
+
+                for (let i = 0; i < points.length; i++) {
+                    const py = rectY + (points[i] / h) * drawH;
+                    leftSubDimsSvg += `<line x1="${rectX - 2}" y1="${py.toFixed(1)}" x2="${dimLeftX - 4}" y2="${py.toFixed(1)}" stroke="var(--subdim-color)" stroke-width="1.1" opacity="0.85"/>`;
+                    if (i < points.length - 1) {
+                        const nextPy = rectY + (points[i + 1] / h) * drawH;
+                        const segMm = Math.round((points[i + 1] - points[i]) * 10) / 10;
+                        const segH = nextPy - py;
+                        const midY = (py + nextPy) / 2;
+                        leftSubDimsSvg += `
+                            <line x1="${dimLeftX}" y1="${py.toFixed(1)}" x2="${dimLeftX}" y2="${nextPy.toFixed(1)}" stroke="var(--subdim-color)" stroke-width="1.2"/>
+                            <circle cx="${dimLeftX}" cy="${py.toFixed(1)}" r="1.8" fill="var(--subdim-color)"/>
+                            <circle cx="${dimLeftX}" cy="${nextPy.toFixed(1)}" r="1.8" fill="var(--subdim-color)"/>
+                            ${segH >= 18 ? `<text x="${dimLeftX - 5}" y="${(midY + 3.5).toFixed(1)}" text-anchor="end" fill="var(--subdim-text)" font-size="11" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${formatMm(segMm)}</text>` : ''}
+                        `;
+                    }
+                }
+            }
+
+            const centerText = `${formatMm(item.widthMm)} × ${formatMm(item.heightMm)}`;
+            const showCenterText = mullions.length === 0 && !isSash && !isCombined && innerW >= 68 && innerH >= 28;
+
+            return `
+                <svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${wText} на ${hText}">
+                    <line x1="${rectX}" y1="${rectY - 3}" x2="${rectX}" y2="${dimTopY - 5}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
+                    <line x1="${rectX + drawW}" y1="${rectY - 3}" x2="${rectX + drawW}" y2="${dimTopY - 5}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
+                    <line x1="${rectX}" y1="${dimTopY}" x2="${rectX + drawW}" y2="${dimTopY}" stroke="var(--dim-color)" stroke-width="1.5"/>
+                    <polygon points="${rectX},${dimTopY} ${rectX + 6},${dimTopY - 3} ${rectX + 6},${dimTopY + 3}" fill="var(--dim-color)"/>
+                    <polygon points="${rectX + drawW},${dimTopY} ${rectX + drawW - 6},${dimTopY - 3} ${rectX + drawW - 6},${dimTopY + 3}" fill="var(--dim-color)"/>
+                    <text x="${topMidX}" y="${dimTopY - 6}" text-anchor="middle" fill="var(--dim-text)" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${wText}</text>
+
+                    <line x1="${rectX + drawW + 3}" y1="${rectY}" x2="${dimRightX + 5}" y2="${rectY}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
+                    <line x1="${rectX + drawW + 3}" y1="${rectY + drawH}" x2="${dimRightX + 5}" y2="${rectY + drawH}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
+                    <line x1="${dimRightX}" y1="${rectY}" x2="${dimRightX}" y2="${rectY + drawH}" stroke="var(--dim-color)" stroke-width="1.5"/>
+                    <polygon points="${dimRightX},${rectY} ${dimRightX - 3},${rectY + 6} ${dimRightX + 3},${rectY + 6}" fill="var(--dim-color)"/>
+                    <polygon points="${dimRightX},${rectY + drawH} ${dimRightX - 3},${rectY + drawH - 6} ${dimRightX + 3},${rectY + drawH - 6}" fill="var(--dim-color)"/>
+                    <text x="${dimRightX + 7}" y="${rightMidY + 4}" text-anchor="start" fill="var(--dim-text)" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${hText}</text>
+
+                    <rect x="${rectX}" y="${rectY}" width="${drawW}" height="${drawH}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2"/>
+                    <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3"/>
+
+                    <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                    <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                    <line x1="${rectX}" y1="${rectY + drawH}" x2="${innerX}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
+                    <line x1="${rectX + drawW}" y1="${rectY + drawH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
+
+                    ${mullionsSvg}
+                    ${combinedSashesSvg}
+                    ${sashHandleSvg}
+                    ${bottomSubDimsSvg}
+                    ${leftSubDimsSvg}
+
+                    ${showCenterText ? `<text x="${rectX + drawW / 2}" y="${rectY + drawH / 2 + 4}" text-anchor="middle" fill="var(--text-secondary)" font-size="12" font-weight="600" font-family="system-ui, -apple-system, sans-serif">${centerText}</text>` : ''}
+                </svg>
+            `;
+        }
+
+        function renderEntities() {
+            const grid = document.getElementById('framesGrid');
+            const toolbar = document.getElementById('toolbar');
+            const statsRow = document.getElementById('statsRow');
+            const printBtn = document.getElementById('printBtn');
+
+            if (allItems.length === 0) {
+                toolbar.classList.remove('visible');
+                printBtn.style.display = 'none';
+                grid.innerHTML = '';
+                return;
+            }
+
+            toolbar.classList.add('visible');
+            printBtn.style.display = 'inline-flex';
+
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const viewMode = document.getElementById('viewModeSelect').value;
+            const extraFilter = document.getElementById('extraFilterSelect').value;
+            const sortMode = document.getElementById('sortSelect').value;
+
+            let filtered = allItems.filter(item => {
+                if (entityMode === 'frames' && item.entityType !== 'frame') return false;
+                if (entityMode === 'sashes' && item.entityType !== 'sash') return false;
+                if (entityMode === 'combined' && item.entityType !== 'combined') return false;
+                if (entityMode === 'both' && item.entityType === 'combined') return false;
+
+                if (extraFilter === 'oversize' && !item.isOversize) return false;
+                if (extraFilter === 'with_mullions' && (!item.mullions || item.mullions.length === 0)) return false;
+                if (extraFilter === 'no_mullions' && item.mullions && item.mullions.length > 0) return false;
+
+                if (!query) return true;
+                const dimStr = `${formatMm(item.widthMm)}x${formatMm(item.heightMm)} ${formatMm(item.widthMm)}×${formatMm(item.heightMm)}`;
+                const mulStr = (item.mullions || []).map(m => m.label).join(' ');
+                const handleStr = item.handleSide
+                    ? `ручка ${HANDLE_SIDE_LABELS[item.handleSide] || item.handleSide}`
+                    : (item.sashes || []).map(s => s.handleSide ? `ручка ${HANDLE_SIDE_LABELS[s.handleSide] || s.handleSide}` : '').join(' ');
+                const kindStr = item.entityType === 'sash'
+                    ? `створка ${item.subCode}`
+                    : (item.entityType === 'combined' ? 'изделие рама створка' : 'рама');
+                const hay = `${item.orderNo} ${item.itemNo} ${kindStr} ${item.client} ${item.article} ${dimStr} ${mulStr} ${handleStr}`.toLowerCase();
+                return hay.includes(query);
+            });
+
+            if (sortMode === 'order') {
+                filtered = filtered.slice().sort((a, b) => {
+                    const cmp = a.orderNo.localeCompare(b.orderNo, 'ru', { numeric: true });
+                    if (cmp !== 0) return cmp;
+                    const cmpItem = a.itemNo.localeCompare(b.itemNo, 'ru', { numeric: true });
+                    if (cmpItem !== 0) return cmpItem;
+                    return a.entityType.localeCompare(b.entityType);
+                });
+            } else if (sortMode === 'width_desc') {
+                filtered = filtered.slice().sort((a, b) => b.widthMm - a.widthMm || b.heightMm - a.heightMm);
+            } else if (sortMode === 'area_desc') {
+                filtered = filtered.slice().sort((a, b) => (b.widthMm * b.heightMm) - (a.widthMm * a.heightMm));
+            }
+
+            const framesTotal = allItems.filter(x => x.entityType === 'frame').length;
+            const sashesTotal = allItems.filter(x => x.entityType === 'sash').length;
+            const oversizeTotal = filtered.filter(x => x.isOversize).length;
+            const uniqueOrders = new Set(allItems.map(f => f.orderNo));
+
+            statsRow.innerHTML = `
+                <div class="stat-pill">Рам: <strong>${framesTotal}</strong> • Створок: <strong>${sashesTotal}</strong></div>
+                <div class="stat-pill">Показано: <strong>${filtered.length}</strong></div>
+                <div class="stat-pill">Заказов: <strong>${uniqueOrders.size}</strong></div>
+                ${oversizeTotal > 0 ? `<div class="stat-pill warn-pill">Негабарит (&lt;400 / &gt;3100 мм): <strong>${oversizeTotal}</strong></div>` : ''}
+            `;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state">По выбранным параметрам изделий не найдено</div>';
+                return;
+            }
+
+            const orderCounts = new Map();
+            for (const f of filtered) {
+                orderCounts.set(f.orderNo, (orderCounts.get(f.orderNo) || 0) + 1);
+            }
+
+            let html = '';
+            let lastOrderNo = null;
+
+            filtered.forEach((item, idx) => {
+                if (viewMode === 'grouped' && item.orderNo !== lastOrderNo) {
+                    lastOrderNo = item.orderNo;
+                    const cnt = orderCounts.get(item.orderNo) || 1;
+                    const clientPart = item.client ? ` • ${escapeHtml(item.client)}` : '';
+                    html += `
+                        <div class="order-group-header">
+                            <div class="order-group-title">Заказ № ${escapeHtml(item.orderNo)}${clientPart}</div>
+                            <div class="order-group-meta">Позиций: <strong>${cnt}</strong></div>
+                        </div>
+                    `;
+                }
+
+                const isSash = item.entityType === 'sash';
+                const isCombined = item.entityType === 'combined';
+
+                let kindBadge = `<span class="kind-badge frame-kind">Рама</span>`;
+                if (isSash) {
+                    kindBadge = `<span class="kind-badge sash-kind">Створка ${escapeHtml(item.subCode)}</span>`;
+                } else if (isCombined) {
+                    kindBadge = `<span class="kind-badge combined-kind">Изделие</span>`;
+                }
+
+                const itemBadge = item.itemNo ? `<span class="item-subbadge">изд. ${escapeHtml(item.itemNo)}</span>` : '';
+                const dupBadge = item.duplicateTotal > 1 ? `<span class="item-subbadge">шт. ${item.duplicateIndex}/${item.duplicateTotal}</span>` : '';
+
+                const handleTag = isSash
+                    ? (item.handleSide
+                        ? `<span class="tag handle-tag">Ручка: ${escapeHtml(HANDLE_SIDE_LABELS[item.handleSide] || item.handleSide)}</span>`
+                        : '')
+                    : '';
+
+                let combinedSashTags = '';
+                if (isCombined && item.sashes && item.sashes.length > 0) {
+                    combinedSashTags = item.sashes.map(s => {
+                        const hLabel = s.handleSide ? `, ручка ${HANDLE_SIDE_LABELS[s.handleSide] || s.handleSide}` : '';
+                        return `<span class="tag handle-tag">Створка ${formatMm(s.widthMm)}×${formatMm(s.heightMm)}${escapeHtml(hLabel)}</span>`;
+                    }).join('');
+                }
+
+                const mullionTags = (item.mullions || []).map(m =>
+                    `<span class="tag mullion-tag">Импост: ${escapeHtml(m.label)}</span>`
+                ).join('');
+
+                const oversizeTag = item.isOversize
+                    ? `<span class="tag warn">Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))}</span>`
+                    : '';
+
+                html += `
+                    <div class="frame-card ${item.isOversize ? 'oversize-warn' : ''}" data-item-idx="${idx}">
+                        <div class="frame-card-header">
+                            <div>
+                                <span class="order-badge">Заказ № ${escapeHtml(item.orderNo)}</span>
+                                ${kindBadge}${itemBadge}${dupBadge}
+                            </div>
+                            <span class="frame-index">#${idx + 1}</span>
+                        </div>
+                        <div class="svg-stage">${createEntitySvg(item)}</div>
+                        <div class="frame-card-footer">
+                            <div class="dim-summary-line">
+                                <span>Ш × В: ${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм</span>
+                                ${item.cell ? `<span style="font-size:0.8rem; color:var(--text-secondary);">Яч. ${escapeHtml(item.cell)}</span>` : ''}
+                            </div>
+                            <div class="meta-tags">
+                                ${oversizeTag}
+                                ${handleTag}
+                                ${combinedSashTags}
+                                ${mullionTags}
+                                ${item.client ? `<span class="tag">${escapeHtml(item.client)}</span>` : ''}
+                                ${item.article ? `<span class="tag">${escapeHtml(item.article)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+
+            grid.querySelectorAll('.frame-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const idx = parseInt(card.getAttribute('data-item-idx'), 10);
+                    const item = filtered[idx];
+                    if (item) openItemModal(item);
+                });
+            });
+        }
+
+        function openItemModal(item) {
+            const modal = document.getElementById('detailModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            const isSash = item.entityType === 'sash';
+            const isCombined = item.entityType === 'combined';
+            const kindTitle = isSash ? `Створка ${item.subCode}` : (isCombined ? 'Изделие' : 'Рама');
+
+            title.textContent = `${kindTitle} — Заказ № ${item.orderNo}${item.itemNo ? ' / изд. ' + item.itemNo : ''} (${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм)`;
+
+            // Пометка по дренажам (наружные / скрытые)
+            const outerList = item.outerDrainages || [];
+            const hiddenList = item.hiddenDrainages || [];
+            let drainageHtml = '';
+
+            if (outerList.length > 0 || hiddenList.length > 0) {
+                const parts = [];
+                if (outerList.length > 0) {
+                    const coords = outerList.map(d => `${SIDE_NAMES[d.side] || d.side}: ${d.mm !== null ? formatMm(d.mm) + ' мм' : d.valStr}`).join(', ');
+                    parts.push(`<div><span class="drainage-badge outer">Наружные дренажи</span> — ${outerList.length} отв. (${escapeHtml(coords)})</div>`);
+                }
+                if (hiddenList.length > 0) {
+                    const coords = hiddenList.map(d => `${SIDE_NAMES[d.side] || d.side}: ${d.mm !== null ? formatMm(d.mm) + ' мм' : d.valStr}`).join(', ');
+                    parts.push(`<div><span class="drainage-badge hidden">Скрытые дренажи</span> — ${hiddenList.length} отв. (${escapeHtml(coords)})</div>`);
+                }
+                const boxClass = hiddenList.length > 0 ? 'has-hidden' : 'has-outer';
+                drainageHtml = `<div class="section-box drainage-callout ${boxClass}">${parts.join('')}</div>`;
+            } else if (!isSash) {
+                drainageHtml = `<div class="section-box"><span class="drainage-badge none">Дренажи</span> на раме отсутствуют</div>`;
+            }
+
+            // Список створок в изделии (если открыто изделие в сборе)
+            let sashesBlockHtml = '';
+            if (isCombined && item.sashes && item.sashes.length > 0) {
+                const sRows = item.sashes.map((s, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><strong>${formatMm(s.widthMm)} × ${formatMm(s.heightMm)} мм</strong></td>
+                        <td><strong style="color:#f0883e;">${escapeHtml(HANDLE_SIDE_LABELS[s.handleSide] || 'Не указана')}</strong></td>
+                        <td>${escapeHtml(s.article || '—')}</td>
+                    </tr>
+                `).join('');
+                sashesBlockHtml = `
+                    <div class="section-box">
+                        <div style="font-weight:700; margin-bottom:6px;">Створки в изделии</div>
+                        <table class="bars-table" style="margin-top:4px;">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Габариты створки</th>
+                                    <th>Сторона ручки</th>
+                                    <th>Артикул</th>
+                                </tr>
+                            </thead>
+                            <tbody>${sRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            const rowsHtml = item.bars.map((b, i) => {
+                const mulList = (b.mullionOps || []).map(op => {
+                    const mm = Math.round((op.valRaw / 10) * 10) / 10;
+                    return `${formatMm(mm)} мм`;
+                }).join(', ');
+
+                const drainParts = [];
+                if (b.outerDrainageOps && b.outerDrainageOps.length > 0) {
+                    const vals = b.outerDrainageOps.map(op => isFinite(op.valRaw) ? formatMm(Math.round(op.valRaw) / 10) + ' мм' : op.valStr).join(', ');
+                    drainParts.push(`Наружные: ${vals}`);
+                }
+                if (b.hiddenDrainageOps && b.hiddenDrainageOps.length > 0) {
+                    const vals = b.hiddenDrainageOps.map(op => isFinite(op.valRaw) ? formatMm(Math.round(op.valRaw) / 10) + ' мм' : op.valStr).join(', ');
+                    drainParts.push(`Скрытые: ${vals}`);
+                }
+
+                const extraNotes = [];
+                if (b.hasHandleRPlus) extraNotes.push('Ручка');
+                if (mulList) extraNotes.push(`Импост: ${mulList}`);
+
+                return `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${escapeHtml(SIDE_NAMES[b.side] || b.side || '—')}</td>
+                        <td><strong>${formatMm(b.cutMm)} мм</strong></td>
+                        <td>${drainParts.length ? escapeHtml(drainParts.join('; ')) : '—'}</td>
+                        <td>${extraNotes.length ? `<strong>${escapeHtml(extraNotes.join('; '))}</strong>` : '—'}</td>
+                        <td>${escapeHtml(b.steel || '—')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const mullionsSummary = (item.mullions && item.mullions.length > 0)
+                ? item.mullions.map(m => m.label).join('; ')
+                : 'нет';
+
+            const handleSummary = isSash
+                ? (item.handleSide
+                    ? `${HANDLE_SIDE_LABELS[item.handleSide] || item.handleSide}${item.handlePosMm ? ' (высота: ' + formatMm(item.handlePosMm) + ' мм)' : ''}`
+                    : 'не указана')
+                : '';
+
+            body.innerHTML = `
+                <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.55;">
+                    Файл: <strong>${escapeHtml(item.fileName)}</strong><br>
+                    ${item.client ? `Заказчик: <strong>${escapeHtml(item.client)}</strong><br>` : ''}
+                    Габариты: <strong>${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм</strong>
+                    ${item.isOversize ? ` <span style="color:var(--accent-red); font-weight:700;">(Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))})</span>` : ''}<br>
+                    ${isSash ? `Сторона ручки: <strong style="color:#f0883e;">${escapeHtml(handleSummary)}</strong><br>` : ''}
+                    Импосты: <strong style="color:var(--accent-amber);">${escapeHtml(mullionsSummary)}</strong>
+                </div>
+                ${drainageHtml}
+                ${sashesBlockHtml}
+                <table class="bars-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Сторона</th>
+                            <th>Длина реза</th>
+                            <th>Дренажи</th>
+                            <th>Ручка / Импост</th>
+                            <th>Армирование</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            `;
+
+            modal.classList.add('open');
+        }
+
+        function applyLoadedItems(parsedAll, names, sourceLabel) {
+            allItems = parsedAll;
+            const framesCnt = allItems.filter(x => x.entityType === 'frame').length;
+            const sashesCnt = allItems.filter(x => x.entityType === 'sash').length;
+
+            const dz = document.getElementById('dropzone');
+            dz.classList.add('compact');
+            const namesPreview = names.length > 3
+                ? `${names.slice(0, 3).join(', ')} и ещё ${names.length - 3}`
+                : names.join(', ');
+            document.getElementById('dropzoneTitle').textContent =
+                `Загружено ${sourceLabel}: ${namesPreview} (рам: ${framesCnt}, створок: ${sashesCnt})`;
+            document.getElementById('dropzoneSub').textContent =
+                'Выберите другой файл на сервере или перетащите новый файл сюда';
+
+            renderEntities();
+        }
+
+        async function handleLocalFiles(fileList) {
+            const files = Array.from(fileList || []);
+            if (files.length === 0) return;
+
+            const parsedAll = [];
+            const names = [];
+
+            for (const file of files) {
+                const buffer = await file.arrayBuffer();
+                const text = decodeCsvBuffer(buffer);
+                const items = parseCsvContent(text, file.name);
+                parsedAll.push(...items);
+                names.push(file.name);
+            }
+
+            applyLoadedItems(parsedAll, names, 'с компьютера');
+        }
+
+        // Инициализация событий
+        const fileInput = document.getElementById('csvFileInput');
+        const dropzone = document.getElementById('dropzone');
+
+        document.getElementById('openFileBtn').addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', e => {
+            handleLocalFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer && e.dataTransfer.files) {
+                handleLocalFiles(e.dataTransfer.files);
+            }
+        });
+
+        // События панели сервера
+        const serverPanel = document.getElementById('serverPanel');
+        document.getElementById('toggleServerBtn').addEventListener('click', () => {
+            const isOpen = serverPanel.classList.toggle('open');
+            if (isOpen && !currentServerPath) {
+                checkServerAndLoad(true);
+            }
+        });
+
+        document.getElementById('serverStatusPill').addEventListener('click', () => {
+            serverPanel.classList.add('open');
+            checkServerAndLoad(true);
+        });
+
+        document.getElementById('closeServerPanelBtn').addEventListener('click', () => {
+            serverPanel.classList.remove('open');
+        });
+
+        document.getElementById('connectServerBtn').addEventListener('click', () => {
+            checkServerAndLoad(true);
+        });
+
+        document.getElementById('serverUrlInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') checkServerAndLoad(true);
+        });
+
+        document.getElementById('serverUpBtn').addEventListener('click', () => {
+            if (parentServerPath) loadServerDirectory(parentServerPath);
+        });
+
+        document.getElementById('serverRootBtn').addEventListener('click', () => {
+            if (rootServerPath) loadServerDirectory(rootServerPath);
+        });
+
+        document.getElementById('loadAllFolderBtn').addEventListener('click', loadAllCsvFromCurrentFolder);
+
+        // Переключатели и фильтры
+        document.querySelectorAll('#entityModeGroup .seg-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#entityModeGroup .seg-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                entityMode = btn.getAttribute('data-mode') || 'combined';
+                renderEntities();
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', renderEntities);
+        document.getElementById('viewModeSelect').addEventListener('change', renderEntities);
+        document.getElementById('extraFilterSelect').addEventListener('change', renderEntities);
+        document.getElementById('sortSelect').addEventListener('change', renderEntities);
+
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            document.getElementById('themeBtn').textContent = isLight ? 'Тёмная тема' : 'Светлая тема';
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('detailModal').classList.remove('open');
+        });
+
+        document.getElementById('detailModal').addEventListener('click', e => {
+            if (e.target.id === 'detailModal') {
+                document.getElementById('detailModal').classList.remove('open');
+            }
+        });
+
+        // ==================== ЗАПУСК ИЗ ПРИЛОЖЕНИЯ МОНИТОРИНГА ====================
+        let isEmbeddedLaunch = false;
+
+        function closeEmbeddedVisualizer() {
+            if (window.AndroidVisualizer && typeof window.AndroidVisualizer.close === 'function') {
+                window.AndroidVisualizer.close();
+                return;
+            }
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'CLOSE_VISUALIZER' }, '*');
+                return;
+            }
+            window.history.back();
+        }
+
+        function setEmbeddedModeUI(titleText) {
+            isEmbeddedLaunch = true;
+            const backBtn = document.getElementById('backToAppBtn');
+            if (backBtn) backBtn.style.display = 'inline-flex';
+            const serverPill = document.getElementById('serverStatusPill');
+            if (serverPill) serverPill.style.display = 'none';
+            const toggleSrvBtn = document.getElementById('toggleServerBtn');
+            if (toggleSrvBtn) toggleSrvBtn.style.display = 'none';
+            const dz = document.getElementById('dropzone');
+            if (dz) dz.style.display = 'none';
+            if (titleText) {
+                const h1 = document.querySelector('.title-block h1');
+                if (h1) h1.textContent = titleText;
+            }
+        }
+
+        window.loadExternalCsvData = function(payload) {
+            try {
+                if (typeof payload === 'string') {
+                    payload = JSON.parse(payload);
+                }
+                if (!payload || !Array.isArray(payload.files)) return;
+
+                if (payload.embedded !== false) {
+                    setEmbeddedModeUI(payload.title || 'Чертежи из раскроя');
+                }
+                if (payload.theme === 'light') {
+                    document.body.classList.add('light-theme');
+                    document.getElementById('themeBtn').textContent = 'Тёмная тема';
+                } else if (payload.theme === 'dark') {
+                    document.body.classList.remove('light-theme');
+                    document.getElementById('themeBtn').textContent = 'Светлая тема';
+                }
+
+                const parsedAll = [];
+                const names = [];
+                for (const f of payload.files) {
+                    if (!f || !f.content) continue;
+                    const items = parseCsvContent(f.content, f.name || 'file.csv');
+                    parsedAll.push(...items);
+                    names.push(f.name || 'file.csv');
+                }
+
+                const searchEl = document.getElementById('searchInput');
+                if (searchEl) {
+                    searchEl.value = payload.initialQuery ? String(payload.initialQuery) : '';
+                }
+
+                const subtitle = document.querySelector('.title-block p');
+                if (subtitle && names.length > 0) {
+                    const preview = names.length > 2 ? `${names.slice(0, 2).join(', ')} (+${names.length - 2})` : names.join(', ');
+                    subtitle.textContent = payload.initialQuery
+                        ? `Заказ: ${payload.initialQuery} • Файлы: ${preview}`
+                        : `Файлы: ${preview}`;
+                }
+
+                applyLoadedItems(parsedAll, names, 'из мониторинга');
+                window.scrollTo(0, 0);
+            } catch (e) {
+                console.error('Ошибка загрузки переданных CSV данных:', e);
+            }
+        };
+
+        document.getElementById('backToAppBtn').addEventListener('click', closeEmbeddedVisualizer);
+
+        window.addEventListener('message', event => {
+            const msg = event && event.data;
+            if (msg && msg.type === 'LOAD_CSV_DATA') {
+                window.loadExternalCsvData(msg);
+            }
+        });
+
+        // Автоинициализация: AndroidVisualizer -> iframe embedded -> URL ?file= -> обычный режим
+        window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('serverUrlInput').value = getDefaultServerUrl();
+
+            if (window.AndroidVisualizer && typeof window.AndroidVisualizer.getPayload === 'function') {
+                try {
+                    const rawPayload = window.AndroidVisualizer.getPayload();
+                    if (rawPayload) {
+                        window.loadExternalCsvData(rawPayload);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Ошибка чтения payload из AndroidVisualizer:', e);
+                }
+            }
+
+            const params = new URLSearchParams(window.location.search || '');
+            const isEmb = params.get('embedded') === '1';
+            const fileParam = params.get('file');
+            const orderParam = params.get('order') || '';
+
+            if (isEmb && window.parent && window.parent !== window) {
+                setEmbeddedModeUI('Чертежи из раскроя');
+                window.parent.postMessage({ type: 'VISUALIZER_READY' }, '*');
+                return;
+            }
+
+            if (fileParam) {
+                setEmbeddedModeUI('Чертежи из раскроя');
+                serverBaseUrl = getDefaultServerUrl();
+                try {
+                    const resp = await fetch(`${serverBaseUrl}/api/read-file?path=${encodeURIComponent(fileParam)}`);
+                    const data = await resp.json();
+                    if (data && data.content) {
+                        window.loadExternalCsvData({
+                            files: [{ name: data.file_name || fileParam, content: data.content }],
+                            initialQuery: orderParam,
+                            title: data.file_name || 'Чертежи из раскроя',
+                            embedded: true
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Ошибка автозагрузки файла по URL:', e);
+                }
+            }
+
+            checkServerAndLoad(false);
+        });
+    </script>
+</body>
+</html>
