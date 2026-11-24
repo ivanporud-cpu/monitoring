@@ -2911,6 +2911,7 @@
                 }
             }
 
+            let yandexErr = '';
             // 2. Пробуем взять из сжатого пакета смены на Яндекс Диске
             if (blockData && blockData.pack_id) {
                 try {
@@ -2934,32 +2935,38 @@
                             }
                             return text;
                         }
+                        yandexErr = 'Файл не найден внутри пакета на Яндекс Диске';
                     }
                 } catch (e) {
+                    yandexErr = e.message || String(e);
                     console.warn('Не удалось прочитать пакет с Яндекс Диска:', e);
                 }
+            } else {
+                yandexErr = 'В cache.json нет пакетов чертежей (обновите 2new_yandex.py на сервере и нажмите «Выгрузить сейчас»)';
             }
 
             // 3. Последняя попытка — локальный сервер (если lastDataSource был 'yandex', но сервер снова в сети)
             if (lastDataSource === 'yandex' && fileObj.file_path) {
-                const resp = await fetchWithTimeout(
-                    '/api/read-file?path=' + encodeURIComponent(fileObj.file_path),
-                    {},
-                    6000
-                );
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data && data.content) {
-                        csvContentCache.set(cacheKey, data.content);
-                        if (!Array.isArray(fileObj.orders)) {
-                            fileObj.orders = extractOrdersFromCsvText(data.content);
+                try {
+                    const resp = await fetchWithTimeout(
+                        '/api/read-file?path=' + encodeURIComponent(fileObj.file_path),
+                        {},
+                        4000
+                    );
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && data.content) {
+                            csvContentCache.set(cacheKey, data.content);
+                            if (!Array.isArray(fileObj.orders)) {
+                                fileObj.orders = extractOrdersFromCsvText(data.content);
+                            }
+                            return data.content;
                         }
-                        return data.content;
                     }
-                }
+                } catch (e) {}
             }
 
-            throw new Error('Не удалось загрузить файл раскроя (проверьте связь с сервером или обновите cache.json на сервере)');
+            throw new Error(yandexErr || 'Не удалось загрузить файл раскроя');
         }
 
         function getMatchingOrdersForFile(fileObj, query) {
@@ -3110,6 +3117,7 @@
 
             try {
                 const filesPayload = [];
+                let lastErrMsg = '';
                 for (const f of fileObjs) {
                     try {
                         const content = await fetchCsvContentForFile(blockData, f);
@@ -3117,12 +3125,13 @@
                             filesPayload.push({ name: f.filename || 'file.csv', content: content });
                         }
                     } catch (e) {
+                        lastErrMsg = e.message || String(e);
                         console.warn('Ошибка чтения файла ' + f.filename + ':', e);
                     }
                 }
 
                 if (filesPayload.length === 0) {
-                    throw new Error('Не удалось загрузить содержимое раскроя');
+                    throw new Error(lastErrMsg || 'Не удалось загрузить содержимое раскроя');
                 }
 
                 const curTheme = document.documentElement.getAttribute('data-theme') || 'dark';
