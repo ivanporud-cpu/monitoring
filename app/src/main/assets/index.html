@@ -233,7 +233,8 @@
 
         body.modal-open { overflow: hidden; touch-action: none; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overscroll-behavior: contain; }
-        .modal-content { background: var(--bg-card); margin: 5% auto; border-radius: 0.625rem; width: 90%; max-width: 37.5rem; max-height: 84vh; display: flex; flex-direction: column; overflow: hidden; color: var(--text-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+        .modal-content { background: var(--bg-card); margin: 3vh auto; border-radius: 0.625rem; width: 92%; max-width: 37.5rem; max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); display: flex; flex-direction: column; overflow: hidden; color: var(--text-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+        .modal-body { min-height: 0; }
         .modal-header { background: var(--modal-header-bg); color: white; padding: 0.95rem 1.25rem; border-radius: 0.625rem 0.625rem 0 0; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-shrink: 0; }
         .modal-header h3 { margin: 0; font-size: 1.1rem; }
         .modal-header .btn { background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 0.0625rem solid rgba(255, 255, 255, 0.55); border-radius: 0.5rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; }
@@ -488,7 +489,7 @@
             .date-weekday { font-size: var(--font-size-date-weekday, 0.875rem); }
             .line-name-tag { font-size: var(--font-size-line-name, 0.75rem); }
             .count-value { font-size: var(--font-size-count-value, 1rem); }
-            .modal-content, .file-manager-content, .settings-content { width: 95%; margin: 10% auto; }
+            .modal-content, .file-manager-content, .settings-content { width: 96%; margin: 0.65rem auto; max-height: calc(100vh - 1.3rem); max-height: calc(100dvh - 1.3rem); }
             .settings-content { width: 96%; margin: 2% auto; max-height: 94vh; }
             .settings-body { padding: 1rem; }
             .file-manager-body { max-height: 60vh; }
@@ -536,8 +537,13 @@
         html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
         .header-inner { display: flex; align-items: center; gap: 0.5rem; }
-        .header-inner h1 { flex: 1; text-align: left; font-size: 1.35rem; }
-        .header-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; }
+        .header-inner h1 { flex: 1; min-width: 0; text-align: left; font-size: 1.25rem; line-height: 1.18; }
+        .header-actions { display: flex; align-items: center; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
+        @media (max-width: 480px) {
+            .header-inner h1 { font-size: 1.05rem; }
+            .header-actions { gap: 0.28rem; }
+            .header-actions .theme-toggle { width: 2.25rem; height: 2.25rem; }
+        }
         .header-actions .theme-toggle { margin-left: 0; }
         .line-tabs {
             display: flex;
@@ -775,9 +781,20 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2.35rem;
-            height: 2.35rem;
+            width: 3.15rem;
+            height: 3.15rem;
             flex-shrink: 0;
+            transition: transform 0.22s ease, filter 0.22s ease;
+        }
+        @media (max-width: 480px) {
+            .brand-logo-wrap {
+                width: 2.85rem;
+                height: 2.85rem;
+            }
+        }
+        .brand-logo-wrap.is-loading {
+            transform: scale(1.12);
+            filter: drop-shadow(0 0 6px rgba(246, 152, 65, 0.55));
         }
         .brand-logo-svg {
             width: 100%;
@@ -789,7 +806,7 @@
             transform-origin: 50px 50px;
         }
         .brand-logo-wrap.is-loading .brand-rays {
-            animation: ptrSpin 2.4s linear infinite;
+            animation: ptrSpin 1.35s linear infinite;
         }
         @keyframes ptrSpin {
             to { transform: rotate(360deg); }
@@ -861,6 +878,16 @@
                         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="4"/>
                             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                        </svg>
+                    </button>
+                    <button class="theme-toggle" id="barcodeGenBtn" title="Создать штрих-код" aria-label="Создать штрих-код">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <line x1="3" y1="5" x2="3" y2="19"/>
+                            <line x1="6.5" y1="5" x2="6.5" y2="19"/>
+                            <line x1="10.5" y1="5" x2="10.5" y2="19"/>
+                            <line x1="13.5" y1="5" x2="13.5" y2="19"/>
+                            <line x1="17" y1="5" x2="17" y2="19"/>
+                            <line x1="21" y1="5" x2="21" y2="19"/>
                         </svg>
                     </button>
                     <button class="theme-toggle" id="settingsBtn" title="Настройки" aria-label="Настройки">
@@ -1095,7 +1122,7 @@
                             <input type="number" id="fontLineName" min="8" max="40" value="14">
                         </div>
                         <div>
-                            <label for="fontCountValue" style="font-size:0.75rem;">Значения (Ипостов, Створки, Рамы, ...)</label>
+                            <label for="fontCountValue" style="font-size:0.75rem;">Значения (Импостов, Створки, Рамы, ...)</label>
                             <input type="number" id="fontCountValue" min="8" max="40" value="18">
                         </div>
                     </div>
@@ -1172,13 +1199,24 @@
                 <div class="files-search-row">
                     <input type="text" id="globalOrderSearchInput" class="files-search-input" placeholder="Номер заказа (напр. 34930)..." inputmode="search">
                     <button class="btn-scan-barcode" id="scanGlobalBarcodeBtn" type="button" title="Сканировать штрих-код камерой" aria-label="Сканировать штрих-код"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="11" y1="7" x2="11" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/><line x1="17" y1="7" x2="17" y2="17"/></svg></button>
-                    <button class="btn-barcode-gen-toggle" id="toggleGlobalBarcodeGenBtn" type="button" title="Создать штрих-код по номеру заказа">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block;"><line x1="4" y1="5" x2="4" y2="19"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="11" y1="5" x2="11" y2="19"/><line x1="14" y1="5" x2="14" y2="19"/><line x1="17" y1="5" x2="17" y2="19"/><line x1="20" y1="5" x2="20" y2="19"/></svg>
-                        <span>Штрих-код</span>
-                    </button>
                     <button class="btn btn-success btn-sm" id="openGlobalAllBtn" type="button" style="display:none;">Все чертежи</button>
                 </div>
-                <div class="barcode-gen-panel" id="globalBarcodeGenPanel">
+                <div class="files-search-status" id="globalOrderSearchStatus">Введите номер заказа для поиска по всем загруженным линиям и сменам</div>
+            </div>
+            <div class="modal-body">
+                <div id="globalOrderSearchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="barcodeGenModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Создать штрих-код</h3>
+                <button class="btn btn-sm" id="closeBarcodeGenBtn" type="button">Закрыть</button>
+            </div>
+            <div class="modal-body">
+                <div class="barcode-gen-panel open" id="globalBarcodeGenPanel" style="margin-top:0;">
                     <div class="barcode-gen-row">
                         <span class="barcode-gen-label">Элемент:</span>
                         <div class="bc-pill-group" id="bcGenTypeGroup">
@@ -1217,10 +1255,6 @@
                         <div class="bc-preview-hint">Нажмите на штрих-код, чтобы открыть на весь экран для сканера</div>
                     </div>
                 </div>
-                <div class="files-search-status" id="globalOrderSearchStatus">Введите номер заказа для поиска по всем загруженным линиям и сменам</div>
-            </div>
-            <div class="modal-body">
-                <div id="globalOrderSearchResults"></div>
             </div>
         </div>
     </div>
@@ -1599,9 +1633,10 @@
             }
             if (needed.length === 0) return false;
 
+            if (!isLocalNetworkAvailable()) return false;
             let rootInfo;
             try {
-                const r = await fetchWithTimeout('/api/files', {}, 6000);
+                const r = await fetchWithTimeout('/api/files', {}, 2200);
                 if (!r.ok) return false;
                 rootInfo = await r.json();
                 if (!rootInfo || rootInfo.error) return false;
@@ -1900,8 +1935,90 @@
             return arr;
         }
 
+        // ==================== ХЕЛПЕРЫ ДЕДУПЛИКАЦИИ И БЫСТРОЙ ПРОВЕРКИ СЕТИ ====================
+        function getBlockImpostCount(block) {
+            if (!block || !block.total_counts) return 0;
+            const tc = block.total_counts;
+            return (tc.Ипостов !== undefined && tc.Ипостов !== null) ? (tc.Ипостов || 0) : (tc.Импостов || 0);
+        }
+
+        function getBlockDedupKey(block) {
+            if (!block) return '';
+            const shift = String(block.day_night || '').trim().toLowerCase();
+            const normName = String(block.folder_name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            const d = getBlockDate(block);
+            if (d) {
+                const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                const isPureDateName = /^\d{1,2}[.\-]\d{1,2}(?:[.\-]\d{2,4})?$/.test(normName) || /^\d{4}-\d{2}-\d{2}$/.test(normName);
+                return iso + '|' + (isPureDateName ? iso : normName) + '|' + shift;
+            }
+            return 'nodate|' + normName + '|' + shift;
+        }
+
+        function scoreBlockRichness(b) {
+            if (!b) return -1;
+            const processed = b.processed ? 1000000 : 0;
+            const filesLen = Array.isArray(b.files) ? b.files.length * 1000 : 0;
+            const tc = b.total_counts || {};
+            const sumCnt = (getBlockImpostCount(b) + (tc.Створки || 0) + (tc.Рамы || 0) + (tc.Заполнения || 0));
+            const hasPack = b.pack_id ? 500 : 0;
+            return processed + filesLen + hasPack + sumCnt;
+        }
+
+        function deduplicateBlocks(blocks) {
+            if (!Array.isArray(blocks) || blocks.length <= 1) return Array.isArray(blocks) ? blocks : [];
+            const byKey = new Map();
+            const order = [];
+            for (const b of blocks) {
+                if (!b) continue;
+                const key = getBlockDedupKey(b);
+                if (!byKey.has(key)) {
+                    byKey.set(key, b);
+                    order.push(key);
+                } else {
+                    const prev = byKey.get(key);
+                    if (scoreBlockRichness(b) >= scoreBlockRichness(prev)) {
+                        byKey.set(key, b);
+                    }
+                }
+            }
+            return order.map(k => byKey.get(k));
+        }
+
+        function isLocalNetworkAvailable() {
+            if (window.AndroidApp && typeof window.AndroidApp.isWifiConnected === 'function') {
+                try { return !!window.AndroidApp.isWifiConnected(); } catch (e) {}
+            }
+            return true;
+        }
+
+        let lastQuickProbeTime = 0;
+        let lastQuickProbeOk = false;
+
+        async function quickProbeLocalServer(timeoutMs = 2000) {
+            if (!isLocalNetworkAvailable()) {
+                lastQuickProbeOk = false;
+                lastQuickProbeTime = Date.now();
+                return false;
+            }
+            if (lastQuickProbeOk && (Date.now() - lastQuickProbeTime < 4000)) {
+                return true;
+            }
+            try {
+                const r = await fetchWithTimeout('/api/files', {}, timeoutMs);
+                const ok = !!(r && r.ok);
+                lastQuickProbeOk = ok;
+                lastQuickProbeTime = Date.now();
+                return ok;
+            } catch (e) {
+                lastQuickProbeOk = false;
+                lastQuickProbeTime = Date.now();
+                return false;
+            }
+        }
+
         // ==================== FETCH С ТАЙМАУТОМ ====================
-        async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), timeoutMs);
             try {
@@ -2469,7 +2586,7 @@
                 if (rawBlocks) {
                     const parsed = JSON.parse(rawBlocks);
                     if (Array.isArray(parsed) && parsed.length === FOLDER_COUNT) {
-                        blocksByFolder = parsed;
+                        blocksByFolder = parsed.map(arr => Array.isArray(arr) ? deduplicateBlocks(arr) : arr);
                     }
                 }
                 const rawTimes = localStorage.getItem(STORAGE_KEYS.CACHED_SCAN_TIME);
@@ -2812,26 +2929,46 @@
             if (configured.length === 0) return false;
 
             setHeaderBrandLoading(true);
-            if (forceFullRecalc || !currentBlocks || currentBlocks.length === 0) updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Обновление данных с сервера...', true);
+            const hasYandex = !!(yandexDiskEnabled && getEffectiveYandexToken());
+            const wifiOn = isLocalNetworkAvailable();
             let anySuccess = false;
-            for (const idx of configured) {
-                // Сканируем конкретную папку, не переключая активную линию
-                const ok = await scanFolderByIndex(idx, forceFullRecalc);
-                if (ok) anySuccess = true;
-            }
 
-            if (anySuccess) {
-                lastDataSource = 'local';
-                updateStatus('Данные обновлены: ' + new Date().toLocaleTimeString('ru-RU'));
-            } else {
-                // Локальный сервер недоступен — пробуем автоматически подгрузить с Яндекс Диска
-                const ydOk = (yandexDiskEnabled && getEffectiveYandexToken()) ? await loadFromYandexDisk(false) : false;
+            if (!wifiOn && hasYandex) {
+                // Wi-Fi отключён — не ждём локальный сервер, сразу грузим с Яндекс Диска
+                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Нет Wi-Fi — загрузка с Яндекс Диска...', true);
+                const ydOk = await loadFromYandexDisk(false);
                 if (ydOk) {
                     anySuccess = true;
                 } else if (blocksByFolder[activeIndex]) {
-                    updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
+                    updateStatus('Нет связи с Яндекс Диском — показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
                 } else {
-                    updateStatus('Нет связи с сервером и Яндекс Диском', true);
+                    updateStatus('Нет связи с Яндекс Диском', true);
+                }
+            } else {
+                if (forceFullRecalc || !currentBlocks || currentBlocks.length === 0) updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Проверка локального сервера...', true);
+                const serverReachable = await quickProbeLocalServer(2200);
+                if (serverReachable) {
+                    for (const idx of configured) {
+                        const ok = await scanFolderByIndex(idx, forceFullRecalc);
+                        if (ok) anySuccess = true;
+                    }
+                } else if (wifiOn && window.AndroidApp && typeof window.AndroidApp.onServerUnreachable === 'function') {
+                    window.AndroidApp.onServerUnreachable();
+                }
+
+                if (anySuccess) {
+                    lastDataSource = 'local';
+                    updateStatus('Данные обновлены: ' + new Date().toLocaleTimeString('ru-RU'));
+                } else {
+                    // Локальный сервер недоступен — быстро переключаемся на Яндекс Диск
+                    const ydOk = hasYandex ? await loadFromYandexDisk(false) : false;
+                    if (ydOk) {
+                        anySuccess = true;
+                    } else if (blocksByFolder[activeIndex]) {
+                        updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
+                    } else {
+                        updateStatus('Нет связи с сервером и Яндекс Диском', true);
+                    }
                 }
             }
 
@@ -2877,7 +3014,7 @@
         // Содержимое папки. null — папки нет/ошибка сервера. Сетевая ошибка пробрасывается наверх.
         async function listDir(path) {
             try {
-                const r = await fetchWithTimeout('/api/files?path=' + encodeURIComponent(path), {}, 15000);
+                const r = await fetchWithTimeout('/api/files?path=' + encodeURIComponent(path), {}, 5000);
                 const d = await r.json();
                 if (d.error) return null;
                 return d;
@@ -3027,8 +3164,9 @@
 
         // Оставляет blockLimit самых свежих блоков по дате. Блоки без даты не обрезаются.
         function trimToFreshest(blocks, limit) {
+            const uniqueBlocks = deduplicateBlocks(blocks);
             const dated = [], undated = [];
-            blocks.forEach(b => {
+            uniqueBlocks.forEach(b => {
                 const d = getBlockDate(b);
                 if (d) dated.push({ b: b, t: d.getTime() }); else undated.push(b);
             });
@@ -3133,7 +3271,7 @@
                 return;
             }
 
-            const filteredBlocks = blocks.filter(block => !block.error && block.processed);
+            const filteredBlocks = deduplicateBlocks(blocks).filter(block => !block.error && block.processed);
             filteredBlocks.sort((a, b) => {
                 return compareBlocksAsc(a, b);
             });
@@ -3143,19 +3281,19 @@
                 let dateStr = date ? date.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric' }) :
                                     block.folder_name.length > 20 ? block.folder_name.substring(0,20)+'...' : block.folder_name;
                 const counts = {
-                    Ипостов: block.total_counts?.Ипостов || 0,
+                    Ипостов: getBlockImpostCount(block),
                     Створки: block.total_counts?.Створки || 0,
                     Рамы: block.total_counts?.Рамы || 0,
                     Заполнения: block.total_counts?.Заполнения || 0
                 };
                 const windowResult = calculateConditionalWindows(counts);
-                const total = (block.total_counts?.Ипостов || 0) +
+                const total = getBlockImpostCount(block) +
                              (block.total_counts?.Створки || 0) +
                              (block.total_counts?.Рамы || 0);
                 return {
                     label: dateStr,
                     full_label: block.folder_name,
-                    Ипостов: block.total_counts?.Ипостов || 0,
+                    Ипостов: getBlockImpostCount(block),
                     Створки: block.total_counts?.Створки || 0,
                     Рамы: block.total_counts?.Рамы || 0,
                     Заполнения: windowResult.zap || 0,
@@ -3288,7 +3426,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label:'Ипостов', data:ipostovData, borderColor:'#3498db', backgroundColor:'rgba(52,152,219,0.1)', borderWidth:2, tension:0.2, fill:false, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:'#3498db', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y' },
+                        { label:'Импостов', data:ipostovData, borderColor:'#3498db', backgroundColor:'rgba(52,152,219,0.1)', borderWidth:2, tension:0.2, fill:false, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:'#3498db', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y' },
                         { label:'Створки', data:stvorkiData, borderColor:'#27ae60', backgroundColor:'rgba(39,174,96,0.1)', borderWidth:2, tension:0.2, fill:false, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:'#27ae60', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y' },
                         { label:'Рамы', data:ramyData, borderColor:'#e74c3c', backgroundColor:'rgba(231,76,60,0.1)', borderWidth:2, tension:0.2, fill:false, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:'#e74c3c', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y' },
                         { label:'Условные окна', data:windowsData, borderColor:'#9b59b6', backgroundColor:'rgba(155,89,182,0.1)', borderWidth:3, tension:0.2, fill:false, pointRadius:5, pointHoverRadius:8, pointBackgroundColor:'#9b59b6', pointBorderColor:'#fff', pointBorderWidth:2, borderDash:[8,4], yAxisID:'y1' },
@@ -3366,7 +3504,7 @@
             }
             let html = `
                 <div class="summary-item"><div class="summary-label">Смен</div><div class="summary-value">${totalShifts}</div></div>
-                <div class="summary-item"><div class="summary-label">Ипостов</div><div class="summary-value">${isMobile ? shorten(totalIpostov) : totalIpostov.toLocaleString()}</div></div>
+                <div class="summary-item"><div class="summary-label">Импостов</div><div class="summary-value">${isMobile ? shorten(totalIpostov) : totalIpostov.toLocaleString()}</div></div>
                 <div class="summary-item"><div class="summary-label">Створки</div><div class="summary-value">${isMobile ? shorten(totalStvorki) : totalStvorki.toLocaleString()}</div></div>
                 <div class="summary-item"><div class="summary-label">Рамы</div><div class="summary-value">${isMobile ? shorten(totalRamy) : totalRamy.toLocaleString()}</div></div>
             `;
@@ -3488,7 +3626,7 @@
                 grid.innerHTML = '<div class="status-message">Нет данных</div>';
                 return;
             }
-            const sortedBlocks = [...blocks].sort(compareBlocksAsc);
+            const sortedBlocks = deduplicateBlocks(blocks).sort(compareBlocksAsc);
 
             // Разделители месяцев показываем, только если на экране больше одного месяца
             const monthKeys = new Set();
@@ -3516,7 +3654,7 @@
                     html += '<div class="date-block"><div class="error-message">' + block.folder_name + ': ' + block.error + '</div></div>';
                 } else if (block.processed) {
                     const counts = {
-                        Ипостов: block.total_counts?.Ипостов || 0,
+                        Ипостов: getBlockImpostCount(block),
                         Створки: block.total_counts?.Створки || 0,
                         Рамы: block.total_counts?.Рамы || 0,
                         Заполнения: block.total_counts?.Заполнения || 0
@@ -3536,7 +3674,7 @@
                     if (fullWeekday) html += '<div class="date-weekday">' + fullWeekday + '</div>';
                     html += '</div>';
 
-                    html += '<div class="count-item"><span>Ипостов:</span><span class="count-value">' + (block.total_counts?.Ипостов || 0) + '</span></div>';
+                    html += '<div class="count-item"><span>Импостов:</span><span class="count-value">' + getBlockImpostCount(block) + '</span></div>';
                     html += '<div class="count-item"><span>Створки:</span><span class="count-value">' + (block.total_counts?.Створки || 0) + '</span></div>';
                     html += '<div class="count-item"><span>Рамы:</span><span class="count-value">' + (block.total_counts?.Рамы || 0) + '</span></div>';
                     html += '<div class="count-item"><span>Контуров:</span><span class="count-value">' + windowResult.zap + '</span></div>';
@@ -3803,7 +3941,7 @@
                 fileHtml += '<span class="file-open-hint">Чертеж</span>';
                 fileHtml += '</div>';
                 fileHtml += '<div class="file-counts">';
-                fileHtml += '<span class="count-badge">И: ' + (file.counts?.Ипостов || 0) + '</span>';
+                fileHtml += '<span class="count-badge">И: ' + (file.counts?.Ипостов ?? file.counts?.Импостов ?? 0) + '</span>';
                 fileHtml += '<span class="count-badge">С: ' + Math.floor((file.counts?.Створки || 0) / 4) + '</span>';
                 fileHtml += '<span class="count-badge">Р: ' + Math.floor((file.counts?.Рамы || 0) / 4) + '</span>';
                 if (ordersCnt > 0) {
@@ -4193,10 +4331,46 @@
             modal.classList.add('open');
         }
 
+        function showBarcodeGenModal() {
+            const modal = document.getElementById('barcodeGenModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            updateBodyScrollLock();
+            const orderInp = document.getElementById('bcGenOrderInput');
+            const searchVal = (document.getElementById('globalOrderSearchInput')?.value || '').trim();
+            if (orderInp && searchVal && !orderInp.value.trim()) {
+                orderInp.value = searchVal;
+            }
+            updateGlobalBarcodeGenerator();
+            if (orderInp) setTimeout(() => orderInp.focus(), 60);
+        }
+
+        function hideBarcodeGenModal() {
+            const modal = document.getElementById('barcodeGenModal');
+            if (modal) modal.style.display = 'none';
+            updateBodyScrollLock();
+        }
+
         function closeBarcodeZoomModal() {
             const modal = document.getElementById('barcodeZoomModal');
             if (modal) modal.classList.remove('open');
         }
+
+        window.closeTopModalIfOpen = function() {
+            const bcZoom = document.getElementById('barcodeZoomModal');
+            if (bcZoom && bcZoom.classList.contains('open')) { closeBarcodeZoomModal(); return true; }
+            const bcGen = document.getElementById('barcodeGenModal');
+            if (bcGen && bcGen.style.display === 'block') { hideBarcodeGenModal(); return true; }
+            const gs = document.getElementById('globalSearchModal');
+            if (gs && gs.style.display === 'block') { hideGlobalSearchModal(); return true; }
+            const fm = document.getElementById('fileManager');
+            if (fm && fm.style.display === 'block') { hideFileManager(); return true; }
+            const flm = document.getElementById('filesModal');
+            if (flm && flm.style.display === 'block') { hideFilesModal(); return true; }
+            const sm = document.getElementById('settingsModal');
+            if (sm && sm.style.display === 'block') { hideSettingsModal(); return true; }
+            return false;
+        };
 
         // ==================== СКАНЕР ШТРИХ-КОДОВ ====================
         function extractOrderFromBarcode(rawText) {
@@ -4293,7 +4467,15 @@
                 return false;
             }
             const idx = activeIndex;
-            const ok = await scanFolderByIndex(idx);
+            const hasYandex = !!(yandexDiskEnabled && getEffectiveYandexToken());
+            let ok = false;
+
+            if (isLocalNetworkAvailable() && await quickProbeLocalServer(2200)) {
+                ok = await scanFolderByIndex(idx);
+            } else if (isLocalNetworkAvailable() && window.AndroidApp && typeof window.AndroidApp.onServerUnreachable === 'function') {
+                window.AndroidApp.onServerUnreachable();
+            }
+
             if (blocksByFolder[idx]) {
                 currentBlocks = blocksByFolder[idx];
                 displayBlocks(currentBlocks);
@@ -4303,7 +4485,7 @@
                 lastDataSource = 'local';
                 updateStatus('Линия ' + lineLabel(idx) + ' обновлена: ' + new Date().toLocaleTimeString('ru-RU'));
             } else {
-                const ydOk = (yandexDiskEnabled && getEffectiveYandexToken()) ? await loadFromYandexDisk(false) : false;
+                const ydOk = hasYandex ? await loadFromYandexDisk(false) : false;
                 if (!ydOk) {
                     if (blocksByFolder[idx]) {
                         updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[idx]) + ')');
@@ -4396,22 +4578,23 @@
 
             if (currentDirectory && !hasMissingDefaultFolders) {
                 if (!blocksByFolder[activeIndex]) {
-                    updateStatus('Загрузка данных с сервера...');
+                    updateStatus(isLocalNetworkAvailable() ? 'Загрузка данных...' : 'Загрузка данных с Яндекс Диска...');
                 }
                 setTimeout(async () => {
                     await refreshAllFolders();
                     restartSwitchTimer();
                     startRefreshTimer();
-                }, 500);
+                }, 120);
             } else {
                 if (!blocksByFolder[activeIndex]) {
-                    updateStatus('Поиск папок линий...');
+                    updateStatus(isLocalNetworkAvailable() ? 'Поиск папок линий...' : 'Загрузка с Яндекс Диска...');
                 }
                 setTimeout(async () => {
-                    // При первом запуске (или если не все папки найдены) автоматически ищем Мурат Стандарт / Мурат Нестандарт / Ламинация
-                    await autoDiscoverFoldersFromLocalServer(false);
-                    ensureActiveIndexValid();
-                    updateActiveDisplay();
+                    if (isLocalNetworkAvailable()) {
+                        await autoDiscoverFoldersFromLocalServer(false);
+                        ensureActiveIndexValid();
+                        updateActiveDisplay();
+                    }
 
                     if (getConfiguredIndexes().length > 0) {
                         await refreshAllFolders();
@@ -4425,7 +4608,7 @@
                     }
                     restartSwitchTimer();
                     startRefreshTimer();
-                }, 400);
+                }, 120);
             }
 
             document.querySelectorAll('#settingsModal .btn[data-index]').forEach(btn => {
@@ -4530,26 +4713,14 @@
             const openGlobalAllBtn = document.getElementById('openGlobalAllBtn');
             if (openGlobalAllBtn) openGlobalAllBtn.addEventListener('click', openAllGlobalMatchesInVisualizer);
 
-            const toggleBcGenBtn = document.getElementById('toggleGlobalBarcodeGenBtn');
-            const bcGenPanel = document.getElementById('globalBarcodeGenPanel');
+            const headerBarcodeGenBtn = document.getElementById('barcodeGenBtn');
+            const closeBarcodeGenBtn = document.getElementById('closeBarcodeGenBtn');
             const bcGenOrderInp = document.getElementById('bcGenOrderInput');
             const bcGenItemInp = document.getElementById('bcGenItemInput');
             const bcGenPreviewBox = document.getElementById('bcGenPreviewBox');
 
-            if (toggleBcGenBtn && bcGenPanel) {
-                toggleBcGenBtn.addEventListener('click', function() {
-                    const isOpen = bcGenPanel.classList.toggle('open');
-                    toggleBcGenBtn.classList.toggle('active', isOpen);
-                    if (isOpen && bcGenOrderInp) {
-                        const searchVal = (document.getElementById('globalOrderSearchInput')?.value || '').trim();
-                        if (searchVal && !bcGenOrderInp.value.trim()) {
-                            bcGenOrderInp.value = searchVal;
-                        }
-                        updateGlobalBarcodeGenerator();
-                        setTimeout(() => bcGenOrderInp.focus(), 40);
-                    }
-                });
-            }
+            if (headerBarcodeGenBtn) headerBarcodeGenBtn.addEventListener('click', showBarcodeGenModal);
+            if (closeBarcodeGenBtn) closeBarcodeGenBtn.addEventListener('click', hideBarcodeGenModal);
             document.querySelectorAll('#bcGenTypeGroup .bc-pill-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('#bcGenTypeGroup .bc-pill-btn').forEach(b => b.classList.remove('active'));
@@ -4772,6 +4943,7 @@
                 if (e.target.id === 'filesModal') hideFilesModal();
                 if (e.target.id === 'settingsModal') hideSettingsModal();
                 if (e.target.id === 'globalSearchModal') hideGlobalSearchModal();
+                if (e.target.id === 'barcodeGenModal') hideBarcodeGenModal();
             });
 
             window.addEventListener('resize', function() {
@@ -4783,7 +4955,7 @@
 
         // ==================== ЖЕСТЫ: PULL-TO-REFRESH И СВАЙП МЕЖДУ ЛИНИЯМИ ====================
         function isAnyModalOpen() {
-            const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal'];
+            const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal', 'barcodeGenModal'];
             return ids.some(id => {
                 const el = document.getElementById(id);
                 return el && el.style.display === 'block';
