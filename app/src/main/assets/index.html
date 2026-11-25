@@ -595,34 +595,182 @@
             margin-top: 0;
         }
 
-        /* Pull-to-refresh индикатор */
-        .ptr-indicator {
-            position: fixed;
-            top: -4.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 3000;
+        .status-message.status-fading {
+            opacity: 0;
+            transition: opacity 0.28s ease;
+        }
+        .status-message.status-hidden {
+            display: none !important;
+        }
+
+        /* Генератор штрих-кода в окне глобального поиска */
+        .btn-barcode-gen-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.52rem 0.72rem !important;
+            background: var(--bg-soft);
+            color: var(--text-primary);
+            border: 0.125rem solid var(--border-input);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+        .btn-barcode-gen-toggle:hover,
+        .btn-barcode-gen-toggle.active {
+            background: var(--btn-primary-bg);
+            border-color: var(--btn-primary-bg);
+            color: #ffffff;
+        }
+        .barcode-gen-panel {
+            display: none;
+            margin-top: 0.35rem;
+            padding: 0.75rem;
+            background: var(--bg-soft);
+            border: 0.0625rem solid var(--border-input);
+            border-radius: 0.625rem;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .barcode-gen-panel.open {
+            display: flex;
+        }
+        .barcode-gen-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .barcode-gen-label {
+            font-size: 0.78rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            min-width: 4.5rem;
+        }
+        .bc-pill-group {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .bc-pill-btn {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.82rem;
+            font-weight: bold;
+            border-radius: 0.45rem;
+            border: 0.0625rem solid var(--border-input);
             background: var(--bg-card);
             color: var(--text-primary);
-            border: 0.125rem solid var(--color-info);
-            border-radius: 999px;
-            padding: 0.5rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .bc-pill-btn.active {
+            background: var(--btn-primary-bg);
+            border-color: var(--btn-primary-bg);
+            color: #ffffff;
+        }
+        .bc-gen-order-input {
+            flex: 1;
+            min-width: 7.5rem;
+            padding: 0.45rem 0.65rem;
+            border: 0.125rem solid var(--border-input);
+            border-radius: 0.45rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.95rem;
             font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-            transition: top 0.2s ease, border-color 0.2s ease;
-            pointer-events: none;
-            white-space: nowrap;
         }
-        .ptr-indicator.dragging {
-            transition: none;
+        .bc-gen-order-input:focus,
+        .bc-gen-item-input:focus {
+            border-color: var(--color-info);
+            outline: none;
         }
-        .ptr-indicator.ready {
-            border-color: var(--color-success);
+        .bc-gen-item-input {
+            width: 3.6rem;
+            padding: 0.35rem 0.45rem;
+            border: 0.125rem solid var(--border-input);
+            border-radius: 0.45rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.88rem;
+            font-weight: bold;
+            text-align: center;
         }
+        .bc-preview-box {
+            background: #ffffff;
+            color: #111111;
+            border: 0.0625rem solid #d8d4ce;
+            border-radius: 0.5rem;
+            padding: 0.75rem 0.65rem 0.55rem;
+            text-align: center;
+            cursor: pointer;
+        }
+        .bc-preview-box svg {
+            width: 100%;
+            max-width: 22rem;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .bc-preview-code {
+            margin-top: 0.35rem;
+            font-family: monospace;
+            font-size: 1.05rem;
+            font-weight: bold;
+            letter-spacing: 0.06em;
+            color: #111111;
+        }
+        .bc-preview-hint {
+            margin-top: 0.2rem;
+            font-size: 0.72rem;
+            color: #666666;
+        }
+        .bc-zoom-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 4000;
+            background: rgba(0, 0, 0, 0.88);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .bc-zoom-modal.open {
+            display: flex;
+        }
+        .bc-zoom-card {
+            background: #ffffff;
+            color: #111111;
+            border-radius: 0.875rem;
+            padding: 1.5rem 1.25rem 1.1rem;
+            width: 100%;
+            max-width: 34rem;
+            text-align: center;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+        }
+        .bc-zoom-card svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0.5rem auto;
+        }
+        .bc-zoom-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #555555;
+            margin-bottom: 0.4rem;
+        }
+        .bc-zoom-code {
+            font-family: monospace;
+            font-size: 1.35rem;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            color: #000000;
+            margin: 0.5rem 0 0.9rem;
+        }
+
         .brand-logo-wrap {
             display: inline-flex;
             align-items: center;
@@ -640,17 +788,8 @@
             transform-box: view-box;
             transform-origin: 50px 50px;
         }
-        .brand-logo-wrap.is-loading .brand-rays,
-        .ptr-indicator.loading .ptr-spinner .brand-rays {
+        .brand-logo-wrap.is-loading .brand-rays {
             animation: ptrSpin 2.4s linear infinite;
-        }
-        .ptr-spinner {
-            width: 1.75rem;
-            height: 1.75rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
         }
         @keyframes ptrSpin {
             to { transform: rotate(360deg); }
@@ -702,10 +841,6 @@
     </style>
 </head>
 <body>
-    <div class="ptr-indicator" id="ptrIndicator" aria-hidden="true">
-        <div class="ptr-spinner" id="ptrSpinner"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="ptr_og" x1="15%" y1="10%" x2="85%" y2="90%"><stop offset="0%" stop-color="#FEC035"/><stop offset="45%" stop-color="#FB963B"/><stop offset="100%" stop-color="#EA8225"/></linearGradient><linearGradient id="ptr_gg" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#B0DF65"/><stop offset="55%" stop-color="#98CB56"/><stop offset="100%" stop-color="#6FA551"/></linearGradient></defs><g class="brand-rays" id="ptrRays"><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(0 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(15 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(30 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(45 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(60 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(75 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(90 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(105 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(120 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(135 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(150 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(165 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(180 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(195 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(210 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(225 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(240 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(255 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(270 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(285 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(300 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(315 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(330 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(345 50 50)"/></g><circle cx="50" cy="50" r="24.8" fill="none" stroke="url(#ptr_og)" stroke-width="6.4"/><rect x="46.9" y="25.5" width="6.2" height="49" fill="url(#ptr_og)"/><rect x="25.5" y="46.9" width="49" height="6.2" fill="url(#ptr_og)"/><path d="M 30.5 41 A 21.8 21.8 0 0 1 48 28.4" fill="none" stroke="#FFF4C2" stroke-width="2.1" stroke-linecap="round" opacity="0.85"/><path d="M 54.5 34 C 54.5 25.8 60.2 22 68.5 22 L 77.2 22 C 78.2 22 79 22.8 79 23.8 L 79 34.5 C 79 42.8 73.5 46.8 64.5 46.8 L 54.5 46.8 Z" fill="url(#ptr_gg)" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"/><path d="M 69.5 26.2 L 74.8 26.2 L 74.8 31.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/></svg></div>
-        <span id="ptrText">Потяните вниз для обновления</span>
-    </div>
     <div class="swipe-toast" id="swipeToast" aria-hidden="true"></div>
     <div class="container" id="mainContainer">
         <div class="header">
@@ -741,9 +876,6 @@
             <div id="autoScanInfo" class="auto-scan-info" style="display: none;">
                 <span id="autoSwitchRow" style="display: none;">
                     <span id="autoScanLabel">Автопереключение линий</span>: следующее через <span id="autoScanTimer">--</span>с
-                </span>
-                <span id="dataRefreshInfo" style="display: none; margin-top: 2px; opacity: 0.85;">
-                    Обновление через: <span id="dataRefreshTimer">--</span>с
                 </span>
             </div>
         </div>
@@ -1039,8 +1171,51 @@
             <div class="files-search-bar">
                 <div class="files-search-row">
                     <input type="text" id="globalOrderSearchInput" class="files-search-input" placeholder="Номер заказа (напр. 34930)..." inputmode="search">
-                    <button class="btn-scan-barcode" id="scanGlobalBarcodeBtn" type="button" title="Сканировать штрих-код" aria-label="Сканировать штрих-код"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="11" y1="7" x2="11" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/><line x1="17" y1="7" x2="17" y2="17"/></svg></button>
+                    <button class="btn-scan-barcode" id="scanGlobalBarcodeBtn" type="button" title="Сканировать штрих-код камерой" aria-label="Сканировать штрих-код"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="11" y1="7" x2="11" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/><line x1="17" y1="7" x2="17" y2="17"/></svg></button>
+                    <button class="btn-barcode-gen-toggle" id="toggleGlobalBarcodeGenBtn" type="button" title="Создать штрих-код по номеру заказа">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block;"><line x1="4" y1="5" x2="4" y2="19"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="11" y1="5" x2="11" y2="19"/><line x1="14" y1="5" x2="14" y2="19"/><line x1="17" y1="5" x2="17" y2="19"/><line x1="20" y1="5" x2="20" y2="19"/></svg>
+                        <span>Штрих-код</span>
+                    </button>
                     <button class="btn btn-success btn-sm" id="openGlobalAllBtn" type="button" style="display:none;">Все чертежи</button>
+                </div>
+                <div class="barcode-gen-panel" id="globalBarcodeGenPanel">
+                    <div class="barcode-gen-row">
+                        <span class="barcode-gen-label">Элемент:</span>
+                        <div class="bc-pill-group" id="bcGenTypeGroup">
+                            <button type="button" class="bc-pill-btn active" data-bc-type="C">C — Створка</button>
+                            <button type="button" class="bc-pill-btn" data-bc-type="P">P — Рама</button>
+                            <button type="button" class="bc-pill-btn" data-bc-type="I">I — Импост</button>
+                        </div>
+                    </div>
+                    <div class="barcode-gen-row" id="bcGenSubRow">
+                        <span class="barcode-gen-label">Индекс:</span>
+                        <div class="bc-pill-group" id="bcGenSubGroup">
+                            <button type="button" class="bc-pill-btn active" data-bc-sub="">Без №</button>
+                            <button type="button" class="bc-pill-btn" data-bc-sub="1">1</button>
+                            <button type="button" class="bc-pill-btn" data-bc-sub="2">2</button>
+                            <button type="button" class="bc-pill-btn" data-bc-sub="3">3</button>
+                            <button type="button" class="bc-pill-btn" data-bc-sub="4">4</button>
+                        </div>
+                    </div>
+                    <div class="barcode-gen-row">
+                        <span class="barcode-gen-label">Заказ:</span>
+                        <input type="text" id="bcGenOrderInput" class="bc-gen-order-input" placeholder="Номер заказа (напр. 34930)" inputmode="numeric">
+                    </div>
+                    <div class="barcode-gen-row">
+                        <span class="barcode-gen-label">Изделие:</span>
+                        <div class="bc-pill-group" id="bcGenItemGroup">
+                            <button type="button" class="bc-pill-btn active" data-bc-item="1">1</button>
+                            <button type="button" class="bc-pill-btn" data-bc-item="2">2</button>
+                            <button type="button" class="bc-pill-btn" data-bc-item="3">3</button>
+                            <button type="button" class="bc-pill-btn" data-bc-item="4">4</button>
+                        </div>
+                        <input type="text" id="bcGenItemInput" class="bc-gen-item-input" value="1" inputmode="numeric" aria-label="Номер изделия">
+                    </div>
+                    <div class="bc-preview-box" id="bcGenPreviewBox" style="display:none;" title="Нажмите, чтобы увеличить штрих-код на весь экран">
+                        <div id="bcGenSvgContainer"></div>
+                        <div class="bc-preview-code" id="bcGenCodeText"></div>
+                        <div class="bc-preview-hint">Нажмите на штрих-код, чтобы открыть на весь экран для сканера</div>
+                    </div>
                 </div>
                 <div class="files-search-status" id="globalOrderSearchStatus">Введите номер заказа для поиска по всем загруженным линиям и сменам</div>
             </div>
@@ -1052,6 +1227,15 @@
 
     <div class="visualizer-overlay" id="browserVisualizerOverlay">
         <iframe id="browserVisualizerFrame" title="Чертежи рам и створок"></iframe>
+    </div>
+
+    <div class="bc-zoom-modal" id="barcodeZoomModal">
+        <div class="bc-zoom-card">
+            <div class="bc-zoom-title" id="bcZoomTitle">Штрих-код</div>
+            <div id="bcZoomSvgContainer"></div>
+            <div class="bc-zoom-code" id="bcZoomCodeText"></div>
+            <button class="btn btn-sm" id="closeBcZoomBtn" type="button">Закрыть</button>
+        </div>
     </div>
 
     <script>
@@ -1569,7 +1753,7 @@
             if (!yandexDiskEnabled || !getEffectiveYandexToken()) return false;
             try {
                 setHeaderBrandLoading(true);
-                updateStatus('Загрузка данных с Яндекс Диска...');
+                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Загрузка данных с Яндекс Диска...', true);
                 const rawText = await yandexDownloadText('app:/cache.json');
                 if (!rawText) throw new Error('Пустой ответ cache.json');
                 const cacheObj = JSON.parse(rawText);
@@ -1881,8 +2065,41 @@
             updateBodyScrollLock();
         }
 
-        function updateStatus(msg) {
-            document.getElementById('statusMessage').textContent = msg;
+        let statusFadeTimerId = null;
+        let statusHideTimerId = null;
+
+        function hideStatusMessageNow() {
+            const el = document.getElementById('statusMessage');
+            if (!el) return;
+            if (statusFadeTimerId) { clearTimeout(statusFadeTimerId); statusFadeTimerId = null; }
+            if (statusHideTimerId) { clearTimeout(statusHideTimerId); statusHideTimerId = null; }
+            el.classList.remove('status-fading');
+            el.classList.add('status-hidden');
+        }
+
+        function updateStatus(msg, sticky = false) {
+            const el = document.getElementById('statusMessage');
+            if (!el) return;
+            if (statusFadeTimerId) { clearTimeout(statusFadeTimerId); statusFadeTimerId = null; }
+            if (statusHideTimerId) { clearTimeout(statusHideTimerId); statusHideTimerId = null; }
+
+            if (!msg) {
+                el.classList.remove('status-fading');
+                el.classList.add('status-hidden');
+                return;
+            }
+            el.textContent = msg;
+            el.classList.remove('status-hidden', 'status-fading');
+
+            if (!sticky) {
+                statusFadeTimerId = setTimeout(() => {
+                    el.classList.add('status-fading');
+                    statusHideTimerId = setTimeout(() => {
+                        el.classList.add('status-hidden');
+                        el.classList.remove('status-fading');
+                    }, 300);
+                }, 5000);
+            }
         }
 
         function renderLineTabs() {
@@ -2324,7 +2541,7 @@
             stopSwitchTimer();
             stopRefreshTimer();
             updateActiveDisplay();
-            updateStatus('Настройки сброшены. Укажите названия линий и выберите папки.');
+            updateStatus('Настройки сброшены. Укажите названия линий и выберите папки.', true);
             document.getElementById('blocksGrid').innerHTML = '';
             chartData = [];
             if (productionChart) { productionChart.destroy(); productionChart = null; }
@@ -2351,11 +2568,9 @@
         function updateInfoBannerVisibility() {
             const box = document.getElementById('autoScanInfo');
             const swRow = document.getElementById('autoSwitchRow');
-            const refRow = document.getElementById('dataRefreshInfo');
             if (!box) return;
             const showSw = !!(swRow && swRow.style.display !== 'none');
-            const showRef = !!(refRow && refRow.style.display !== 'none');
-            box.style.display = (showSw || showRef) ? 'block' : 'none';
+            box.style.display = showSw ? 'block' : 'none';
         }
 
         function startSwitchTimer() {
@@ -2563,20 +2778,14 @@
         // Линии без названия ПРОПУСКАЮТСЯ.
         function startRefreshTimer() {
             stopRefreshTimer();
-            const refRow = document.getElementById('dataRefreshInfo');
+            updateInfoBannerVisibility();
             if (refreshInterval <= 0 || getConfiguredIndexes().length === 0) {
-                if (refRow) refRow.style.display = 'none';
-                updateInfoBannerVisibility();
                 return;
             }
-            if (refRow) refRow.style.display = 'block';
-            updateInfoBannerVisibility();
             refreshCountdown = refreshInterval;
-            updateRefreshCountdownDisplay();
 
             refreshTimerId = setInterval(() => {
                 refreshCountdown--;
-                updateRefreshCountdownDisplay();
                 if (refreshCountdown <= 0) {
                     refreshCountdown = refreshInterval;
                     refreshAllFolders();
@@ -2602,7 +2811,8 @@
             const configured = getConfiguredIndexes();
             if (configured.length === 0) return false;
 
-            updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Обновление данных с сервера...');
+            setHeaderBrandLoading(true);
+            if (forceFullRecalc || !currentBlocks || currentBlocks.length === 0) updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Обновление данных с сервера...', true);
             let anySuccess = false;
             for (const idx of configured) {
                 // Сканируем конкретную папку, не переключая активную линию
@@ -2621,7 +2831,7 @@
                 } else if (blocksByFolder[activeIndex]) {
                     updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
                 } else {
-                    updateStatus('Нет связи с сервером и Яндекс Диском');
+                    updateStatus('Нет связи с сервером и Яндекс Диском', true);
                 }
             }
 
@@ -2631,6 +2841,7 @@
                 displayBlocks(currentBlocks);
                 prepareChartDataFromBlocks(currentBlocks);
             }
+            setHeaderBrandLoading(false);
             return anySuccess;
         }
 
@@ -2862,7 +3073,7 @@
                         if (seenMonths.has(k)) continue;
                         seenMonths.add(k);
 
-                        updateStatus('Сканирование: ' + baseName(mp) + ' (' + lineName + ')');
+                        if (!currentBlocks || currentBlocks.length === 0) updateStatus('Сканирование: ' + baseName(mp) + ' (' + lineName + ')', true);
                         const blocks = await scanMonthFolder(mp, forceFullRecalc);
                         if (blocks === null) continue;
                         scannedAny = true;
@@ -3589,7 +3800,7 @@
                 fileHtml += '<div class="file-item" data-file-idx="' + idx + '">';
                 fileHtml += '<div class="file-item-top">';
                 fileHtml += '<strong>' + escapeHtmlSimple(file.filename) + '</strong>';
-                fileHtml += '<span class="file-open-hint"> </span>';
+                fileHtml += '<span class="file-open-hint">Чертеж</span>';
                 fileHtml += '</div>';
                 fileHtml += '<div class="file-counts">';
                 fileHtml += '<span class="count-badge">И: ' + (file.counts?.Ипостов || 0) + '</span>';
@@ -3790,7 +4001,7 @@
                 resHtml += '<div class="file-item" data-global-idx="' + idx + '">';
                 resHtml += '<div class="file-item-top">';
                 resHtml += '<strong>' + escapeHtmlSimple(m.file.filename) + '</strong>';
-                resHtml += '<span class="file-open-hint"> </span>';
+                resHtml += '<span class="file-open-hint">Чертеж</span>';
                 resHtml += '</div>';
                 resHtml += '<div class="file-counts">';
                 resHtml += '<span class="count-badge badge-line">' + escapeHtmlSimple(m.lineName) + '</span>';
@@ -3855,6 +4066,137 @@
             }
         }
 
+
+        // ==================== ГЕНЕРАТОР ШТРИХ-КОДА CODE 128 (ОФЛАЙН SVG) ====================
+        const CODE128_PATTERNS = [
+            '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
+            '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
+            '221231','213212','223112','312131','311222','321122','321221','312212','322112','322211',
+            '212123','212321','232121','111323','131123','131321','112313','132113','132311','211313',
+            '231113','231311','112133','112331','132131','113123','113321','133121','313121','211331',
+            '231131','213113','213311','213131','311123','311321','331121','312113','312311','332111',
+            '314111','221411','431111','111224','111422','121124','121421','141122','141221','112214',
+            '112412','122114','122411','142112','142211','241211','221114','413111','241112','134111',
+            '111242','121142','121241','114212','124112','124211','411212','421112','421211','212141',
+            '214121','412121','111143','111341','131141','114113','114311','411113','411311','113141',
+            '114131','311141','411131','211412','211214','211232','2331112'
+        ];
+
+        function charToWin1251Byte(ch) {
+            const cp = ch.charCodeAt(0);
+            if (cp >= 0x0410 && cp <= 0x044F) return cp - 0x0410 + 192;
+            if (cp === 0x0401) return 168;
+            if (cp === 0x0451) return 184;
+            return -1;
+        }
+
+        function buildCode128Svg(text, barHeight = 76) {
+            const str = String(text || '').trim();
+            if (!str) return '';
+            const codes = [104]; // Start Code B
+            for (let i = 0; i < str.length; i++) {
+                const cp = str.charCodeAt(i);
+                if (cp >= 32 && cp <= 126) {
+                    codes.push(cp - 32);
+                } else {
+                    const b = charToWin1251Byte(str[i]);
+                    if (b >= 160 && b <= 254) {
+                        codes.push(100); // FNC4 (+128 shift)
+                        codes.push((b - 128) - 32);
+                    }
+                }
+            }
+            if (codes.length <= 1) return '';
+
+            let sum = codes[0];
+            for (let i = 1; i < codes.length; i++) {
+                sum += codes[i] * i;
+            }
+            codes.push(sum % 103);
+            codes.push(106); // Stop
+
+            const quiet = 10;
+            const modW = 2;
+            let x = quiet * modW;
+            let rects = '';
+
+            for (let ci = 0; ci < codes.length; ci++) {
+                const pat = CODE128_PATTERNS[codes[ci]];
+                if (!pat) continue;
+                for (let pi = 0; pi < pat.length; pi++) {
+                    const w = parseInt(pat[pi], 10) * modW;
+                    if (pi % 2 === 0) {
+                        rects += '<rect x="' + x + '" y="0" width="' + w + '" height="' + barHeight + '" fill="#000000"/>';
+                    }
+                    x += w;
+                }
+            }
+            const totalW = x + quiet * modW;
+            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + totalW + ' ' + barHeight + '" shape-rendering="crispEdges" role="img" aria-label="' + escapeHtmlSimple(str) + '">' +
+                   '<rect x="0" y="0" width="' + totalW + '" height="' + barHeight + '" fill="#ffffff"/>' +
+                   rects + '</svg>';
+        }
+
+        const bcGenState = { type: 'C', sub: '', item: '1' };
+
+        function getBcGenTypeLabel(t) {
+            if (t === 'P') return 'Рама';
+            if (t === 'I') return 'Импост';
+            return 'Створка';
+        }
+
+        function updateGlobalBarcodeGenerator() {
+            const orderInp = document.getElementById('bcGenOrderInput');
+            const itemInp = document.getElementById('bcGenItemInput');
+            const subRow = document.getElementById('bcGenSubRow');
+            const previewBox = document.getElementById('bcGenPreviewBox');
+            const svgWrap = document.getElementById('bcGenSvgContainer');
+            const codeEl = document.getElementById('bcGenCodeText');
+            if (!orderInp || !previewBox || !svgWrap || !codeEl) return;
+
+            if (subRow) {
+                subRow.style.display = (bcGenState.type === 'P') ? 'none' : 'flex';
+            }
+
+            const orderVal = String(orderInp.value || '').trim().replace(/\s+/g, '');
+            const itemVal = String((itemInp ? itemInp.value : bcGenState.item) || '1').trim().replace(/\s+/g, '') || '1';
+            if (!orderVal) {
+                previewBox.style.display = 'none';
+                svgWrap.innerHTML = '';
+                codeEl.textContent = '';
+                return;
+            }
+
+            const prefix = bcGenState.type === 'P' ? 'P' : (bcGenState.type + (bcGenState.sub || ''));
+            const fullCode = prefix + '/' + orderVal + '/' + itemVal;
+            const svg = buildCode128Svg(fullCode, 76);
+            if (!svg) {
+                previewBox.style.display = 'none';
+                return;
+            }
+            svgWrap.innerHTML = svg;
+            codeEl.textContent = fullCode;
+            previewBox.dataset.code = fullCode;
+            previewBox.dataset.title = getBcGenTypeLabel(bcGenState.type) + ' • Заказ ' + orderVal + ' / изд. ' + itemVal;
+            previewBox.style.display = 'block';
+        }
+
+        function openBarcodeZoomModal(codeText, titleText) {
+            const modal = document.getElementById('barcodeZoomModal');
+            const titleEl = document.getElementById('bcZoomTitle');
+            const svgWrap = document.getElementById('bcZoomSvgContainer');
+            const codeEl = document.getElementById('bcZoomCodeText');
+            if (!modal || !svgWrap || !codeText) return;
+            if (titleEl) titleEl.textContent = titleText || 'Штрих-код';
+            svgWrap.innerHTML = buildCode128Svg(codeText, 110);
+            if (codeEl) codeEl.textContent = codeText;
+            modal.classList.add('open');
+        }
+
+        function closeBarcodeZoomModal() {
+            const modal = document.getElementById('barcodeZoomModal');
+            if (modal) modal.classList.remove('open');
+        }
 
         // ==================== СКАНЕР ШТРИХ-КОДОВ ====================
         function extractOrderFromBarcode(rawText) {
@@ -3947,7 +4289,7 @@
         // Ручное обновление активной линии (сразу, без ожидания таймера)
         async function refreshData() {
             if (!isFolderConfigured(activeIndex)) {
-                updateStatus('Нет активной линии: укажите название линии в настройках');
+                updateStatus('Нет активной линии: укажите название линии в настройках', true);
                 return false;
             }
             const idx = activeIndex;
@@ -4076,10 +4418,10 @@
                     } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
                         const ydOk = await loadFromYandexDisk(false);
                         if (!ydOk) {
-                            updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).');
+                            updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).', true);
                         }
                     } else {
-                        updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).');
+                        updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).', true);
                     }
                     restartSwitchTimer();
                     startRefreshTimer();
@@ -4187,6 +4529,80 @@
             }
             const openGlobalAllBtn = document.getElementById('openGlobalAllBtn');
             if (openGlobalAllBtn) openGlobalAllBtn.addEventListener('click', openAllGlobalMatchesInVisualizer);
+
+            const toggleBcGenBtn = document.getElementById('toggleGlobalBarcodeGenBtn');
+            const bcGenPanel = document.getElementById('globalBarcodeGenPanel');
+            const bcGenOrderInp = document.getElementById('bcGenOrderInput');
+            const bcGenItemInp = document.getElementById('bcGenItemInput');
+            const bcGenPreviewBox = document.getElementById('bcGenPreviewBox');
+
+            if (toggleBcGenBtn && bcGenPanel) {
+                toggleBcGenBtn.addEventListener('click', function() {
+                    const isOpen = bcGenPanel.classList.toggle('open');
+                    toggleBcGenBtn.classList.toggle('active', isOpen);
+                    if (isOpen && bcGenOrderInp) {
+                        const searchVal = (document.getElementById('globalOrderSearchInput')?.value || '').trim();
+                        if (searchVal && !bcGenOrderInp.value.trim()) {
+                            bcGenOrderInp.value = searchVal;
+                        }
+                        updateGlobalBarcodeGenerator();
+                        setTimeout(() => bcGenOrderInp.focus(), 40);
+                    }
+                });
+            }
+            document.querySelectorAll('#bcGenTypeGroup .bc-pill-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#bcGenTypeGroup .bc-pill-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    bcGenState.type = this.getAttribute('data-bc-type') || 'C';
+                    updateGlobalBarcodeGenerator();
+                });
+            });
+            document.querySelectorAll('#bcGenSubGroup .bc-pill-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#bcGenSubGroup .bc-pill-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    bcGenState.sub = this.getAttribute('data-bc-sub') || '';
+                    updateGlobalBarcodeGenerator();
+                });
+            });
+            document.querySelectorAll('#bcGenItemGroup .bc-pill-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#bcGenItemGroup .bc-pill-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const val = this.getAttribute('data-bc-item') || '1';
+                    bcGenState.item = val;
+                    if (bcGenItemInp) bcGenItemInp.value = val;
+                    updateGlobalBarcodeGenerator();
+                });
+            });
+            if (bcGenOrderInp) {
+                bcGenOrderInp.addEventListener('input', updateGlobalBarcodeGenerator);
+            }
+            if (bcGenItemInp) {
+                bcGenItemInp.addEventListener('input', function() {
+                    const v = this.value.trim();
+                    bcGenState.item = v || '1';
+                    document.querySelectorAll('#bcGenItemGroup .bc-pill-btn').forEach(b => {
+                        b.classList.toggle('active', b.getAttribute('data-bc-item') === v);
+                    });
+                    updateGlobalBarcodeGenerator();
+                });
+            }
+            if (bcGenPreviewBox) {
+                bcGenPreviewBox.addEventListener('click', function() {
+                    const code = this.dataset.code || '';
+                    if (code) openBarcodeZoomModal(code, this.dataset.title || 'Штрих-код');
+                });
+            }
+            const closeBcZoomBtn = document.getElementById('closeBcZoomBtn');
+            if (closeBcZoomBtn) closeBcZoomBtn.addEventListener('click', closeBarcodeZoomModal);
+            const bcZoomModalEl = document.getElementById('barcodeZoomModal');
+            if (bcZoomModalEl) {
+                bcZoomModalEl.addEventListener('click', function(e) {
+                    if (e.target.id === 'barcodeZoomModal') closeBarcodeZoomModal();
+                });
+            }
             if (window.AndroidApp) {
                 const srvBtn = document.getElementById('apkServerBtn');
                 const srvGrp = document.getElementById('apkServerSettingsGroup');
@@ -4375,9 +4791,7 @@
         }
 
         function setupTouchGestures() {
-            const ptrIndicator = document.getElementById('ptrIndicator');
-            const ptrSpinner = document.getElementById('ptrSpinner');
-            const ptrText = document.getElementById('ptrText');
+            const headerLogoRays = document.querySelector('#headerBrandLogo .brand-rays');
             const swipeStage = document.getElementById('lineSwipeStage');
 
             let startX = 0;
@@ -4441,7 +4855,6 @@
                     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
                     if (startedAtTop && dy > 10 && Math.abs(dy) > Math.abs(dx) * 1.3 && !isScanning) {
                         gestureMode = 'ptr';
-                        if (ptrIndicator) ptrIndicator.classList.add('dragging');
                     } else if (!startedInChart && Math.abs(dx) > Math.abs(dy) * 1.45) {
                         gestureMode = 'swipe';
                         if (swipeStage) {
@@ -4453,25 +4866,15 @@
                     }
                 }
 
-                if (gestureMode === 'ptr' && ptrIndicator) {
+                if (gestureMode === 'ptr') {
                     if (dy <= 0) {
                         currentPull = 0;
-                        ptrIndicator.style.top = '-4.5rem';
-                        ptrIndicator.classList.remove('ready');
+                        if (headerLogoRays) headerLogoRays.style.transform = '';
                         return;
                     }
                     currentPull = Math.min(PTR_MAX, dy * 0.45);
-                    ptrIndicator.style.top = (currentPull - 46) + 'px';
-                    const ptrRaysEl = document.getElementById('ptrRays');
-                    if (ptrRaysEl) {
-                        ptrRaysEl.style.transform = 'rotate(' + Math.round(currentPull * 2.5) + 'deg)';
-                    }
-                    if (currentPull >= PTR_THRESHOLD) {
-                        ptrIndicator.classList.add('ready');
-                        if (ptrText) ptrText.textContent = 'Отпустите для обновления';
-                    } else {
-                        ptrIndicator.classList.remove('ready');
-                        if (ptrText) ptrText.textContent = 'Потяните вниз для обновления';
+                    if (headerLogoRays) {
+                        headerLogoRays.style.transform = 'rotate(' + Math.round(currentPull * 2.5) + 'deg)';
                     }
                 } else if (gestureMode === 'swipe' && swipeStage) {
                     const configured = getConfiguredIndexes();
@@ -4501,30 +4904,18 @@
             }, { passive: true });
 
             async function finishTouchGesture(e) {
-                if (gestureMode === 'ptr' && ptrIndicator) {
-                    ptrIndicator.classList.remove('dragging');
+                if (gestureMode === 'ptr') {
+                    if (headerLogoRays) headerLogoRays.style.transform = '';
                     if (currentPull >= PTR_THRESHOLD && !isPtrRefreshing && !isScanning) {
                         isPtrRefreshing = true;
-                        ptrIndicator.classList.remove('ready');
-                        const ptrRaysLoad = document.getElementById('ptrRays');
-                        if (ptrRaysLoad) ptrRaysLoad.style.transform = '';
-                        ptrIndicator.classList.add('loading');
-                        ptrIndicator.style.top = '0.875rem';
-                        if (ptrText) ptrText.textContent = 'Обновление данных...';
-
+                        setHeaderBrandLoading(true);
                         try {
                             await refreshAllFolders();
                             refreshCountdown = refreshInterval;
-                            updateRefreshCountdownDisplay();
                         } finally {
                             isPtrRefreshing = false;
-                            ptrIndicator.classList.remove('loading');
-                            ptrIndicator.style.top = '-4.5rem';
-                            if (ptrText) ptrText.textContent = 'Потяните вниз для обновления';
+                            setHeaderBrandLoading(false);
                         }
-                    } else {
-                        ptrIndicator.classList.remove('ready');
-                        ptrIndicator.style.top = '-4.5rem';
                     }
                 } else if (gestureMode === 'swipe' && !isAnyModalOpen() && !startedInChart) {
                     const touch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
@@ -4564,9 +4955,8 @@
                     resetSwipeStagePosition(true);
                     hideSwipeToast();
                 }
-                if (gestureMode === 'ptr' && ptrIndicator) {
-                    ptrIndicator.classList.remove('dragging', 'ready');
-                    ptrIndicator.style.top = '-4.5rem';
+                if (gestureMode === 'ptr' && headerLogoRays) {
+                    headerLogoRays.style.transform = '';
                 }
                 gestureMode = null;
                 currentPull = 0;
