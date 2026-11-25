@@ -569,10 +569,7 @@ public class MainActivity extends Activity {
                     if (isFinishing() || isDestroyed()) return;
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Доступно обновление " + finalTag)
-                            .setMessage("Текущая версия: v" + getCurrentVersionName() + "
-Новая версия: " + finalTag + "
-
-Скачать и установить сейчас?")
+                            .setMessage("Текущая версия: v" + getCurrentVersionName() + "\nНовая версия: " + finalTag + "\n\nСкачать и установить сейчас?")
                             .setPositiveButton("Обновить", (d, w) -> downloadAndInstallApk(finalApkUrl))
                             .setNegativeButton("Позже", null)
                             .show();
