@@ -41,6 +41,9 @@
             --dim-text: #79c0ff;
             --subdim-color: #d29922;
             --subdim-text: #e3b341;
+            --alu-fill: #8b949e;
+            --alu-stroke: #c9d1d9;
+            --alu-line: #484f58;
             --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
         }
 
@@ -79,6 +82,9 @@
             --dim-text: #b84b0f;
             --subdim-color: #6FA551;
             --subdim-text: #4d7a32;
+            --alu-fill: #b8c2cc;
+            --alu-stroke: #57606a;
+            --alu-line: #6e7781;
             --shadow: 0 2px 10px rgba(38, 36, 34, 0.07);
         }
 
@@ -807,6 +813,27 @@
             font-weight: 700;
         }
 
+        .tag.alu-tag {
+            background: rgba(139, 148, 158, 0.22);
+            color: var(--text-primary);
+            border: 1px solid rgba(139, 148, 158, 0.55);
+            font-weight: 700;
+        }
+
+        .tag.stulp-tag {
+            background: rgba(56, 139, 253, 0.16);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 139, 253, 0.38);
+            font-weight: 700;
+        }
+
+        .tag.manual-tag {
+            background: rgba(163, 113, 247, 0.16);
+            color: var(--accent-purple);
+            border: 1px solid rgba(163, 113, 247, 0.4);
+            font-weight: 700;
+        }
+
         /* Модальное окно деталей */
         .modal-backdrop {
             display: none;
@@ -1391,6 +1418,139 @@
             return { isOversize: reasons.length > 0, isTooLarge, isTooSmall, reasons };
         }
 
+        // Вычитает припуск на сварку по углам из PROFILE (по 3 мм на каждый конец с острым/ус резом != 90°)
+        function getBarNetLengthMm(bar) {
+            if (!bar || !(bar.cutMm > 0)) return 0;
+            const ang = bar.profileAngles;
+            if (ang && (ang.a1 !== null || ang.a2 !== null)) {
+                const w1 = (ang.a1 !== null && Math.abs(ang.a1 - 90) < 1.5) ? 0 : 3;
+                const w2 = (ang.a2 !== null && Math.abs(ang.a2 - 90) < 1.5) ? 0 : 3;
+                return Math.max(0, bar.cutMm - w1 - w2);
+            }
+            return Math.max(0, bar.cutMm - 6);
+        }
+
+        // Определяет наличие алюминиевого порога по 3 признакам:
+        // 1) отсутствует нижняя заготовка 'Н', или
+        // 2) у 'Н' углы 90°/90° (и боковые Л/П имеют 90° снизу), или
+        // 3) артикул 'Н' отличается от артикула верха 'В' (П360, СПА-3675, TS 62R, PT70 и т.п.)
+        function detectAluThresholdFromBars(bars, entityType) {
+            if (entityType !== 'frame' || !bars || bars.length < 2) {
+                return { hasAlu: false, article: '', threshOffsetMm: 0 };
+            }
+            const bySide = new Map();
+            for (const b of bars) {
+                if (b.side && !bySide.has(b.side)) bySide.set(b.side, b);
+            }
+            const barN = bySide.get('Н');
+            const barV = bySide.get('В');
+            const barL = bySide.get('Л');
+            const barP = bySide.get('П');
+            const hasTop = !!(barV || bySide.has('Л-В') || bySide.has('П-В'));
+            const hasSides = !!(barL || barP);
+
+            if (!barN && hasSides && hasTop) {
+                return { hasAlu: true, article: '', threshOffsetMm: 20 };
+            }
+
+            if (barN) {
+                const nAng = barN.profileAngles;
+                const nIs90 = !!(nAng && nAng.a1 !== null && nAng.a2 !== null
+                    && Math.abs(nAng.a1 - 90) < 1.5 && Math.abs(nAng.a2 - 90) < 1.5);
+                const diffArt = !!(barV && barN.article && barV.article && barN.article !== barV.article);
+                const sideHas90 = !!(
+                    (barP && barP.profileAngles && barP.profileAngles.a1 !== null && Math.abs(barP.profileAngles.a1 - 90) < 1.5) ||
+                    (barL && barL.profileAngles && barL.profileAngles.a2 !== null && Math.abs(barL.profileAngles.a2 - 90) < 1.5)
+                );
+                if (diffArt || (nIs90 && (sideHas90 || !barV))) {
+                    return { hasAlu: true, article: barN.article || '', threshOffsetMm: 20 };
+                }
+            }
+            return { hasAlu: false, article: '', threshOffsetMm: 0 };
+        }
+
+        // Общий расчёт верхних вершин контура (используется и в buildEntityContour, и в computeMullionsForEntity)
+        function computeTopBarGeometry(bars, widthMm, heightMm) {
+            const w = widthMm > 0 ? widthMm : 1000;
+            const h = heightMm > 0 ? heightMm : 1000;
+            const bySide = new Map();
+            for (const b of (bars || [])) {
+                if (b.side && !bySide.has(b.side)) bySide.set(b.side, b);
+            }
+            const hasLV = bySide.has('Л-В');
+            const hasPV = bySide.has('П-В');
+            const barL = bySide.get('Л');
+            const barP = bySide.get('П');
+            const barV = bySide.get('В');
+            const isArch = !!(barV && barV.cutMm > w * 1.35);
+
+            let yL = 0;
+            let yP = 0;
+            let peakX = w / 2;
+            let topStartX = 0;
+            let topEndX = w;
+            let hasFlatTop = !hasLV && !hasPV;
+
+            if (hasLV && hasPV && barV && !isArch) {
+                // Равнобедренная или несимметричная трапеция с горизонтальным верхом 'В' и двумя скатами 'Л-В' и 'П-В'
+                hasFlatTop = true;
+                const lvNet = getBarNetLengthMm(bySide.get('Л-В'));
+                const pvNet = getBarNetLengthMm(bySide.get('П-В'));
+                const topLen = Math.min(w, getBarNetLengthMm(barV));
+                const lLen = barL ? getBarNetLengthMm(barL) : 0;
+                const pLen = barP ? getBarNetLengthMm(barP) : 0;
+                yL = barL ? Math.max(0, Math.min(h, h - lLen)) : h;
+                yP = barP ? Math.max(0, Math.min(h, h - pLen)) : h;
+
+                const remW = Math.max(0, w - topLen);
+                const dxL = lvNet > yL ? Math.sqrt(Math.max(0, lvNet * lvNet - yL * yL)) : NaN;
+                const dxP = pvNet > yP ? Math.sqrt(Math.max(0, pvNet * pvNet - yP * yP)) : NaN;
+                let leftRun = remW / 2;
+                if (isFinite(dxL) && isFinite(dxP) && (dxL + dxP) > 1) {
+                    leftRun = remW * (dxL / (dxL + dxP));
+                }
+                topStartX = Math.max(0, Math.min(w - topLen, Math.round(leftRun * 10) / 10));
+                topEndX = Math.min(w, Math.round((topStartX + topLen) * 10) / 10);
+            } else if (hasLV && hasPV) {
+                // Фронтон или треугольник без горизонтального верха 'В'
+                hasFlatTop = false;
+                const lvNet = getBarNetLengthMm(bySide.get('Л-В'));
+                const pvNet = getBarNetLengthMm(bySide.get('П-В'));
+                const lLen = barL ? getBarNetLengthMm(barL) : 0;
+                const pLen = barP ? getBarNetLengthMm(barP) : 0;
+                yL = barL ? Math.max(0, Math.min(h, h - lLen)) : h;
+                yP = barP ? Math.max(0, Math.min(h, h - pLen)) : h;
+
+                const dxL = lvNet > yL ? Math.sqrt(Math.max(0, lvNet * lvNet - yL * yL)) : NaN;
+                const dxP = pvNet > yP ? Math.sqrt(Math.max(0, pvNet * pvNet - yP * yP)) : NaN;
+                if (isFinite(dxL) && isFinite(dxP) && dxL > 10 && dxP > 10) {
+                    peakX = (dxL + (w - dxP)) / 2;
+                } else {
+                    const totalSlope = Math.max(1, lvNet + pvNet);
+                    peakX = w * (lvNet / totalSlope);
+                }
+                peakX = Math.max(w * 0.08, Math.min(w * 0.92, peakX));
+                topStartX = peakX;
+                topEndX = peakX;
+            } else if (hasLV) {
+                const lLen = barL ? getBarNetLengthMm(barL) : 0;
+                yL = barL ? Math.max(0, Math.min(h, h - lLen)) : h;
+                const topCut = barV ? getBarNetLengthMm(barV) : 0;
+                hasFlatTop = !!barV && topCut > 1;
+                topStartX = barV ? Math.max(0, Math.min(w, w - topCut)) : w;
+                topEndX = w;
+            } else if (hasPV) {
+                const pLen = barP ? getBarNetLengthMm(barP) : 0;
+                yP = barP ? Math.max(0, Math.min(h, h - pLen)) : h;
+                const topCut = barV ? getBarNetLengthMm(barV) : 0;
+                hasFlatTop = !!barV && topCut > 1;
+                topStartX = 0;
+                topEndX = barV ? Math.max(0, Math.min(w, topCut)) : 0;
+            }
+
+            return { hasLV, hasPV, barL, barP, barV, isArch, hasFlatTop, yL, yP, peakX, topStartX, topEndX };
+        }
+
         // Разбиение рамы на пролёты с учётом как сквозных, так и Т-образных импостов
         function computeFrameSpans(widthMm, heightMm, mullions) {
             if (widthMm <= 0 || heightMm <= 0) return [];
@@ -1444,10 +1604,12 @@
             }));
         }
 
-        // Оценка соответствия створки конкретному пролёту с учётом границ (рама/импост) и стороны ручки
-        function scoreSashForSpan(sash, sp, frameW) {
+        // Оценка соответствия створки конкретному пролёту с учётом границ (рама/импост), арки/скоса, порога и стороны ручки
+        function scoreSashForSpan(sash, sp, frameItem, contour) {
+            const frameW = frameItem ? frameItem.widthMm : 0;
+            const hasAlu = !!(frameItem && frameItem.hasAluThreshold);
             const expW = (sp.leftIsFrame ? 33 : 11.5) + (sp.rightIsFrame ? 33 : 11.5);
-            const expH = (sp.topIsFrame ? 33 : 11.5) + (sp.botIsFrame ? 33 : 11.5);
+            const expH = (sp.topIsFrame ? 33 : 11.5) + (sp.botIsFrame ? (hasAlu ? 20 : 33) : 11.5);
 
             const diffW = sp.spanW - sash.widthMm;
             const diffH = sp.spanH - sash.heightMm;
@@ -1457,6 +1619,25 @@
             }
 
             const sizeErr = Math.abs(diffW - expW) + Math.abs(diffH - expH);
+
+            // Если рама имеет арочный или скошенный верх, а створка прямоугольная — штрафуем пролёты,
+            // верх которых срезан аркой или скатом (например, боковые треугольники в трапеции 31980/1)
+            let shapePenalty = 0;
+            if (frameItem) {
+                const sashBars = sash.bars || [];
+                const sashIsRect = !isArchEntity(sash) && !sashBars.some(b => b.side === 'Л-В' || b.side === 'П-В');
+                if (sashIsRect && contour && contour.isPolygon && sp.topIsFrame) {
+                    const insetX = Math.min(25, sp.spanW * 0.15);
+                    const yAtLeft = contour.topYAt(sp.x1 + insetX);
+                    const yAtRight = contour.topYAt(sp.x2 - insetX);
+                    const maxSlopeCut = Math.max(yAtLeft, yAtRight);
+                    if (maxSlopeCut > sp.y1 + 35) {
+                        shapePenalty += 800 + maxSlopeCut;
+                    } else if (!sp.botIsFrame) {
+                        shapePenalty += 500;
+                    }
+                }
+            }
 
             // Логика ручки: створка открывается от импоста к краю рамы
             // Ручка справа (П) -> предпочтительно левый пролёт (справа импост, слева рама)
@@ -1472,31 +1653,107 @@
                 if (sp.rightIsFrame) handleAdjust -= 4;
                 if (frameW > 0) handleAdjust += ((frameW - sp.x2) / frameW) * 1.5;
             } else if (hs === 'В') {
-                if (sp.topIsFrame) handleAdjust -= 4;
+                if (!sp.topIsFrame && sp.botIsFrame) handleAdjust -= 4;
             }
 
-            return sizeErr + handleAdjust;
+            return sizeErr + shapePenalty + handleAdjust;
         }
 
-        // Сопоставление створок с пролётами рамы
+        // Сопоставление створок с пролётами рамы (включая штульповые пары в одном бес-импостном пролёте)
         function matchSashesToFrameSpans(frameItem, sashItems) {
             const spans = computeFrameSpans(frameItem.widthMm, frameItem.heightMm, frameItem.mullions);
             const matches = [];
+            const stulpDividers = [];
 
             if (!sashItems || sashItems.length === 0 || spans.length === 0) {
-                return { spans, matches };
+                return { spans, matches, stulpDividers };
             }
 
-            const usedSpans = new Set();
+            const contour = buildEntityContour(frameItem);
             const sortedSashes = sashItems.slice().sort((a, b) => a.subCode.localeCompare(b.subCode, 'ru', { numeric: true }));
+            const usedSpans = new Set();
+            const assignedSashes = new Set();
 
+            // Проверяем штульповую пару (2 створки в одном общем пролёте, например, двустворчатые двери и штульповые окна)
+            const hasStulpBar = !!(frameItem.stulps && frameItem.stulps.length > 0);
+            if (sortedSashes.length >= 2) {
+                for (let si = 0; si < spans.length; si++) {
+                    if (usedSpans.has(si)) continue;
+                    const sp = spans[si];
+
+                    // Ищем пару неназначенных створок примерно одинаковой высоты, чья суммарная ширина равна пролёту минус ~55..130 мм
+                    let bestPair = null;
+                    let bestPairErr = Infinity;
+                    for (let a = 0; a < sortedSashes.length; a++) {
+                        if (assignedSashes.has(sortedSashes[a])) continue;
+                        for (let b = a + 1; b < sortedSashes.length; b++) {
+                            if (assignedSashes.has(sortedSashes[b])) continue;
+                            const sA = sortedSashes[a];
+                            const sB = sortedSashes[b];
+                            if (Math.abs(sA.heightMm - sB.heightMm) > 25) continue;
+                            const sumW = sA.widthMm + sB.widthMm;
+                            const diffW = sp.spanW - sumW;
+                            const diffH = sp.spanH - Math.max(sA.heightMm, sB.heightMm);
+                            if (diffW >= 40 && diffW <= 135 && diffH >= 10 && diffH <= 140) {
+                                const err = Math.abs(diffW - 80) + Math.abs(diffH - 50);
+                                if (err < bestPairErr) {
+                                    bestPairErr = err;
+                                    bestPair = [sA, sB];
+                                }
+                            }
+                        }
+                    }
+
+                    if (bestPair && (hasStulpBar || sortedSashes.length > spans.length)) {
+                        usedSpans.add(si);
+                        let [sLeft, sRight] = bestPair;
+                        // Если у одной створки ручка слева (Л) — ставим её справа; если ручка справа (П) — слева
+                        if (sLeft.handleSide === 'Л' && sRight.handleSide !== 'Л') {
+                            [sLeft, sRight] = [sRight, sLeft];
+                        } else if (sRight.handleSide === 'П' && sLeft.handleSide !== 'П') {
+                            [sLeft, sRight] = [sRight, sLeft];
+                        }
+                        assignedSashes.add(sLeft);
+                        assignedSashes.add(sRight);
+
+                        const totalSW = Math.max(1, sLeft.widthMm + sRight.widthMm);
+                        const splitX = Math.round((sp.x1 + sp.spanW * (sLeft.widthMm / totalSW)) * 10) / 10;
+
+                        const spLeft = Object.assign({}, sp, {
+                            x2: splitX,
+                            spanW: Math.round((splitX - sp.x1) * 10) / 10,
+                            rightIsFrame: false,
+                            isStulpSide: 'right'
+                        });
+                        const spRight = Object.assign({}, sp, {
+                            x1: splitX,
+                            spanW: Math.round((sp.x2 - splitX) * 10) / 10,
+                            leftIsFrame: false,
+                            isStulpSide: 'left'
+                        });
+
+                        const mLeft = { sash: sLeft, span: spLeft, isStulpPair: true };
+                        const mRight = { sash: sRight, span: spRight, isStulpPair: true };
+                        matches.push(mLeft, mRight);
+                        stulpDividers.push({
+                            x: splitX,
+                            y1: sp.y1,
+                            y2: sp.y2,
+                            cutMm: hasStulpBar ? frameItem.stulps[0].cutMm : Math.max(sLeft.heightMm, sRight.heightMm)
+                        });
+                    }
+                }
+            }
+
+            // Остальные створки сопоставляем поштучно с оставшимися пролётами
             for (const s of sortedSashes) {
+                if (assignedSashes.has(s)) continue;
                 let bestIdx = -1;
                 let bestScore = Infinity;
 
                 for (let i = 0; i < spans.length; i++) {
                     if (usedSpans.has(i)) continue;
-                    const score = scoreSashForSpan(s, spans[i], frameItem.widthMm);
+                    const score = scoreSashForSpan(s, spans[i], frameItem, contour);
                     if (score < bestScore) {
                         bestScore = score;
                         bestIdx = i;
@@ -1514,11 +1771,193 @@
                 }
             }
 
-            return { spans, matches };
+            return { spans, matches, stulpDividers };
+        }
+
+        // Уточняет сложную сетку импостов (как витраж 32376/1), используя кратность DATA;05 на вертикальных импостах (ИВ)
+        // и резервирует все строки ИГ, принадлежащие раме, чтобы они не попадали внутрь створок
+        function refineMultiBayFrameMullions(builtFrames, impostRows, usedImposts) {
+            if (!impostRows || impostRows.length === 0 || !builtFrames || builtFrames.length === 0) return;
+
+            const impostsByOrderItem = new Map();
+            for (const imp of impostRows) {
+                const k = imp.orderNo + '|' + imp.itemNo;
+                if (!impostsByOrderItem.has(k)) impostsByOrderItem.set(k, []);
+                impostsByOrderItem.get(k).push(imp);
+            }
+
+            for (const fr of builtFrames) {
+                const k = fr.orderNo + '|' + fr.itemNo;
+                const itemImposts = (impostsByOrderItem.get(k) || []).filter(imp => !usedImposts.has(imp));
+                if (itemImposts.length === 0) continue;
+
+                const vertMullions = (fr.mullions || []).filter(m => m.orient === 'V' && m.full).sort((a, b) => a.posMm - b.posMm);
+                const horizFull = (fr.mullions || []).filter(m => m.orient === 'H' && m.full);
+                const vertImpostBars = itemImposts.filter(imp => imp.orient === 'V' && imp.mullionOps && imp.mullionOps.length > 0);
+
+                // Если в раме >= 2 сквозных вертикальных импостов и на строках ИВ есть метки DATA;05,
+                // проверяем, проходит ли горизонтальный импост через центральную секцию (2 метки на одном Y = с обеих сторон, 1 метка = только снаружи)
+                if (vertMullions.length >= 2 && horizFull.length > 0 && vertImpostBars.length > 0) {
+                    const updatedMullions = (fr.mullions || []).filter(m => !(m.orient === 'H' && m.full));
+                    const leftX = vertMullions[0].posMm;
+                    const rightX = vertMullions[vertMullions.length - 1].posMm;
+
+                    for (const hm of horizFull) {
+                        let singleSideCount = 0;
+                        let bothSideCount = 0;
+                        for (const vb of vertImpostBars) {
+                            const topOffset = Math.max(0, (fr.heightMm - vb.cutMm) / 2);
+                            const hits = vb.mullionOps.filter(op => {
+                                const yA = (op.valRaw / 10) + topOffset;
+                                const yB = fr.heightMm - ((op.valRaw / 10) + topOffset);
+                                return Math.abs(yA - hm.posMm) <= 18 || Math.abs(yB - hm.posMm) <= 18;
+                            }).length;
+                            if (hits >= 2) bothSideCount++;
+                            else if (hits === 1) singleSideCount++;
+                        }
+
+                        if (singleSideCount >= 2 && bothSideCount === 0) {
+                            // Перемычки только в левом и правом боковых пролётах (центр свободен под дверь!)
+                            updatedMullions.push({
+                                orient: 'H', x1: 0, y1: hm.posMm, x2: leftX, y2: hm.posMm,
+                                full: false, posMm: hm.posMm, label: `Гориз. (лево) ${formatMm(hm.posMm)} мм`
+                            });
+                            updatedMullions.push({
+                                orient: 'H', x1: rightX, y1: hm.posMm, x2: fr.widthMm, y2: hm.posMm,
+                                full: false, posMm: hm.posMm, label: `Гориз. (право) ${formatMm(hm.posMm)} мм`
+                            });
+                        } else {
+                            updatedMullions.push(hm);
+                        }
+                    }
+                    fr.mullions = updatedMullions;
+                }
+
+                // Резервируем все ИГ-заготовки, длины которых соответствуют сегментам горизонтальных импостов рамы
+                const frameHorizSegs = [];
+                const vXs = (fr.mullions || []).filter(m => m.orient === 'V').map(m => m.posMm).sort((a, b) => a - b);
+                for (const hm of (fr.mullions || []).filter(m => m.orient === 'H')) {
+                    const innerVs = vXs.filter(vx => vx > hm.x1 + 10 && vx < hm.x2 - 10);
+                    const pts = [hm.x1, ...innerVs, hm.x2];
+                    for (let i = 0; i < pts.length - 1; i++) {
+                        const segLeftFrame = pts[i] <= 1;
+                        const segRightFrame = pts[i + 1] >= fr.widthMm - 1;
+                        const segW = pts[i + 1] - pts[i];
+                        const expDed = (segLeftFrame ? 42 : 20) + (segRightFrame ? 42 : 20);
+                        frameHorizSegs.push({ segW, expDed });
+                    }
+                }
+
+                for (const seg of frameHorizSegs) {
+                    const matchImp = itemImposts.find(imp =>
+                        !usedImposts.has(imp) &&
+                        (!imp.orient || imp.orient === 'H') &&
+                        Math.abs((seg.segW - imp.cutMm) - seg.expDed) <= 32
+                    );
+                    if (matchImp) {
+                        usedImposts.add(matchImp);
+                    }
+                }
+            }
+        }
+
+        // Восстанавливает горизонтальный импост рамы по строкам ИГ, когда в CSV нет DATA;05 на раме (например, арка 33570/1)
+        function assignMissingFrameImposts(builtFrames, builtSashes, impostRows, usedImposts) {
+            if (!impostRows || impostRows.length === 0 || !builtFrames || builtFrames.length === 0) return;
+
+            const impostsByOrderItem = new Map();
+            for (const imp of impostRows) {
+                const k = imp.orderNo + '|' + imp.itemNo;
+                if (!impostsByOrderItem.has(k)) impostsByOrderItem.set(k, []);
+                impostsByOrderItem.get(k).push(imp);
+            }
+
+            const sashesByOrderItem = new Map();
+            for (const s of (builtSashes || [])) {
+                const k = s.orderNo + '|' + s.itemNo;
+                if (!sashesByOrderItem.has(k)) sashesByOrderItem.set(k, []);
+                sashesByOrderItem.get(k).push(s);
+            }
+
+            for (const fr of builtFrames) {
+                const k = fr.orderNo + '|' + fr.itemNo;
+                const candidates = (impostsByOrderItem.get(k) || []).filter(imp => !usedImposts.has(imp));
+                if (candidates.length === 0) continue;
+
+                // Импосты ИГ, чья длина реза соответствует ширине рамы (вычет профиля ~55..115 мм)
+                const frameHorizCands = candidates.filter(imp => {
+                    if (imp.orient && imp.orient !== 'H') return false;
+                    const diff = fr.widthMm - imp.cutMm;
+                    return diff >= 55 && diff <= 115;
+                });
+                if (frameHorizCands.length === 0) continue;
+
+                const existingHoriz = (fr.mullions || []).filter(m => m.orient === 'H');
+                if (existingHoriz.length > 0) {
+                    const toReserve = Math.min(existingHoriz.length, frameHorizCands.length);
+                    for (let i = 0; i < toReserve; i++) {
+                        usedImposts.add(frameHorizCands[i]);
+                    }
+                    continue;
+                }
+
+                const chosenImp = (fr.cell && frameHorizCands.find(imp => imp.cell && imp.cell === fr.cell)) || frameHorizCands[0];
+                usedImposts.add(chosenImp);
+
+                const itemSashes = sashesByOrderItem.get(k) || [];
+                const rectLowerSash = itemSashes.find(s => s.heightMm > 0 && s.heightMm < fr.heightMm - 100);
+                const archFrame = isArchEntity(fr);
+                const barL = (fr.bars || []).find(b => b.side === 'Л');
+                const barP = (fr.bars || []).find(b => b.side === 'П');
+
+                let yFromTop = Math.round(fr.heightMm / 2);
+                let sourceHint = 'по длине ИГ';
+
+                if (rectLowerSash) {
+                    const botDed = fr.hasAluThreshold ? 20 : 33;
+                    const lowerSpanH = rectLowerSash.heightMm + botDed + 11.5;
+                    const rawY = Math.round((fr.heightMm - lowerSpanH) * 10) / 10;
+                    if (rawY > 60 && rawY < fr.heightMm - 60) {
+                        yFromTop = rawY;
+                        sourceHint = `над створкой ${formatMm(rectLowerSash.widthMm)}×${formatMm(rectLowerSash.heightMm)}`;
+                    }
+                } else if (archFrame) {
+                    const sideBar = (barL && barL.cutMm > 0 && barL.cutMm < fr.heightMm - 30) ? barL : barP;
+                    if (sideBar) {
+                        const rise = Math.max(60, Math.min(fr.heightMm - getBarNetLengthMm(sideBar), fr.widthMm * 0.55));
+                        yFromTop = Math.round(rise * 10) / 10;
+                        sourceHint = 'по основанию арки';
+                    }
+                }
+
+                fr.mullions.push({
+                    orient: 'H',
+                    x1: 0,
+                    y1: yFromTop,
+                    x2: fr.widthMm,
+                    y2: yFromTop,
+                    full: true,
+                    posMm: yFromTop,
+                    cutMm: chosenImp.cutMm,
+                    estimated: true,
+                    sourceHint: sourceHint,
+                    label: `Гориз. ~${formatMm(yFromTop)} мм (рез ${formatMm(chosenImp.cutMm)} мм)`
+                });
+            }
+        }
+
+        // Ожидаемый вычет профиля створки на горизонтальный импост (оконные ~120 мм, входные 162–196 мм)
+        function expectedSashImpostDeduction(article) {
+            const a = String(article || '').toUpperCase();
+            if (a.includes('DD ') || a.includes('GD ') || a.includes('/118')) return 196;
+            if (a.includes('S360.10')) return 174;
+            if (a.includes('007 06 1006')) return 172;
+            if (a.includes('S670.10')) return 162;
+            return 120;
         }
 
         // Находит и рассчитывает положение импоста внутри створки/двери (когда в CSV нет DATA;05 на створке)
-        function assignDoorAndSashMullions(builtFrames, builtSashes, impostRows) {
+        function assignDoorAndSashMullions(builtFrames, builtSashes, impostRows, usedImposts) {
             if (!impostRows || impostRows.length === 0 || !builtSashes || builtSashes.length === 0) return;
 
             const impostsByOrderItem = new Map();
@@ -1528,7 +1967,6 @@
                 impostsByOrderItem.get(k).push(imp);
             }
 
-            // Группируем рамы по номеру заказа (для поиска соседнего окна балконного блока)
             const framesByOrder = new Map();
             const frameByOrderItem = new Map();
             for (const fr of builtFrames) {
@@ -1538,11 +1976,9 @@
                 if (!frameByOrderItem.has(k)) frameByOrderItem.set(k, fr);
             }
 
-            // Для каждого заказа/изделия отбираем импосты, которые не относятся к раме, а подходят по длине к створке
-            const usedImposts = new Set();
+            if (!usedImposts) usedImposts = new Set();
 
             for (const s of builtSashes) {
-                // Если на створке уже есть точные импосты из DATA;05 — оставляем их
                 if (s.mullions && s.mullions.length > 0) continue;
 
                 const k = s.orderNo + '|' + s.itemNo;
@@ -1550,29 +1986,23 @@
                 if (candidates.length === 0) continue;
 
                 const parentFrame = frameByOrderItem.get(k) || null;
-                const frameHorizCount = parentFrame ? (parentFrame.mullions || []).filter(m => m.orient === 'H').length : 0;
-                const frameVertCount = parentFrame ? (parentFrame.mullions || []).filter(m => m.orient === 'V').length : 0;
+                const expDed = expectedSashImpostDeduction(s.article);
 
-                // Проверяем горизонтальные импосты (ИГ) — типично для балконных и входных дверей
-                // Длина реза ИГ в створке меньше ширины створки на ~106–120 мм (допуск 85..145 мм)
+                // Горизонтальные импосты (ИГ): вычет 85..215 мм покрывает и оконные (120 мм), и широкие входные (162–196 мм) створки
                 const horizCands = candidates.filter(imp => {
                     if (imp.orient && imp.orient !== 'H') return false;
                     const diff = s.widthMm - imp.cutMm;
-                    return diff >= 85 && diff <= 145;
+                    return diff >= 85 && diff <= 215;
                 });
 
-                // Берём импосты сверх тех, что уже стоят в раме (если в раме нет гориз. импостов — берём все подходящие)
-                const extraHoriz = frameHorizCount === 0
-                    ? horizCands
-                    : horizCands.filter(imp => {
-                        if (!parentFrame) return true;
-                        // Если у рамы есть пролёты, отличающиеся от ширины створки, проверяем, что рез именно под створку
-                        const frameDiff = parentFrame.widthMm - imp.cutMm;
-                        return frameDiff > 145;
+                if (horizCands.length > 0) {
+                    // Выбираем импост, наиболее точно соответствующий ширине этой створки (с приоритетом ячейки и ожидаемого вычета)
+                    horizCands.sort((a, b) => {
+                        const errA = Math.abs((s.widthMm - a.cutMm) - expDed) - ((s.cell && a.cell === s.cell) ? 4 : 0);
+                        const errB = Math.abs((s.widthMm - b.cutMm) - expDed) - ((s.cell && b.cell === s.cell) ? 4 : 0);
+                        return errA - errB;
                     });
-
-                if (extraHoriz.length > 0) {
-                    const chosenImp = (s.cell && extraHoriz.find(imp => imp.cell && imp.cell === s.cell)) || extraHoriz[0];
+                    const chosenImp = horizCands[0];
                     usedImposts.add(chosenImp);
 
                     const calc = calculateDoorImpostY(s, parentFrame, framesByOrder.get(s.orderNo) || []);
@@ -1594,13 +2024,14 @@
                     });
                 }
 
-                // Также проверяем редкий случай вертикального импоста внутри створки (ИВ)
+                // Редкий случай вертикального импоста внутри створки (ИВ)
+                const frameVertCount = parentFrame ? (parentFrame.mullions || []).filter(m => m.orient === 'V').length : 0;
                 if (frameVertCount === 0) {
                     const vertCands = candidates.filter(imp => {
                         if (usedImposts.has(imp)) return false;
                         if (imp.orient !== 'V') return false;
                         const diff = s.heightMm - imp.cutMm;
-                        return diff >= 85 && diff <= 145;
+                        return diff >= 85 && diff <= 215;
                     });
                     if (vertCands.length > 0) {
                         const chosenV = (s.cell && vertCands.find(imp => imp.cell && imp.cell === s.cell)) || vertCands[0];
@@ -1670,7 +2101,10 @@
             const frameRows = [];
             const sashRows = [];
             const impostRows = [];
+            const stulpRows = [];
             let pendingDataOps = [];
+            let pendingProfileAngles = null;
+            let afterManualSeparator = false;
 
             for (let i = 0; i < lines.length; i++) {
                 const rawLine = lines[i];
@@ -1682,6 +2116,12 @@
 
                 if (rowType === 'PROFILE') {
                     pendingDataOps = [];
+                    const a1Raw = parseNumberSafe(safeCol(cols, 4));
+                    const a2Raw = parseNumberSafe(safeCol(cols, 5));
+                    pendingProfileAngles = {
+                        a1: isFinite(a1Raw) ? Math.round((a1Raw / 10) * 10) / 10 : null,
+                        a2: isFinite(a2Raw) ? Math.round((a2Raw / 10) * 10) / 10 : null
+                    };
                     continue;
                 }
 
@@ -1699,9 +2139,19 @@
                 }
 
                 const currentData = pendingDataOps;
+                const currentAngles = afterManualSeparator ? null : pendingProfileAngles;
                 pendingDataOps = [];
+                pendingProfileAngles = null;
 
                 const code7 = safeCol(cols, 7);
+                const col1Raw = safeCol(cols, 1);
+
+                // Пустая строка-разделитель BARCODE;0;0;0;... — после неё идут короткие детали ручной резки без PROFILE
+                if (!code7 && (col1Raw === '0' || !col1Raw)) {
+                    afterManualSeparator = true;
+                    continue;
+                }
+
                 const elemCode15 = safeCol(cols, 15).toUpperCase();
                 const tokens = code7.split('/').map(t => t.trim());
                 const prefix = (tokens[0] || '').toUpperCase();
@@ -1709,16 +2159,37 @@
                 const orderNo = (tokens.length > 1 && tokens[1]) ? tokens[1] : (tokens[0] || 'Без номера');
                 const itemNo = (tokens.length > 2 && tokens[2]) ? tokens[2] : '';
 
+                const isStulp = prefix.startsWith('Ш');
+                const isFixedSash = prefix.startsWith('Г') || elemCode15.startsWith('ГС');
                 const isFrame = (prefix === 'P') || (!prefix && elemCode15 === 'Р');
-                const isSash = prefix.startsWith('C') || elemCode15.startsWith('С');
-                const isImpost = prefix.startsWith('I') || elemCode15.startsWith('И');
+                const isSash = prefix.startsWith('C') || elemCode15.startsWith('С') || isFixedSash;
+                const isImpost = !isStulp && (prefix.startsWith('I') || elemCode15.startsWith('И'));
+
+                if (isStulp) {
+                    const shCutRaw = parseNumberSafe(col1Raw);
+                    const shCutMm = isFinite(shCutRaw) && shCutRaw > 0 ? Math.round((shCutRaw / 10) * 10) / 10 : 0;
+                    if (shCutMm > 0) {
+                        stulpRows.push({
+                            orderNo: orderNo,
+                            itemNo: itemNo,
+                            code: prefix || 'Ш1',
+                            cutMm: shCutMm,
+                            article: safeCol(cols, 2),
+                            cell: safeCol(cols, 18),
+                            steel: safeCol(cols, 12),
+                            isManualCut: afterManualSeparator
+                        });
+                    }
+                    continue;
+                }
 
                 if (isImpost) {
-                    const impCutRaw = parseNumberSafe(safeCol(cols, 1));
+                    const impCutRaw = parseNumberSafe(col1Raw);
                     const impCutMm = isFinite(impCutRaw) && impCutRaw > 0 ? Math.round((impCutRaw / 10) * 10) / 10 : 0;
                     if (impCutMm > 0) {
                         const isHorizImp = elemCode15.startsWith('ИГ');
                         const isVertImp = elemCode15.startsWith('ИВ');
+                        const impMullionOps = currentData.filter(d => d.op === '05' && isFinite(d.valRaw) && d.valRaw > 0);
                         impostRows.push({
                             orderNo: orderNo,
                             itemNo: itemNo,
@@ -1727,7 +2198,9 @@
                             orient: isHorizImp ? 'H' : (isVertImp ? 'V' : ''),
                             cutMm: impCutMm,
                             article: safeCol(cols, 2),
-                            cell: safeCol(cols, 18)
+                            cell: safeCol(cols, 18),
+                            mullionOps: impMullionOps,
+                            isManualCut: afterManualSeparator
                         });
                     }
                     continue;
@@ -1750,18 +2223,20 @@
 
                 const widthMm = isFinite(wRaw) && wRaw > 0 ? Math.round((wRaw / 10) * 10) / 10 : 0;
                 const heightMm = isFinite(hRaw) && hRaw > 0 ? Math.round((hRaw / 10) * 10) / 10 : 0;
-                const cutRaw = parseNumberSafe(safeCol(cols, 1));
+                const cutRaw = parseNumberSafe(col1Raw);
                 const cutMm = isFinite(cutRaw) && cutRaw > 0 ? Math.round((cutRaw / 10) * 10) / 10 : 0;
 
                 const mullionOps = currentData.filter(d => d.op === '05' && isFinite(d.valRaw) && d.valRaw > 0);
                 const outerDrainageOps = currentData.filter(d => d.op === '02');
                 const hiddenDrainageOps = currentData.filter(d => d.op === '07');
-                const handlePosOps = currentData.filter(d => (d.op === '12' || d.op === '13') && isFinite(d.valRaw) && d.valRaw > 0);
+                const handlePosOps = currentData.filter(d => (d.op === '12' || d.op === '12-2' || d.op === '13') && isFinite(d.valRaw) && d.valRaw > 0);
                 const hasHandleRPlus = cols.some(c => String(c || '').trim().toUpperCase() === 'R+');
 
                 const rowObj = {
                     entityType: isFrame ? 'frame' : 'sash',
-                    subCode: isSash ? (prefix || elemCode15 || 'C1') : 'P',
+                    subCode: isFixedSash ? (elemCode15 || prefix || 'ГС-1') : (isSash ? (prefix || elemCode15 || 'C1') : 'P'),
+                    isFixedSash: isFixedSash,
+                    isManualCut: afterManualSeparator,
                     fileName: fileName,
                     orderNo: orderNo,
                     itemNo: itemNo,
@@ -1780,7 +2255,8 @@
                     mullionOps: mullionOps,
                     outerDrainageOps: outerDrainageOps,
                     hiddenDrainageOps: hiddenDrainageOps,
-                    handlePosOps: handlePosOps
+                    handlePosOps: handlePosOps,
+                    profileAngles: currentAngles
                 };
 
                 if (isFrame) frameRows.push(rowObj);
@@ -1790,10 +2266,25 @@
             const builtFrames = buildEntitiesFromRows(frameRows, 'frame');
             const builtSashes = buildEntitiesFromRows(sashRows, 'sash');
 
-            // Расчёт импостов в створках (дверях) по строкам импостов (ИГ / ИВ) в том же заказе/изделии
-            assignDoorAndSashMullions(builtFrames, builtSashes, impostRows);
+            // Привязываем штульпы (Ш1) к рамам
+            const stulpsByOrderItem = new Map();
+            for (const sh of stulpRows) {
+                const k = sh.orderNo + '|' + sh.itemNo;
+                if (!stulpsByOrderItem.has(k)) stulpsByOrderItem.set(k, []);
+                stulpsByOrderItem.get(k).push(sh);
+            }
+            for (const fr of builtFrames) {
+                const k = fr.orderNo + '|' + fr.itemNo;
+                fr.stulps = stulpsByOrderItem.get(k) || [];
+            }
 
-            // Распределяем створки по конкретным экземплярам рам (учитываем количество одинаковых изделий и номер ячейки)
+            // Уточняем многопролётные сетки (32376/1), восстанавливаем импосты рамы (33570/1) и импосты в створках (дверях)
+            const sharedUsedImposts = new Set();
+            refineMultiBayFrameMullions(builtFrames, impostRows, sharedUsedImposts);
+            assignMissingFrameImposts(builtFrames, builtSashes, impostRows, sharedUsedImposts);
+            assignDoorAndSashMullions(builtFrames, builtSashes, impostRows, sharedUsedImposts);
+
+            // Распределяем створки по конкретным экземплярам рам
             const sashesByOrderItem = new Map();
             for (const s of builtSashes) {
                 const k = s.orderNo + '|' + s.itemNo;
@@ -1808,7 +2299,6 @@
                 const k = fr.orderNo + '|' + fr.itemNo;
                 const candidates = (sashesByOrderItem.get(k) || []).filter(s => !usedSashSet.has(s));
 
-                // Берём по 1 экземпляру каждого subCode (C1, C2, C3...), предпочитая совпадение по ячейке или порядковому номеру копии
                 const subCodeGroups = new Map();
                 for (const s of candidates) {
                     if (!subCodeGroups.has(s.subCode)) subCodeGroups.set(s.subCode, []);
@@ -1842,6 +2332,10 @@
                     ...matchedSashes.flatMap(s => s.oversizeReasons.map(r => `${s.subCode}: ${r}`))
                 ];
 
+                const itemManualCut = fr.hasManualCut
+                    || matchedSashes.some(s => s.hasManualCut)
+                    || (impostRows.some(imp => imp.orderNo === fr.orderNo && imp.itemNo === fr.itemNo && imp.isManualCut));
+
                 builtCombined.push({
                     entityType: 'combined',
                     fileName: fr.fileName,
@@ -1856,16 +2350,32 @@
                     cell: fr.cell,
                     frame: fr,
                     sashes: matchedSashes,
+                    stulps: fr.stulps || [],
                     mullions: fr.mullions,
                     outerDrainages: fr.outerDrainages,
                     hiddenDrainages: fr.hiddenDrainages,
                     spanComparison: comparison,
                     bars: fr.bars,
+                    hasAluThreshold: !!fr.hasAluThreshold,
+                    aluThresholdArticle: fr.aluThresholdArticle || '',
+                    hasManualCut: itemManualCut,
                     isOversize: anyOversize,
                     isTooLarge: anyTooLarge,
                     isTooSmall: anyTooSmall,
                     oversizeReasons: oversizeReasons
                 });
+            }
+
+            // Отдельные створки (в т.ч. глухие Г1/ГС-1 без рамы в файле) тоже показываем в режиме «Изделие», чтобы они не терялись
+            for (const s of builtSashes) {
+                if (usedSashSet.has(s)) continue;
+                builtCombined.push(Object.assign({}, s, {
+                    entityType: 'combined',
+                    isStandaloneSash: true,
+                    sashes: [s],
+                    stulps: [],
+                    spanComparison: null
+                }));
             }
 
             return [...builtCombined, ...builtFrames, ...builtSashes];
@@ -1935,8 +2445,16 @@
                         }
                     }
 
+                    const aluInfo = detectAluThresholdFromBars(bars, entityType);
+                    const hasManualCut = bars.some(b => b.isManualCut);
+                    const isFixedSash = bars.some(b => b.isFixedSash);
+
                     result.push({
                         entityType: entityType,
+                        hasAluThreshold: aluInfo.hasAlu,
+                        aluThresholdArticle: aluInfo.article,
+                        hasManualCut: hasManualCut,
+                        isFixedSash: isFixedSash,
                         subCode: first.subCode,
                         fileName: first.fileName,
                         orderNo: first.orderNo,
@@ -1968,16 +2486,20 @@
         function splitRowsIntoQuadruples(rows) {
             const entities = [];
             const remaining = rows.slice();
+            const hasSideLabels = rows.some(r => !!r.side);
 
             while (remaining.length > 0) {
                 const currentBars = [];
                 const usedSides = new Set();
 
-                // Если у заготовок указана ячейка (кроме R+), стараемся собирать 4 стороны одной ячейки вместе
+                // Если у заготовок указана ячейка (кроме R+), стараемся собирать стороны одной ячейки вместе
                 const seedCell = remaining.find(r => r.cell && r.cell.toUpperCase() !== 'R+')?.cell || '';
 
+                const hasSlopedSides = remaining.some(r => r.side === 'Л-В' || r.side === 'П-В');
+                const maxBarsPerEntity = hasSlopedSides ? 6 : 4;
+
                 if (seedCell) {
-                    for (let i = 0; i < remaining.length && currentBars.length < 4; ) {
+                    for (let i = 0; i < remaining.length && currentBars.length < maxBarsPerEntity; ) {
                         const r = remaining[i];
                         const sameCellOrHandle = (r.cell === seedCell) || (r.cell.toUpperCase() === 'R+');
                         if (sameCellOrHandle && r.side && !usedSides.has(r.side)) {
@@ -1989,7 +2511,7 @@
                     }
                 }
 
-                for (let i = 0; i < remaining.length && currentBars.length < 4; ) {
+                for (let i = 0; i < remaining.length && currentBars.length < maxBarsPerEntity; ) {
                     const s = remaining[i].side;
                     if (s && !usedSides.has(s)) {
                         usedSides.add(s);
@@ -1999,8 +2521,19 @@
                     }
                 }
 
-                while (currentBars.length < 4 && remaining.length > 0) {
-                    currentBars.push(remaining.shift());
+                // Не добираем дубли уже собранных сторон (иначе у треугольников из 3 сторон и дверей с порогом забирается заготовка соседнего изделия)
+                if (!hasSideLabels || currentBars.length === 0) {
+                    while (currentBars.length < 4 && remaining.length > 0) {
+                        currentBars.push(remaining.shift());
+                    }
+                } else {
+                    for (let i = 0; i < remaining.length && currentBars.length < maxBarsPerEntity; ) {
+                        if (!remaining[i].side) {
+                            currentBars.push(remaining.splice(i, 1)[0]);
+                        } else {
+                            i++;
+                        }
+                    }
                 }
 
                 entities.push(currentBars);
@@ -2011,7 +2544,8 @@
 
         function computeMullionsForEntity(bars, widthMm, heightMm) {
             if (widthMm <= 0 || heightMm <= 0) return [];
-
+            const topGeom = computeTopBarGeometry(bars, widthMm, heightMm);
+            const aluInfo = detectAluThresholdFromBars(bars, 'frame');
             const topXs = [];
             const botXs = [];
             const leftYs = [];
@@ -2023,33 +2557,52 @@
                 const isHorizBar = (side === 'В' || side === 'Н');
                 const nominalRaw = (isHorizBar ? widthMm : heightMm) * 10;
                 const cutRaw = bar.cutRaw > 0 ? bar.cutRaw : (nominalRaw + 60);
-                const weldRaw = Math.max(0, (cutRaw - nominalRaw) / 2);
+                // Припуск на сварку в начале заготовки (0 мм если угол 90°, иначе 3 мм)
+                let weldStartRaw = 30;
+                if (bar.profileAngles && bar.profileAngles.a1 !== null) {
+                    weldStartRaw = Math.abs(bar.profileAngles.a1 - 90) < 1.5 ? 0 : 30;
+                } else if (cutRaw >= nominalRaw) {
+                    weldStartRaw = Math.max(0, (cutRaw - nominalRaw) / 2);
+                }
+
+                const netBarLenMm = getBarNetLengthMm(bar) || (isHorizBar ? widthMm : heightMm);
+                // Если стойка 'П' стоит на алюминиевом пороге (90° снизу), её нижний край поднят на высоту порога (~20 мм)
+                const botThreshMm = (aluInfo.hasAlu && (side === 'П' || side === 'Л')) ? aluInfo.threshOffsetMm : 0;
+                // Верхний край левой стойки 'Л' смещён вниз, если стойка короче (высоты рамы - порог)
+                const availVertH = Math.max(1, heightMm - botThreshMm);
+                const leftTopStartMm = (side === 'Л' && netBarLenMm < availVertH - 10)
+                    ? Math.max(0, availVertH - netBarLenMm)
+                    : 0;
+                // Правый край верхней заготовки 'В' равен topGeom.topEndX (для трапеции 31980/1 это 1990 мм, а не 2740 мм!)
+                const topBarRightX = (side === 'В' && topGeom.hasFlatTop && netBarLenMm < widthMm - 10)
+                    ? topGeom.topEndX
+                    : widthMm;
 
                 for (const op of bar.mullionOps) {
-                    const distFromBarStartMm = Math.max(0, (op.valRaw - weldRaw) / 10);
+                    const distFromBarStartMm = Math.max(0, (op.valRaw - weldStartRaw) / 10);
 
                     if (side === 'В') {
-                        // Верхняя заготовка идёт справа налево (против часовой стрелки при виде изнутри)
-                        const x = Math.round((widthMm - distFromBarStartMm) * 10) / 10;
+                        // Верхняя заготовка идёт справа налево от своего правого торца topBarRightX
+                        const x = Math.round((topBarRightX - distFromBarStartMm) * 10) / 10;
                         if (x > 5 && x < widthMm - 5) topXs.push({ x: x, side: 'В' });
                     } else if (side === 'Н') {
                         // Нижняя заготовка идёт слева направо
                         const x = Math.round(distFromBarStartMm * 10) / 10;
                         if (x > 5 && x < widthMm - 5) botXs.push({ x: x, side: 'Н' });
                     } else if (side === 'Л') {
-                        // Левая заготовка идёт сверху вниз
-                        const y = Math.round(distFromBarStartMm * 10) / 10;
+                        // Левая заготовка идёт сверху вниз (от своего верхнего торца leftTopStartMm)
+                        const y = Math.round((leftTopStartMm + distFromBarStartMm) * 10) / 10;
                         if (y > 5 && y < heightMm - 5) leftYs.push({ y: y, side: 'Л' });
                     } else if (side === 'П') {
-                        // Правая заготовка идёт снизу вверх
-                        const y = Math.round((heightMm - distFromBarStartMm) * 10) / 10;
+                        // Правая заготовка идёт снизу вверх (от heightMm - botThreshMm)
+                        const y = Math.round(((heightMm - botThreshMm) - distFromBarStartMm) * 10) / 10;
                         if (y > 5 && y < heightMm - 5) rightYs.push({ y: y, side: 'П' });
                     }
                 }
             }
 
             const mullions = [];
-            const TOL = 6.0;
+            const TOL = 8.0;
 
             const usedBot = new Set();
             const partialTop = [];
@@ -2188,14 +2741,222 @@
             return '';
         }
 
+        function isArchEntity(item) {
+            const w = item && item.widthMm > 0 ? item.widthMm : 1000;
+            const bars = (item && item.bars) || [];
+            const barV = bars.find(b => b.side === 'В');
+            return !!(barV && barV.cutMm > w * 1.35);
+        }
+
+        // Равномерное смещение многоугольника внутрь (insetPx может быть числом или массивом по рёбрам)
+        function offsetPolygonPoints(ptsSvg, insetPx) {
+            const n = ptsSvg.length;
+            if (n < 3) return ptsSvg;
+
+            let area2 = 0;
+            for (let i = 0; i < n; i++) {
+                const a = ptsSvg[i];
+                const b = ptsSvg[(i + 1) % n];
+                area2 += a.x * b.y - b.x * a.y;
+            }
+            const sign = area2 >= 0 ? 1 : -1;
+
+            const lines = [];
+            for (let i = 0; i < n; i++) {
+                const p1 = ptsSvg[i];
+                const p2 = ptsSvg[(i + 1) % n];
+                const edgeInset = Array.isArray(insetPx) ? (insetPx[i] ?? insetPx[0] ?? 6) : insetPx;
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                if (len < 1e-6) {
+                    lines.push({ px: p1.x, py: p1.y, dx: 1, dy: 0, inset: edgeInset });
+                    continue;
+                }
+                const ux = dx / len;
+                const uy = dy / len;
+                // Внутренняя нормаль к ребру (p1 -> p2) в SVG-координатах (X вправо, Y вниз)
+                const nx = sign * (-uy);
+                const ny = sign * ux;
+                lines.push({
+                    px: p1.x + nx * edgeInset,
+                    py: p1.y + ny * edgeInset,
+                    dx: ux,
+                    dy: uy,
+                    inset: edgeInset
+                });
+            }
+
+            function intersectLines(l1, l2) {
+                const det = l1.dx * (-l2.dy) - l1.dy * (-l2.dx);
+                const maxIns = Math.max(l1.inset || 6, l2.inset || 6);
+                if (Math.abs(det) < 1e-4) {
+                    return { x: (l1.px + l2.px) / 2, y: (l1.py + l2.py) / 2 };
+                }
+                const rx = l2.px - l1.px;
+                const ry = l2.py - l1.py;
+                const t = (rx * (-l2.dy) - ry * (-l2.dx)) / det;
+                const ix = l1.px + l1.dx * t;
+                const iy = l1.py + l1.dy * t;
+                if (Math.hypot(ix - l2.px, iy - l2.py) > maxIns * 3.5) {
+                    return { x: l2.px, y: l2.py };
+                }
+                return { x: ix, y: iy };
+            }
+
+            const out = [];
+            for (let i = 0; i < n; i++) {
+                const prevLine = lines[(i - 1 + n) % n];
+                const curLine = lines[i];
+                out.push(intersectLines(prevLine, curLine));
+            }
+            return out;
+        }
+
+        function pointsToSvgPath(ptsSvg) {
+            if (!ptsSvg || ptsSvg.length < 3) return '';
+            return ptsSvg.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z';
+        }
+
+        // Строит контур изделия (прямоугольник, трапеция Л-В / П-В с верхом В или без, фронтон, треугольник или арка)
+        function buildEntityContour(item) {
+            const w = item.widthMm > 0 ? item.widthMm : 1000;
+            const h = item.heightMm > 0 ? item.heightMm : 1000;
+            const bars = item.bars || [];
+            const g = computeTopBarGeometry(bars, w, h);
+            const { hasLV, hasPV, barL, barP, barV, isArch, hasFlatTop, yL, yP, peakX, topStartX, topEndX } = g;
+
+            let archRiseMm = Math.min(w * 0.36, h * 0.22);
+            if (isArch) {
+                const sideBar = (barL && barL.cutMm > 0 && barL.cutMm < h - 30)
+                    ? barL
+                    : ((barP && barP.cutMm > 0 && barP.cutMm < h - 30) ? barP : null);
+                if (sideBar) {
+                    const aluOff = item.hasAluThreshold ? 20 : 0;
+                    const sideNet = getBarNetLengthMm(sideBar);
+                    archRiseMm = Math.max(60, Math.min(h - aluOff - sideNet, w * 0.52));
+                } else {
+                    const impH = (item.mullions || []).find(m => m.orient === 'H' && m.posMm > 200);
+                    if (impH && impH.posMm < h * 0.5) {
+                        archRiseMm = Math.max(80, Math.min(impH.posMm * 0.85, w * 0.45));
+                    }
+                }
+            }
+
+            function topYAt(x) {
+                const cx = Math.max(0, Math.min(w, x));
+                if (isArch) {
+                    const midX = w / 2;
+                    const halfW = Math.max(1, w / 2);
+                    const dx = (cx - midX) / halfW;
+                    const norm = Math.max(0, 1 - dx * dx);
+                    return Math.max(0, archRiseMm * (1 - Math.sqrt(norm)));
+                }
+                if (hasLV && hasPV && hasFlatTop) {
+                    if (cx <= topStartX) {
+                        const t = topStartX > 0 ? (cx / topStartX) : 0;
+                        return yL * (1 - t);
+                    }
+                    if (cx <= topEndX) return 0;
+                    const span = Math.max(1, w - topEndX);
+                    const t = (cx - topEndX) / span;
+                    return yP * t;
+                }
+                if (hasLV && hasPV) {
+                    if (cx <= peakX) {
+                        const t = peakX > 0 ? (cx / peakX) : 0;
+                        return yL * (1 - t);
+                    }
+                    const span = Math.max(1, w - peakX);
+                    const t = (cx - peakX) / span;
+                    return yP * t;
+                }
+                if (hasLV) {
+                    if (cx <= topStartX) {
+                        const t = topStartX > 0 ? (cx / topStartX) : 0;
+                        return yL * (1 - t);
+                    }
+                    return 0;
+                }
+                if (hasPV) {
+                    if (cx <= topEndX) return 0;
+                    const span = Math.max(1, w - topEndX);
+                    const t = (cx - topEndX) / span;
+                    return yP * t;
+                }
+                return 0;
+            }
+
+            function dedupPts(arr) {
+                const res = [];
+                for (const p of arr) {
+                    const prev = res[res.length - 1];
+                    if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y) > 1.0) {
+                        res.push(p);
+                    }
+                }
+                if (res.length > 2 && Math.hypot(res[0].x - res[res.length - 1].x, res[0].y - res[res.length - 1].y) <= 1.0) {
+                    res.pop();
+                }
+                return res;
+            }
+
+            let mmPts = [];
+            if (isArch) {
+                const steps = 36;
+                for (let i = 0; i <= steps; i++) {
+                    const x = (w * i) / steps;
+                    mmPts.push({ x: x, y: topYAt(x) });
+                }
+                mmPts.push({ x: w, y: h });
+                mmPts.push({ x: 0, y: h });
+            } else if (hasLV && hasPV && hasFlatTop) {
+                const raw = [];
+                if (yL < h - 1) raw.push({ x: 0, y: yL });
+                raw.push({ x: topStartX, y: 0 });
+                raw.push({ x: topEndX, y: 0 });
+                if (yP < h - 1) raw.push({ x: w, y: yP });
+                raw.push({ x: w, y: h });
+                raw.push({ x: 0, y: h });
+                mmPts = dedupPts(raw);
+            } else if (hasLV && hasPV) {
+                const raw = [];
+                if (yL < h - 1) raw.push({ x: 0, y: yL });
+                raw.push({ x: peakX, y: 0 });
+                if (yP < h - 1) raw.push({ x: w, y: yP });
+                raw.push({ x: w, y: h });
+                raw.push({ x: 0, y: h });
+                mmPts = dedupPts(raw);
+            } else if (hasLV) {
+                const raw = [];
+                if (yL < h - 1) raw.push({ x: 0, y: yL });
+                raw.push({ x: topStartX, y: 0 });
+                if (topStartX < w - 1) raw.push({ x: w, y: 0 });
+                raw.push({ x: w, y: h });
+                raw.push({ x: 0, y: h });
+                mmPts = dedupPts(raw);
+            } else if (hasPV) {
+                const raw = [{ x: 0, y: 0 }];
+                if (topEndX > 1) raw.push({ x: topEndX, y: 0 });
+                if (yP < h - 1) raw.push({ x: w, y: yP });
+                raw.push({ x: w, y: h });
+                raw.push({ x: 0, y: h });
+                mmPts = dedupPts(raw);
+            }
+
+            const isPolygon = isArch || hasLV || hasPV;
+            const isTriangle = isPolygon && !isArch && mmPts.length === 3;
+            return { isPolygon, isArch, isTriangle, hasLV, hasPV, hasFlatTop, topStartX, topEndX, mmPts, topYAt, archRiseMm };
+        }
+
         function createEntitySvg(item) {
             const svgW = 360;
             const svgH = 270;
 
             const w = item.widthMm > 0 ? item.widthMm : 1000;
             const h = item.heightMm > 0 ? item.heightMm : 1000;
-            const isSash = item.entityType === 'sash';
-            const isCombined = item.entityType === 'combined';
+            const isSash = item.entityType === 'sash' || !!item.isStandaloneSash;
+            const isCombined = item.entityType === 'combined' && !item.isStandaloneSash;
 
             const mullions = item.mullions || [];
             const vertMullions = mullions.filter(m => m.orient === 'V');
@@ -2217,13 +2978,15 @@
             const rectY = padTop + Math.round((availH - drawH) / 2);
 
             const profileThick = Math.max(5.5, Math.min(11, Math.round(Math.min(drawW, drawH) * 0.085)));
+            const hasAluThreshold = !isSash && !!item.hasAluThreshold;
+            const botProfileThick = hasAluThreshold ? Math.max(3, Math.round(profileThick * 0.42)) : profileThick;
             const mullionThick = Math.max(4, Math.min(9, Math.round(profileThick * 0.82)));
             const halfMul = mullionThick / 2;
 
             const innerX = rectX + profileThick;
             const innerY = rectY + profileThick;
             const innerW = Math.max(10, drawW - profileThick * 2);
-            const innerH = Math.max(10, drawH - profileThick * 2);
+            const innerH = Math.max(10, drawH - profileThick - botProfileThick);
 
             const fillVar = isSash ? 'var(--sash-fill)' : 'var(--pvc-fill)';
             const strokeVar = isSash ? 'var(--sash-stroke)' : 'var(--pvc-stroke)';
@@ -2240,13 +3003,41 @@
                 ...mullions.filter(m => !m.full)
             ];
 
+            const contour = buildEntityContour(item);
+            let outerPolyPath = '';
+            let innerPolyPath = '';
+            let polyMiterLinesSvg = '';
+            if (contour.isPolygon && contour.mmPts) {
+                const outerSvgPts = contour.mmPts.map(p => ({
+                    x: rectX + (p.x / w) * drawW,
+                    y: rectY + (p.y / h) * drawH
+                }));
+                outerPolyPath = pointsToSvgPath(outerSvgPts);
+                const botY = rectY + drawH;
+                const edgeInsets = outerSvgPts.map((p, i) => {
+                    const q = outerSvgPts[(i + 1) % outerSvgPts.length];
+                    const isBottomEdge = Math.abs(p.y - botY) < 1.0 && Math.abs(q.y - botY) < 1.0;
+                    return (hasAluThreshold && isBottomEdge) ? botProfileThick : profileThick;
+                });
+                const innerSvgPts = offsetPolygonPoints(outerSvgPts, edgeInsets);
+                innerPolyPath = pointsToSvgPath(innerSvgPts);
+                if (!contour.isArch && outerSvgPts.length === innerSvgPts.length) {
+                    for (let i = 0; i < outerSvgPts.length; i++) {
+                        if (hasAluThreshold && Math.abs(outerSvgPts[i].y - botY) < 1.0) continue;
+                        polyMiterLinesSvg += `<line x1="${outerSvgPts[i].x.toFixed(1)}" y1="${outerSvgPts[i].y.toFixed(1)}" x2="${innerSvgPts[i].x.toFixed(1)}" y2="${innerSvgPts[i].y.toFixed(1)}" stroke="${strokeVar}" stroke-width="1.1"/>`;
+                    }
+                }
+            }
+
             let mullionsSvg = '';
             for (const m of orderedMullions) {
                 if (m.orient === 'V') {
                     const mx = rectX + (m.x1 / w) * drawW;
-                    const rawY1 = rectY + (m.y1 / h) * drawH;
+                    const topEdgeMm = contour.isPolygon ? contour.topYAt(m.x1) : 0;
+                    const effY1Mm = Math.max(m.y1, topEdgeMm);
+                    const rawY1 = rectY + (effY1Mm / h) * drawH;
                     const rawY2 = rectY + (m.y2 / h) * drawH;
-                    const yTop = m.y1 <= 1 ? innerY : (rawY1 + halfMul);
+                    const yTop = effY1Mm <= topEdgeMm + 1 ? (rectY + (topEdgeMm / h) * drawH + profileThick) : (rawY1 + halfMul);
                     const yBot = m.y2 >= h - 1 ? (innerY + innerH) : (rawY2 - halfMul);
                     const barH = Math.max(2, yBot - yTop);
                     const xLeft = mx - halfMul;
@@ -2274,10 +3065,20 @@
                     const sp = mInfo.span;
                     const s = mInfo.sash;
 
-                    const sx1 = rectX + (sp.x1 / w) * drawW + (sp.x1 <= 0.5 ? profileThick : halfMul) + 1.5;
-                    const sx2 = rectX + (sp.x2 / w) * drawW - (sp.x2 >= w - 0.5 ? profileThick : halfMul) - 1.5;
-                    const sy1 = rectY + (sp.y1 / h) * drawH + (sp.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
-                    const sy2 = rectY + (sp.y2 / h) * drawH - (sp.y2 >= h - 0.5 ? profileThick : halfMul) - 1.5;
+                    const leftInset = sp.isStulpSide === 'left' ? 2 : (sp.x1 <= 0.5 ? profileThick : halfMul);
+                    const rightInset = sp.isStulpSide === 'right' ? 2 : (sp.x2 >= w - 0.5 ? profileThick : halfMul);
+                    const sx1 = rectX + (sp.x1 / w) * drawW + leftInset + 1.2;
+                    const sx2 = rectX + (sp.x2 / w) * drawW - rightInset - 1.2;
+                    let sy1 = rectY + (sp.y1 / h) * drawH + (sp.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
+                    const botGap = sp.y2 >= h - 0.5 ? botProfileThick : halfMul;
+                    const sy2 = rectY + (sp.y2 / h) * drawH - botGap - 1.5;
+
+                    // Защита: если прямоугольная створка значительно ниже пролёта (например, нет импоста под аркой), не растягиваем её поверх арки
+                    if (s.heightMm > 0 && sp.spanH - s.heightMm > 140) {
+                        const realSashDrawH = Math.max(14, (s.heightMm / h) * drawH);
+                        const clampedTop = sy2 - realSashDrawH;
+                        if (clampedTop > sy1) sy1 = clampedTop;
+                    }
 
                     const sw = Math.max(12, sx2 - sx1);
                     const sh = Math.max(12, sy2 - sy1);
@@ -2313,6 +3114,16 @@
                         ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, 'var(--sash-stroke)')}
                         ${sh >= 26 && sw >= 42 ? `<text x="${(sx1 + sw / 2).toFixed(1)}" y="${(sy1 + sh - 5).toFixed(1)}" text-anchor="middle" fill="var(--sash-stroke)" font-size="9.5" font-weight="700" font-family="system-ui, sans-serif">${formatMm(s.widthMm)}×${formatMm(s.heightMm)}</text>` : ''}
                     `;
+                }
+                if (item.spanComparison.stulpDividers && item.spanComparison.stulpDividers.length > 0) {
+                    for (const sd of item.spanComparison.stulpDividers) {
+                        const sx = rectX + (sd.x / w) * drawW;
+                        const sy1 = rectY + (sd.y1 / h) * drawH + (sd.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
+                        const sy2 = rectY + (sd.y2 / h) * drawH - (sd.y2 >= h - 0.5 ? botProfileThick : halfMul) - 1.5;
+                        combinedSashesSvg += `
+                            <line x1="${sx.toFixed(1)}" y1="${sy1.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy2.toFixed(1)}" stroke="var(--accent-blue)" stroke-width="2.2" stroke-dasharray="5,3"/>
+                        `;
+                    }
                 }
             }
 
@@ -2410,13 +3221,33 @@
                     <polygon points="${dimRightX},${rectY + drawH} ${dimRightX - 3},${rectY + drawH - 6} ${dimRightX + 3},${rectY + drawH - 6}" fill="var(--dim-color)"/>
                     <text x="${dimRightX + 7}" y="${rightMidY + 4}" text-anchor="start" fill="var(--dim-text)" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${hText}</text>
 
-                    <rect x="${rectX}" y="${rectY}" width="${drawW}" height="${drawH}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2"/>
-                    <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3"/>
-
-                    <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                    <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                    <line x1="${rectX}" y1="${rectY + drawH}" x2="${innerX}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
-                    <line x1="${rectX + drawW}" y1="${rectY + drawH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
+${(() => {
+                        const threshY = rectY + drawH - botProfileThick;
+                        const aluStripSvg = hasAluThreshold
+                            ? `<rect x="${rectX}" y="${threshY.toFixed(1)}" width="${drawW}" height="${botProfileThick}" fill="var(--alu-fill)" stroke="var(--alu-stroke)" stroke-width="1.3"/>
+                               <line x1="${rectX}" y1="${(threshY + botProfileThick / 2).toFixed(1)}" x2="${rectX + drawW}" y2="${(threshY + botProfileThick / 2).toFixed(1)}" stroke="var(--alu-line)" stroke-width="0.7" opacity="0.75"/>`
+                            : '';
+                        if (contour.isPolygon) {
+                            return `<path d="${outerPolyPath}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2" stroke-linejoin="round"/>
+                                    <path d="${innerPolyPath}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3" stroke-linejoin="round"/>
+                                    ${polyMiterLinesSvg}
+                                    ${aluStripSvg}`;
+                        }
+                        if (hasAluThreshold) {
+                            const uPath = `M ${rectX} ${threshY.toFixed(1)} L ${rectX} ${rectY} L ${rectX + drawW} ${rectY} L ${rectX + drawW} ${threshY.toFixed(1)} L ${(innerX + innerW).toFixed(1)} ${threshY.toFixed(1)} L ${(innerX + innerW).toFixed(1)} ${innerY} L ${innerX} ${innerY} L ${innerX} ${threshY.toFixed(1)} Z`;
+                            return `<rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)"/>
+                                    <path d="${uPath}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2" stroke-linejoin="miter"/>
+                                    <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                                    <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                                    ${aluStripSvg}`;
+                        }
+                        return `<rect x="${rectX}" y="${rectY}" width="${drawW}" height="${drawH}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2"/>
+                                <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3"/>
+                                <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                                <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
+                                <line x1="${rectX}" y1="${rectY + drawH}" x2="${innerX}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
+                                <line x1="${rectX + drawW}" y1="${rectY + drawH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>`;
+                    })()}
 
                     ${mullionsSvg}
                     ${combinedSashesSvg}
@@ -2468,7 +3299,10 @@
                 const kindStr = item.entityType === 'sash'
                     ? `створка ${item.subCode}`
                     : (item.entityType === 'combined' ? 'изделие рама створка' : 'рама');
-                const hay = `${item.orderNo} ${item.itemNo} ${kindStr} ${item.client} ${item.article} ${dimStr} ${mulStr} ${handleStr}`.toLowerCase();
+                const aluStr = item.hasAluThreshold ? `алюминиевый порог алюм ${item.aluThresholdArticle || ''}` : '';
+                const stulpStr = (item.stulps && item.stulps.length > 0) ? 'штульп ш1' : '';
+                const manualStr = item.hasManualCut ? 'ручная резка' : '';
+                const hay = `${item.orderNo} ${item.itemNo} ${kindStr} ${item.client} ${item.article} ${dimStr} ${mulStr} ${handleStr} ${aluStr} ${stulpStr} ${manualStr}`.toLowerCase();
                 return hay.includes(query);
             });
 
@@ -2526,12 +3360,13 @@
                     `;
                 }
 
-                const isSash = item.entityType === 'sash';
-                const isCombined = item.entityType === 'combined';
+                const isSash = item.entityType === 'sash' || !!item.isStandaloneSash;
+                const isCombined = item.entityType === 'combined' && !item.isStandaloneSash;
 
                 let kindBadge = `<span class="kind-badge frame-kind">Рама</span>`;
                 if (isSash) {
-                    kindBadge = `<span class="kind-badge sash-kind">Створка ${escapeHtml(item.subCode)}</span>`;
+                    const sashLabel = item.isFixedSash ? `Глух. створка ${item.subCode}` : `Створка ${item.subCode}`;
+                    kindBadge = `<span class="kind-badge sash-kind">${escapeHtml(sashLabel)}</span>`;
                 } else if (isCombined) {
                     kindBadge = `<span class="kind-badge combined-kind">Изделие</span>`;
                 }
@@ -2586,6 +3421,9 @@
                             </div>
                             <div class="meta-tags">
                                 ${oversizeTag}
+                                ${item.hasAluThreshold ? `<span class="tag alu-tag">Алюм. порог${item.aluThresholdArticle ? ' ' + escapeHtml(item.aluThresholdArticle) : ''}</span>` : ''}
+                                ${(item.stulps && item.stulps.length > 0) ? `<span class="tag stulp-tag">Штульп ${formatMm(item.stulps[0].cutMm)} мм</span>` : ''}
+                                ${item.hasManualCut ? '<span class="tag manual-tag">Ручная резка</span>' : ''}
                                 ${handleTag}
                                 ${combinedSashTags}
                                 ${mullionTags}
@@ -2613,9 +3451,9 @@
             const title = document.getElementById('modalTitle');
             const body = document.getElementById('modalBody');
 
-            const isSash = item.entityType === 'sash';
-            const isCombined = item.entityType === 'combined';
-            const kindTitle = isSash ? `Створка ${item.subCode}` : (isCombined ? 'Изделие' : 'Рама');
+            const isSash = item.entityType === 'sash' || !!item.isStandaloneSash;
+            const isCombined = item.entityType === 'combined' && !item.isStandaloneSash;
+            const kindTitle = isSash ? (item.isFixedSash ? `Глухая створка ${item.subCode}` : `Створка ${item.subCode}`) : (isCombined ? 'Изделие' : 'Рама');
 
             title.textContent = `${kindTitle} — Заказ № ${item.orderNo}${item.itemNo ? ' / изд. ' + item.itemNo : ''} (${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм)`;
 
@@ -2689,17 +3527,41 @@
                 if (b.hasHandleRPlus) extraNotes.push('Ручка');
                 if (mulList) extraNotes.push(`Импост: ${mulList}`);
 
+                if (b.isManualCut) extraNotes.push('Ручная резка');
+                if (item.hasAluThreshold && b.side === 'Н') extraNotes.push(`Алюм. порог${b.article ? ' ' + b.article : ''}`);
+
+                const angText = (b.profileAngles && (b.profileAngles.a1 !== null || b.profileAngles.a2 !== null))
+                    ? `${b.profileAngles.a1 ?? '—'}° / ${b.profileAngles.a2 ?? '—'}°`
+                    : (b.isManualCut ? 'ручн.' : '—');
                 return `
                     <tr>
                         <td>${i + 1}</td>
-                        <td>${escapeHtml(SIDE_NAMES[b.side] || b.side || '—')}</td>
-                        <td><strong>${formatMm(b.cutMm)} мм</strong></td>
+                        <td>${escapeHtml(b.side || '—')} (${escapeHtml(SIDE_NAMES[b.side] || 'Наклон/сост.')})</td>
+                        <td><strong>${formatMm(b.cutMm)} мм</strong><br><span style="font-size:0.76rem; color:var(--text-muted);">Углы: ${escapeHtml(angText)}</span></td>
                         <td>${drainParts.length ? escapeHtml(drainParts.join('; ')) : '—'}</td>
                         <td>${extraNotes.length ? `<strong>${escapeHtml(extraNotes.join('; '))}</strong>` : '—'}</td>
                         <td>${escapeHtml(b.steel || '—')}</td>
                     </tr>
                 `;
-            }).join('');
+            }).join('') + ((item.hasAluThreshold && !item.bars.some(b => b.side === 'Н')) ? `
+                <tr style="color:var(--text-secondary);">
+                    <td>—</td>
+                    <td>Н (Нижняя)</td>
+                    <td><strong>Алюминиевый порог</strong></td>
+                    <td>—</td>
+                    <td>Нет ПВХ-заготовки</td>
+                    <td>—</td>
+                </tr>
+            ` : '') + ((item.stulps || []).map(sh => `
+                <tr>
+                    <td>Ш</td>
+                    <td>Штульп (${escapeHtml(sh.code)})</td>
+                    <td><strong>${formatMm(sh.cutMm)} мм</strong><br><span style="font-size:0.76rem; color:var(--text-muted);">${escapeHtml(sh.article || '')}</span></td>
+                    <td>—</td>
+                    <td><strong>Штульповой профиль</strong></td>
+                    <td>${escapeHtml(sh.steel || '—')}</td>
+                </tr>
+            `).join(''));
 
             const modalMullionList = [
                 ...(item.mullions || []).map(m => m.label + (m.sourceHint ? ` (${m.sourceHint})` : '')),
@@ -2722,6 +3584,8 @@
                     Габариты: <strong>${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм</strong>
                     ${item.isOversize ? ` <span style="color:var(--accent-red); font-weight:700;">(Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))})</span>` : ''}<br>
                     ${isSash ? `Сторона ручки: <strong style="color:#f0883e;">${escapeHtml(handleSummary)}</strong><br>` : ''}
+                    ${item.hasAluThreshold ? `Порог: <strong>Алюминиевый${item.aluThresholdArticle ? ' (' + escapeHtml(item.aluThresholdArticle) + ')' : ''}</strong><br>` : ''}
+                    ${(item.stulps && item.stulps.length > 0) ? `Штульп: <strong>${item.stulps.map(sh => `${sh.code}: ${formatMm(sh.cutMm)} мм (${sh.article || '—'})`).join(', ')}</strong><br>` : ''}
                     Импосты: <strong style="color:var(--accent-amber);">${escapeHtml(mullionsSummary)}</strong>
                 </div>
                 ${drainageHtml}
