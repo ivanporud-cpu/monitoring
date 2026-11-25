@@ -7,6 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -72,8 +75,8 @@ public class NewDayWorker extends Worker {
     public static final String YANDEX_API_BASE = "https://cloud-api.yandex.net/v1/disk/resources";
 
     public static final int SCAN_PORT = 5000;
-    public static final int SOCKET_TIMEOUT_MS = 450;
-    public static final int VERIFY_TIMEOUT_MS = 1200;
+    public static final int SOCKET_TIMEOUT_MS = 280;
+    public static final int VERIFY_TIMEOUT_MS = 900;
     public static final String FALLBACK_SUBNET = "192.168.57.";
 
     public static final String CHANNEL_ID = "new_day_channel";
@@ -114,10 +117,13 @@ public class NewDayWorker extends Worker {
         String serverUrl = null;
         JSONObject yandexCache = null;
 
-        List<String> servers = findWorkingServers(prefs, false);
-        if (!servers.isEmpty()) {
-            serverUrl = servers.get(0);
-        } else if (prefs.getBoolean(KEY_YANDEX_ENABLED, true)) {
+        if (isWifiOrLanConnected(ctx)) {
+            List<String> servers = findWorkingServers(ctx, prefs, false);
+            if (!servers.isEmpty()) {
+                serverUrl = servers.get(0);
+            }
+        }
+        if (serverUrl == null && prefs.getBoolean(KEY_YANDEX_ENABLED, true)) {
             String token = prefs.getString(KEY_YANDEX_TOKEN, DEFAULT_YANDEX_TOKEN);
             if (token == null || token.trim().isEmpty()) {
                 token = DEFAULT_YANDEX_TOKEN;
@@ -403,7 +409,43 @@ public class NewDayWorker extends Worker {
 
     // ==================== ТИХИЙ АВТОПОИСК СЕРВЕРА С ПРОВЕРКОЙ «СВОЙ/ЧУЖОЙ» ====================
 
+    public static boolean isWifiOrLanConnected(Context ctx) {
+        if (ctx == null) {
+            return getLocalSubnetPrefix() != null;
+        }
+        try {
+            ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                Network[] networks = cm.getAllNetworks();
+                if (networks != null) {
+                    for (Network net : networks) {
+                        NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                        if (caps != null && (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                                || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return getLocalSubnetPrefix() != null;
+    }
+
     public static List<String> findWorkingServers(SharedPreferences prefs, boolean forceFullScan) {
+        return findWorkingServers(null, prefs, forceFullScan);
+    }
+
+    public static List<String> findWorkingServers(Context ctx, SharedPreferences prefs, boolean forceFullScan) {
+        if (ctx != null && !isWifiOrLanConnected(ctx)) {
+            return Collections.emptyList();
+        }
+        String localPrefix = getLocalSubnetPrefix();
+        if (localPrefix == null) {
+            return Collections.emptyList();
+        }
+
         String savedUrl = normalizeBaseUrl(prefs.getString(KEY_SERVER_URL, ""));
         if (!forceFullScan && !savedUrl.isEmpty()) {
             if (isMonitoringServer(savedUrl, VERIFY_TIMEOUT_MS)) {
@@ -411,11 +453,8 @@ public class NewDayWorker extends Worker {
             }
         }
 
-        String localPrefix = getLocalSubnetPrefix();
-        String firstPrefix = (localPrefix != null) ? localPrefix : FALLBACK_SUBNET;
-
-        List<String> verified = scanAndVerifySubnet(firstPrefix);
-        if (verified.isEmpty() && !FALLBACK_SUBNET.equals(firstPrefix)) {
+        List<String> verified = scanAndVerifySubnet(localPrefix);
+        if (verified.isEmpty() && !FALLBACK_SUBNET.equals(localPrefix)) {
             verified = scanAndVerifySubnet(FALLBACK_SUBNET);
         }
 
@@ -480,7 +519,7 @@ public class NewDayWorker extends Worker {
         }
         pool.shutdown();
         try {
-            pool.awaitTermination(12, TimeUnit.SECONDS);
+            pool.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
         }
 
