@@ -122,7 +122,7 @@
             padding: 1.25rem;
             transition: background .25s ease, color .25s ease;
         }
-        .container { max-width: 75rem; margin: 0 auto; }
+        .container { position: relative; z-index: 2; max-width: 75rem; margin: 0 auto; }
 
         .header {
             position: relative;
@@ -538,12 +538,23 @@
         html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
         html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
+        .brand-under-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .brand-drag-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 1850;
+            pointer-events: none;
+            overflow: hidden;
+        }
         .header-roam-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5.4rem;
+            inset: 0;
             pointer-events: none;
             z-index: 1;
             overflow: hidden;
@@ -555,7 +566,7 @@
             align-items: center;
             justify-content: flex-end;
             gap: 0.5rem;
-            min-height: 3.75rem;
+            min-height: 3.8rem;
             pointer-events: none;
         }
         .header-actions {
@@ -573,20 +584,21 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         @media (max-width: 480px) {
-            .header-roam-layer { height: 4.9rem; }
-            .header-inner { min-height: 3.35rem; }
+            .header-inner { min-height: 3.45rem; }
             .header-actions { gap: 0.3rem; }
             .header-actions .theme-toggle { width: 2.3rem; height: 2.3rem; }
         }
         .line-tabs {
             position: relative;
             z-index: 5;
+            pointer-events: none;
             display: flex;
             flex-wrap: wrap;
             gap: 0.45rem;
             margin-top: 0.65rem;
             justify-content: flex-start;
         }
+        .line-tab-btn { pointer-events: auto; }
         .line-tabs:empty { display: none; }
         .line-tab-btn {
             background: var(--bg-soft);
@@ -814,28 +826,38 @@
 
         .brand-logo-wrap {
             position: absolute;
-            top: 0.42rem;
+            top: 0;
             left: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 4.55rem;
-            height: 4.55rem;
+            width: 4.4rem;
+            height: 4.4rem;
+            transform-origin: center center;
             will-change: transform;
             pointer-events: auto;
-            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: grab;
             transition: filter 0.3s ease;
             -webkit-tap-highlight-color: transparent;
         }
+        .brand-logo-wrap.is-dragging {
+            cursor: grabbing;
+            filter: drop-shadow(0 8px 16px rgba(224, 122, 34, 0.45));
+        }
+        .brand-logo-wrap.is-hiding {
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+        }
         @media (max-width: 480px) {
             .brand-logo-wrap {
-                top: 0.38rem;
-                width: 4.05rem;
-                height: 4.05rem;
+                width: 4.0rem;
+                height: 4.0rem;
             }
         }
         .brand-logo-wrap.is-loading {
-            filter: drop-shadow(0 0 8px rgba(246, 152, 65, 0.7));
+            filter: drop-shadow(0 0 8px rgba(246, 152, 65, 0.72));
         }
         .brand-logo-svg {
             width: 100%;
@@ -843,25 +865,16 @@
             display: block;
             overflow: visible;
         }
-        .brand-rays {
-            transform-box: view-box;
-            transform-origin: 50px 50px;
-        }
-        .brand-leaf {
-            transform-box: view-box;
-            transform-origin: 58px 43px;
+        /* ВАЖНО: у .brand-rays и .brand-leaf НЕ задаём CSS transform-origin/transform-box,
+           чтобы SVG transform="rotate(a cx cy)" всегда вращался строго вокруг центра солнца (50,50)! */
+        .brand-leaf-shape {
             transition: fill 0.6s ease;
-            animation: leafSway 4.2s ease-in-out infinite;
-        }
-        @keyframes leafSway {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(4.5deg) scale(1.03); }
         }
 
         /* Сезонные сценки за окном внутри солнышка */
         .season-scene {
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.45s ease;
         }
         .brand-logo-wrap.season-summer .scene-summer,
         .brand-logo-wrap.season-autumn .scene-autumn,
@@ -869,23 +882,27 @@
         .brand-logo-wrap.season-spring .scene-spring {
             opacity: 1;
         }
+        html.theme-new-year .brand-logo-wrap .season-scene { opacity: 0; }
+        html.theme-new-year .brand-logo-wrap .scene-newyear { opacity: 1; }
+
         .brand-logo-wrap.season-summer .win-sky { fill: url(#hdr_sky_summer); }
         .brand-logo-wrap.season-autumn .win-sky { fill: url(#hdr_sky_autumn); }
         .brand-logo-wrap.season-winter .win-sky { fill: url(#hdr_sky_winter); }
         .brand-logo-wrap.season-spring .win-sky { fill: url(#hdr_sky_spring); }
+        html.theme-new-year .brand-logo-wrap .win-sky { fill: url(#hdr_sky_newyear); }
 
         .brand-logo-wrap.season-summer .brand-leaf-shape { fill: url(#hdr_leaf_summer); }
         .brand-logo-wrap.season-autumn .brand-leaf-shape { fill: url(#hdr_leaf_autumn); }
         .brand-logo-wrap.season-winter .brand-leaf-shape { fill: url(#hdr_leaf_winter); }
         .brand-logo-wrap.season-spring .brand-leaf-shape { fill: url(#hdr_leaf_spring); }
+        html.theme-new-year .brand-logo-wrap .brand-leaf-shape { fill: url(#hdr_leaf_newyear); }
 
-        .brand-logo-wrap.season-winter .winter-frost-dot { opacity: 0.95; }
         .winter-frost-dot { opacity: 0; transition: opacity 0.5s ease; }
+        .brand-logo-wrap.season-winter .winter-frost-dot,
+        html.theme-new-year .brand-logo-wrap .winter-frost-dot { opacity: 0.95; }
 
         /* Летнее облачко */
-        .summer-cloud {
-            animation: cloudDrift 7s linear infinite;
-        }
+        .summer-cloud { animation: cloudDrift 7s linear infinite; }
         @keyframes cloudDrift {
             0% { transform: translateX(-14px); opacity: 0.4; }
             20%, 80% { opacity: 0.95; }
@@ -911,7 +928,7 @@
             100% { transform: translate(-5px, 24px); opacity: 0; }
         }
 
-        /* Зимний снег */
+        /* Зимний и новогодний снег в окне */
         .snow-flake {
             fill: #FFFFFF;
             animation: snowFall 2.4s ease-in-out infinite;
@@ -948,23 +965,105 @@
             100% { transform: translate(22px, 3px) scale(0.88); opacity: 0; }
         }
 
-        /* Ставни в окне солнышка (периодически открываются и закрываются) */
-        .win-shutter {
-            transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Новогодняя шапочка и ёлочные огоньки внутри лейбла */
+        .ny-santa-hat {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.45s ease;
         }
-        .win-shutter-left {
-            transform-box: view-box;
-            transform-origin: 26.5px 50px;
-            transform: scaleX(0.05);
+        html.theme-new-year .ny-santa-hat {
+            opacity: 1;
         }
-        .win-shutter-right {
-            transform-box: view-box;
-            transform-origin: 73.5px 50px;
-            transform: scaleX(0.05);
+        .ny-ornament {
+            animation: nyBlink 1.6s ease-in-out infinite alternate;
         }
-        .brand-logo-wrap.shutters-closed .win-shutter-left,
-        .brand-logo-wrap.shutters-closed .win-shutter-right {
-            transform: scaleX(1);
+        .ny-ornament.o2 { animation-delay: -0.5s; }
+        .ny-ornament.o3 { animation-delay: -1.0s; }
+        .ny-ornament.o4 { animation-delay: -1.3s; }
+        @keyframes nyBlink {
+            0% { opacity: 0.45; }
+            100% { opacity: 1; }
+        }
+
+        /* Новогодняя гирлянда в шапке */
+        .ny-garland {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1.45rem;
+            pointer-events: none;
+            z-index: 4;
+            overflow: hidden;
+        }
+        html.theme-new-year .ny-garland {
+            display: block;
+        }
+        .ny-garland svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .ny-bulb {
+            animation: nyBulbTwinkle 1.8s ease-in-out infinite alternate;
+        }
+        .ny-bulb.b2 { animation-delay: -0.45s; }
+        .ny-bulb.b3 { animation-delay: -0.9s; }
+        .ny-bulb.b4 { animation-delay: -1.35s; }
+        @keyframes nyBulbTwinkle {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* Фоновый новогодний снегопад */
+        .ny-snow-layer {
+            display: none;
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 3;
+            overflow: hidden;
+        }
+        html.theme-new-year .ny-snow-layer {
+            display: block;
+        }
+        .ny-bg-flake {
+            position: absolute;
+            top: -14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(195,228,255,0.55) 70%, transparent 100%);
+            animation-name: nyBgSnowFall;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+        html:not([data-theme="dark"]).theme-new-year .ny-bg-flake {
+            background: radial-gradient(circle, rgba(255,255,255,0.98) 0%, rgba(120,185,240,0.6) 72%, transparent 100%);
+            box-shadow: 0 0 3px rgba(90, 155, 220, 0.35);
+        }
+        @keyframes nyBgSnowFall {
+            0%   { transform: translate3d(0, -10px, 0); opacity: 0; }
+            10%  { opacity: 0.9; }
+            50%  { transform: translate3d(18px, 50vh, 0); opacity: 0.85; }
+            90%  { opacity: 0.8; }
+            100% { transform: translate3d(-14px, 105vh, 0); opacity: 0; }
+        }
+
+        html.theme-new-year .header {
+            border: 0.0625rem solid rgba(254, 192, 53, 0.55);
+            box-shadow: 0 3px 14px rgba(246, 152, 65, 0.16), var(--shadow-card);
+        }
+        html.theme-new-year .date-block {
+            border: 0.0625rem solid rgba(155, 210, 255, 0.45);
+        }
+
+        /* Частицы при касании логотипа */
+        .brand-tap-spark {
+            position: fixed;
+            pointer-events: none;
+            z-index: 2100;
+            border-radius: 50%;
+            will-change: transform, opacity;
         }
 
         /* Пробегающий градиент в цветах лейбла по контуру нажимаемого элемента */
@@ -1021,11 +1120,29 @@
     </style>
 </head>
 <body>
+    <div class="brand-under-layer" id="brandUnderLayer" aria-hidden="true"></div>
+    <div class="ny-snow-layer" id="nySnowLayer" aria-hidden="true"></div>
+    <div class="brand-drag-layer" id="brandDragLayer" aria-hidden="true"></div>
     <div class="swipe-toast" id="swipeToast" aria-hidden="true"></div>
     <div class="container" id="mainContainer">
         <div class="header" id="mainHeader">
+            <div class="ny-garland" aria-hidden="true">
+                <svg viewBox="0 0 360 24" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,4 Q45,16 90,6 Q135,16 180,6 Q225,16 270,6 Q315,16 360,4" fill="none" stroke="#2D5A27" stroke-width="1.6" opacity="0.85"/>
+                    <circle class="ny-bulb b1" cx="26" cy="10" r="3.2" fill="#FF4D4D"/>
+                    <circle class="ny-bulb b2" cx="62" cy="11" r="3.2" fill="#FFD700"/>
+                    <circle class="ny-bulb b3" cx="98" cy="8" r="3.2" fill="#2ECC71"/>
+                    <circle class="ny-bulb b4" cx="134" cy="11" r="3.2" fill="#56CCF2"/>
+                    <circle class="ny-bulb b1" cx="170" cy="8" r="3.2" fill="#FFD700"/>
+                    <circle class="ny-bulb b2" cx="206" cy="11" r="3.2" fill="#FF4D4D"/>
+                    <circle class="ny-bulb b3" cx="242" cy="10" r="3.2" fill="#56CCF2"/>
+                    <circle class="ny-bulb b4" cx="278" cy="8" r="3.2" fill="#2ECC71"/>
+                    <circle class="ny-bulb b1" cx="314" cy="11" r="3.2" fill="#FFD700"/>
+                    <circle class="ny-bulb b2" cx="344" cy="8" r="3.2" fill="#FF4D4D"/>
+                </svg>
+            </div>
             <div class="header-roam-layer" id="headerRoamLayer">
-                <div class="brand-logo-wrap season-summer" id="headerBrandLogo" title="Нажмите, чтобы сменить сезон"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <div class="brand-logo-wrap season-summer" id="headerBrandLogo" title="Нажмите или потяните на плитки"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <defs>
   <clipPath id="winGlassClip"><circle cx="50" cy="50" r="22.4"/></clipPath>
   <linearGradient id="hdr_og" x1="15%" y1="10%" x2="85%" y2="90%"><stop offset="0%" stop-color="#FEC035"/><stop offset="45%" stop-color="#FB963B"/><stop offset="100%" stop-color="#EA8225"/></linearGradient>
@@ -1033,17 +1150,19 @@
   <linearGradient id="hdr_leaf_autumn" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#FFE066"/><stop offset="55%" stop-color="#F5A623"/><stop offset="100%" stop-color="#D35400"/></linearGradient>
   <linearGradient id="hdr_leaf_winter" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#F5FAFF"/><stop offset="55%" stop-color="#B3E5FC"/><stop offset="100%" stop-color="#5CACEE"/></linearGradient>
   <linearGradient id="hdr_leaf_spring" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#D4F07A"/><stop offset="55%" stop-color="#8BC34A"/><stop offset="100%" stop-color="#4CAF50"/></linearGradient>
+  <linearGradient id="hdr_leaf_newyear" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#5CD68D"/><stop offset="55%" stop-color="#27AE60"/><stop offset="100%" stop-color="#145A32"/></linearGradient>
   <linearGradient id="hdr_sky_summer" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8EEFF"/><stop offset="100%" stop-color="#FFF7D6"/></linearGradient>
   <linearGradient id="hdr_sky_autumn" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#B8C7D9"/><stop offset="100%" stop-color="#E8DFD1"/></linearGradient>
   <linearGradient id="hdr_sky_winter" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#A8D1F5"/><stop offset="100%" stop-color="#EDF6FF"/></linearGradient>
   <linearGradient id="hdr_sky_spring" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#BCEBFF"/><stop offset="100%" stop-color="#ECFFE8"/></linearGradient>
-  <linearGradient id="hdr_shutter" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD480"/><stop offset="100%" stop-color="#E68A2E"/></linearGradient>
+  <linearGradient id="hdr_sky_newyear" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#13294B"/><stop offset="100%" stop-color="#2A548A"/></linearGradient>
+  <linearGradient id="hdr_sash_glass" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.52"/><stop offset="45%" stop-color="#DDF4FF" stop-opacity="0.22"/><stop offset="100%" stop-color="#B8E4FF" stop-opacity="0.34"/></linearGradient>
 </defs>
 <g class="brand-rays" id="headerBrandRays"><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(0 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(15 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(30 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(45 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(60 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(75 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(90 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(105 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(120 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(135 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(150 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(165 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(180 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(195 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(210 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(225 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(240 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(255 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(270 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(285 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(300 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(315 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(330 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(345 50 50)"/></g>
 <g clip-path="url(#winGlassClip)">
   <circle cx="50" cy="50" r="23" class="win-sky"/>
   <g class="season-scene scene-summer">
-    <circle cx="38" cy="36" r="5" fill="#FFF3B0" opacity="0.9"/>
+    <circle cx="38" cy="36" r="5" fill="#FFF3B0" opacity="0.92"/>
     <g class="summer-cloud">
       <ellipse cx="44" cy="61" rx="7" ry="3.4" fill="#FFFFFF" opacity="0.88"/>
       <ellipse cx="48" cy="59.5" rx="5" ry="3" fill="#FFFFFF" opacity="0.92"/>
@@ -1071,29 +1190,56 @@
     <path class="spring-bird b2" d="M47 59 Q49.5 55.5 52 59 Q54.5 55.5 57 59"/>
     <path class="spring-bird b3" d="M41 34 Q43 31 45 34 Q47 31 49 34"/>
   </g>
-  <g class="win-shutter win-shutter-left">
-    <rect x="26.5" y="26.5" width="23.5" height="47" fill="url(#hdr_shutter)" stroke="#C96816" stroke-width="1.2"/>
-    <line x1="29.5" y1="36" x2="46.5" y2="36" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="29.5" y1="43" x2="46.5" y2="43" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="29.5" y1="57" x2="46.5" y2="57" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="29.5" y1="64" x2="46.5" y2="64" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-  </g>
-  <g class="win-shutter win-shutter-right">
-    <rect x="50" y="26.5" width="23.5" height="47" fill="url(#hdr_shutter)" stroke="#C96816" stroke-width="1.2"/>
-    <line x1="53.5" y1="36" x2="70.5" y2="36" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="53.5" y1="43" x2="70.5" y2="43" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="53.5" y1="57" x2="70.5" y2="57" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
-    <line x1="53.5" y1="64" x2="70.5" y2="64" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+  <g class="season-scene scene-newyear">
+    <path d="M26 68 Q38 63 50 66 Q62 63 74 68 L74 75 L26 75 Z" fill="#FFFFFF" opacity="0.95"/>
+    <rect x="48.2" y="61" width="3.6" height="6" fill="#7B4B2A"/>
+    <polygon points="50,35 39,50 61,50" fill="#1E8449"/>
+    <polygon points="50,42 36,57 64,57" fill="#239B56"/>
+    <polygon points="50,49 34,64 66,64" fill="#27AE60"/>
+    <polygon points="50,31 51.3,34 54.5,34.2 52,36.2 52.8,39.2 50,37.4 47.2,39.2 48,36.2 45.5,34.2 48.7,34" fill="#FFD700"/>
+    <circle class="ny-ornament o1" cx="46" cy="48" r="1.8" fill="#FF4D4D"/>
+    <circle class="ny-ornament o2" cx="54" cy="52" r="1.8" fill="#FFD700"/>
+    <circle class="ny-ornament o3" cx="43" cy="59" r="1.9" fill="#56CCF2"/>
+    <circle class="ny-ornament o4" cx="56" cy="60" r="1.8" fill="#FF6B9D"/>
+    <circle class="snow-flake s1" cx="35" cy="36" r="1.7"/>
+    <circle class="snow-flake s3" cx="62" cy="35" r="1.8"/>
+    <circle class="snow-flake s5" cx="39" cy="48" r="1.5"/>
+    <circle class="snow-flake s6" cx="63" cy="50" r="1.6"/>
   </g>
 </g>
-<rect x="47.2" y="25.5" width="5.6" height="49" fill="url(#hdr_og)"/>
-<rect x="25.5" y="47.2" width="49" height="5.6" fill="url(#hdr_og)"/>
 <circle cx="50" cy="50" r="24.8" fill="none" stroke="url(#hdr_og)" stroke-width="6.2"/>
 <path d="M 30.5 41 A 21.8 21.8 0 0 1 48 28.4" fill="none" stroke="#FFF4C2" stroke-width="2.1" stroke-linecap="round" opacity="0.85"/>
-<g class="brand-leaf">
+<!-- Распашные створки окна со стеклом, профилем и ручками -->
+<g id="winSashLeft">
+  <path d="M 27.5,50 A 22.5,22.5 0 0,1 50,27.5 L 50,72.5 A 22.5,22.5 0 0,1 27.5,50 Z" fill="url(#hdr_sash_glass)" stroke="#E68A2E" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M 30.3,50 A 19.7,19.7 0 0,1 47.8,30.4 L 47.8,69.6 A 19.7,19.7 0 0,1 30.3,50 Z" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity="0.9"/>
+  <line x1="28.2" y1="50" x2="49.2" y2="50" stroke="#EA8225" stroke-width="3.2"/>
+  <line x1="34" y1="38" x2="43" y2="33" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity="0.72"/>
+  <line x1="34" y1="62" x2="42" y2="57" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" opacity="0.58"/>
+  <rect x="46.2" y="46.8" width="2.2" height="6.4" rx="1" fill="#FFFFFF" stroke="#C96816" stroke-width="0.7"/>
+  <circle cx="27.5" cy="40" r="1.3" fill="#C96816"/>
+  <circle cx="27.5" cy="60" r="1.3" fill="#C96816"/>
+</g>
+<g id="winSashRight">
+  <path d="M 72.5,50 A 22.5,22.5 0 0,0 50,27.5 L 50,72.5 A 22.5,22.5 0 0,0 72.5,50 Z" fill="url(#hdr_sash_glass)" stroke="#E68A2E" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M 69.7,50 A 19.7,19.7 0 0,0 52.2,30.4 L 52.2,69.6 A 19.7,19.7 0 0,0 69.7,50 Z" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity="0.9"/>
+  <line x1="50.8" y1="50" x2="71.8" y2="50" stroke="#EA8225" stroke-width="3.2"/>
+  <line x1="57" y1="38" x2="65" y2="33" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity="0.72"/>
+  <line x1="57" y1="62" x2="65" y2="57" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" opacity="0.58"/>
+  <rect x="51.6" y="46.8" width="2.2" height="6.4" rx="1" fill="#FFFFFF" stroke="#C96816" stroke-width="0.7"/>
+  <circle cx="72.5" cy="40" r="1.3" fill="#C96816"/>
+  <circle cx="72.5" cy="60" r="1.3" fill="#C96816"/>
+</g>
+<g class="brand-leaf" id="headerBrandLeaf">
   <path class="brand-leaf-shape" d="M 54.5 34 C 54.5 25.8 60.2 22 68.5 22 L 77.2 22 C 78.2 22 79 22.8 79 23.8 L 79 34.5 C 79 42.8 73.5 46.8 64.5 46.8 L 54.5 46.8 Z" fill="url(#hdr_leaf_summer)" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"/>
   <path d="M 69.5 26.2 L 74.8 26.2 L 74.8 31.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
   <circle class="winter-frost-dot" cx="63" cy="36" r="2.2" fill="#FFFFFF"/>
+</g>
+<g class="ny-santa-hat" id="nySantaHat">
+  <path d="M 27 29 C 32 10 53 6 67 18 C 72 22 75 26 76 29 Z" fill="#D92626" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M 56 12 C 67 12 77 18 81 26" fill="none" stroke="#D92626" stroke-width="5" stroke-linecap="round"/>
+  <rect x="24" y="25" width="52" height="7.5" rx="3.75" fill="#FFFFFF" stroke="#E8EDF2" stroke-width="1"/>
+  <circle cx="82" cy="27" r="4.6" fill="#FFFFFF" stroke="#E8EDF2" stroke-width="1"/>
 </g>
 </svg></div>
             </div>
@@ -1232,6 +1378,16 @@
                         <label for="darkThemeCheckbox" style="font-weight: bold; margin:0;">Тёмная тема</label>
                     </div>
                     <div class="hint">Тёмное оформление экрана. Также переключается кнопкой в шапке.</div>
+                </div>
+
+                <div class="settings-group">
+                    <label for="newYearThemeMode">Новогодняя тема</label>
+                    <select id="newYearThemeMode" style="width:100%; padding:0.55rem 0.65rem; border:0.125rem solid var(--border-input); border-radius:0.375rem; font-size:0.95rem; background:var(--bg-input); color:var(--text-primary);">
+                        <option value="auto">Авто (по флажку с сервера)</option>
+                        <option value="on">Включена (просмотр)</option>
+                        <option value="off">Выключена</option>
+                    </select>
+                    <div class="hint" id="newYearThemeHint">Управляется флажком на сервере (и через cache.json на Яндекс Диске). Сейчас от сервера: выкл.</div>
                 </div>
 
                 <div class="settings-group">
@@ -1543,6 +1699,89 @@
             }
         }
 
+        // ==================== НОВОГОДНЯЯ ТЕМА (УПРАВЛЯЕТСЯ С СЕРВЕРА) ====================
+        const LS_NY_MODE_KEY = 'monitoring_new_year_mode';     // 'auto' | 'on' | 'off'
+        const LS_NY_SERVER_KEY = 'monitoring_new_year_server'; // 'true' | 'false'
+        let newYearMode = 'auto';
+        let newYearServerFlag = false;
+        let newYearActive = false;
+
+        function ensureNySnowFlakes() {
+            const layer = document.getElementById('nySnowLayer');
+            if (!layer || layer.dataset.built === '1') return;
+            layer.dataset.built = '1';
+            const frag = document.createDocumentFragment();
+            for (let i = 0; i < 18; i++) {
+                const fl = document.createElement('span');
+                fl.className = 'ny-bg-flake';
+                const sz = (3.5 + (i % 5) * 1.4).toFixed(1);
+                fl.style.width = sz + 'px';
+                fl.style.height = sz + 'px';
+                fl.style.left = ((i * 5.6 + (i % 3) * 1.9) % 98).toFixed(1) + '%';
+                fl.style.animationDuration = (6.5 + (i % 6) * 1.45).toFixed(2) + 's';
+                fl.style.animationDelay = (-((i * 1.37) % 10)).toFixed(2) + 's';
+                frag.appendChild(fl);
+            }
+            layer.appendChild(frag);
+        }
+
+        function updateNewYearThemeState() {
+            const active = (newYearMode === 'on') ? true : (newYearMode === 'off' ? false : !!newYearServerFlag);
+            newYearActive = active;
+            document.documentElement.classList.toggle('theme-new-year', active);
+            if (active) ensureNySnowFlakes();
+            const hint = document.getElementById('newYearThemeHint');
+            if (hint) {
+                hint.textContent = 'Управляется флажком на сервере (и через cache.json на Яндекс Диске). Сейчас от сервера: ' +
+                    (newYearServerFlag ? 'вкл.' : 'выкл.');
+            }
+        }
+
+        function initNewYearTheme() {
+            const savedMode = localStorage.getItem(LS_NY_MODE_KEY);
+            if (savedMode === 'auto' || savedMode === 'on' || savedMode === 'off') {
+                newYearMode = savedMode;
+            }
+            newYearServerFlag = localStorage.getItem(LS_NY_SERVER_KEY) === 'true';
+            updateNewYearThemeState();
+        }
+
+        function applyServerNewYearFlag(val) {
+            if (typeof val !== 'boolean') return;
+            if (newYearServerFlag !== val) {
+                newYearServerFlag = val;
+                localStorage.setItem(LS_NY_SERVER_KEY, String(val));
+                updateNewYearThemeState();
+            } else {
+                localStorage.setItem(LS_NY_SERVER_KEY, String(val));
+            }
+        }
+
+        window.setNewYearTheme = function(enabled) {
+            newYearMode = enabled ? 'on' : 'off';
+            localStorage.setItem(LS_NY_MODE_KEY, newYearMode);
+            updateNewYearThemeState();
+        };
+
+        async function fetchServerUiConfig() {
+            if (!isLocalNetworkAvailable()) return;
+            try {
+                const r = await fetchWithTimeout('/api/ui-config', {}, 2000);
+                if (!r || !r.ok) return;
+                const d = await r.json();
+                if (!d || typeof d !== 'object') return;
+                const flag = (typeof d.new_year_theme === 'boolean') ? d.new_year_theme
+                    : (typeof d.newYearTheme === 'boolean') ? d.newYearTheme
+                    : (d.holidays && typeof d.holidays.new_year === 'boolean') ? d.holidays.new_year
+                    : null;
+                if (typeof flag === 'boolean') {
+                    applyServerNewYearFlag(flag);
+                }
+            } catch (e) {
+                // Сервер пока не поддерживает /api/ui-config — тихо игнорируем
+            }
+        }
+
         // ==================== ЖИВОЙ АНИМИРОВАННЫЙ ЛОГОТИП В ШАПКЕ ====================
         const livingBrand = {
             isLoading: false,
@@ -1551,22 +1790,46 @@
             raySpeed: 18,
             targetRaySpeed: 18,
             nextRayChangeAt: 0,
-            idleDir: 1,
             idlePhase: 0,
+
+            // Режимы: 'roam' (в шапке) | 'dragging' (тянут пальцем) | 'hiding' (прячется под плитками) | 'returning' (неспеша возвращается в шапку)
+            mode: 'roam',
+            isDragging: false,
+
+            // Координаты в текущем слое (в 'roam' — относительно .header, в 'dragging'/'hiding'/'returning' — viewport px)
             x: 10,
+            y: 4,
             targetX: 120,
+            targetY: 4,
             vx: 0,
+            vy: 0,
             roamPausedUntil: 0,
-            bodyTwist: 0,
+
+            // Размеры, дыхание, расширение на всю шапку, отклик на тап
+            bloomStart: 0,
+            bloomDur: 0,
+            nextBloomAt: 0,
+            tapBounceStart: 0,
+            tapBounceDur: 0,
+            dragTilt: 0,
+            hideUntil: 0,
+            returnStartAt: 0,
+            returnOriginX: 0,
+
+            // Периодический поворот корпуса
             twistAnimStart: 0,
             twistAnimDur: 0,
             twistTarget: 0,
             nextTwistAt: 0,
+
+            // Сезоны и распашные створки окна (openProg: 0 = закрыты, 1 = 138° на распашку)
             seasons: ['summer', 'autumn', 'winter', 'spring'],
             seasonIdx: 0,
             nextSeasonAt: 0,
-            nextShutterAt: 0,
-            shuttersClosingTimer: null,
+            sashOpenProg: 0,
+            sashTargetOpen: 0,
+            nextSashEventAt: 0,
+            sashCloseTimer: null,
             started: false
         };
 
@@ -1576,73 +1839,258 @@
             if (logo) logo.classList.toggle('is-loading', !!active);
         }
 
-        function setBrandLogoSeason(nextIdx, animateShutters) {
+        function setBrandLogoSeason(nextIdx, swingSashes) {
             const logo = document.getElementById('headerBrandLogo');
             if (!logo) return;
             const idx = ((nextIdx % livingBrand.seasons.length) + livingBrand.seasons.length) % livingBrand.seasons.length;
-            const applyClass = () => {
-                livingBrand.seasonIdx = idx;
-                livingBrand.seasons.forEach(s => logo.classList.remove('season-' + s));
-                logo.classList.add('season-' + livingBrand.seasons[idx]);
-            };
-            if (animateShutters) {
-                logo.classList.add('shutters-closed');
-                clearTimeout(livingBrand.shuttersClosingTimer);
-                livingBrand.shuttersClosingTimer = setTimeout(() => {
-                    applyClass();
-                    livingBrand.shuttersClosingTimer = setTimeout(() => {
-                        logo.classList.remove('shutters-closed');
-                    }, 320);
-                }, 650);
-            } else {
-                applyClass();
+            livingBrand.seasonIdx = idx;
+            livingBrand.seasons.forEach(s => logo.classList.remove('season-' + s));
+            logo.classList.add('season-' + livingBrand.seasons[idx]);
+            if (swingSashes) {
+                openBrandSashesWide(2800);
             }
         }
 
-        function triggerBrandShuttersBlink() {
-            const logo = document.getElementById('headerBrandLogo');
-            if (!logo || logo.classList.contains('shutters-closed')) return;
-            logo.classList.add('shutters-closed');
-            clearTimeout(livingBrand.shuttersClosingTimer);
-            livingBrand.shuttersClosingTimer = setTimeout(() => {
-                logo.classList.remove('shutters-closed');
-            }, 1250);
+        function openBrandSashesWide(holdMs = 2600) {
+            livingBrand.sashTargetOpen = 1;
+            clearTimeout(livingBrand.sashCloseTimer);
+            livingBrand.sashCloseTimer = setTimeout(() => {
+                if (livingBrand.mode !== 'dragging') {
+                    livingBrand.sashTargetOpen = 0;
+                }
+            }, holdMs);
+        }
+
+        function applySashMatrix(el, hx, hy, deg, isLeft) {
+            if (!el) return;
+            const rad = deg * Math.PI / 180;
+            const sx = Math.cos(rad);
+            const sy = 1 + Math.sin(rad) * 0.08;
+            const ky = (Math.sin(rad) * 0.24) * (isLeft ? 1 : -1);
+            const tx = hx * (1 - sx);
+            const ty = hy * (1 - sy) - ky * hx;
+            el.setAttribute(
+                'transform',
+                'matrix(' + sx.toFixed(4) + ' ' + ky.toFixed(4) + ' 0 ' + sy.toFixed(4) + ' ' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ')'
+            );
+        }
+
+        function spawnBrandTapSparks(cx, cy) {
+            const palette = newYearActive
+                ? ['#FFD700', '#FF4D4D', '#2ECC71', '#56CCF2', '#FFFFFF']
+                : ['#FEC035', '#FB963B', '#EA8225', '#B0DF65', '#6FA551'];
+            const count = 8;
+            for (let i = 0; i < count; i++) {
+                const sp = document.createElement('span');
+                sp.className = 'brand-tap-spark';
+                const sz = 5 + (i % 3) * 2.5;
+                sp.style.width = sz + 'px';
+                sp.style.height = sz + 'px';
+                sp.style.left = (cx - sz / 2) + 'px';
+                sp.style.top = (cy - sz / 2) + 'px';
+                sp.style.background = palette[i % palette.length];
+                sp.style.boxShadow = '0 0 6px ' + palette[i % palette.length];
+                document.body.appendChild(sp);
+
+                const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+                const dist = 34 + Math.random() * 26;
+                const dx = Math.cos(ang) * dist;
+                const dy = Math.sin(ang) * dist;
+                if (typeof sp.animate === 'function') {
+                    sp.animate([
+                        { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
+                        { transform: 'translate3d(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px,0) scale(0.15)', opacity: 0 }
+                    ], { duration: 480, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+                }
+                setTimeout(() => { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 520);
+            }
         }
 
         function initLivingBrandLogo() {
             if (livingBrand.started) return;
             const logo = document.getElementById('headerBrandLogo');
-            const layer = document.getElementById('headerRoamLayer');
+            const headerLayer = document.getElementById('headerRoamLayer');
+            const underLayer = document.getElementById('brandUnderLayer');
+            const dragLayer = document.getElementById('brandDragLayer');
             const rays = document.getElementById('headerBrandRays');
-            if (!logo || !layer || !rays) return;
+            const leaf = document.getElementById('headerBrandLeaf');
+            const sashL = document.getElementById('winSashLeft');
+            const sashR = document.getElementById('winSashRight');
+            if (!logo || !headerLayer || !rays) return;
             livingBrand.started = true;
 
             const now0 = performance.now();
-            livingBrand.nextRayChangeAt = now0 + 3800;
-            livingBrand.nextSeasonAt = now0 + 13000;
-            livingBrand.nextShutterAt = now0 + 6200;
-            livingBrand.nextTwistAt = now0 + 9500;
+            livingBrand.nextRayChangeAt = now0 + 3600;
+            livingBrand.nextSeasonAt = now0 + 13500;
+            livingBrand.nextSashEventAt = now0 + 5200;
+            livingBrand.nextTwistAt = now0 + 10500;
+            livingBrand.nextBloomAt = now0 + 7500;
             livingBrand.x = 12;
+            livingBrand.y = 6;
 
             const pickNextRoamTarget = (nowMs) => {
-                const lw = layer.clientWidth || 320;
-                const bw = logo.offsetWidth || 68;
-                const minX = 6;
-                const maxX = Math.max(minX + 10, lw - bw - 6);
-                const span = maxX - minX;
-                // Выбираем точку в другой половине шапки, чтобы логотип действительно гулял по всей ширине
-                const curNorm = span > 0 ? (livingBrand.x - minX) / span : 0;
+                const lw = headerLayer.clientWidth || 320;
+                const lh = headerLayer.clientHeight || 96;
+                const bw = logo.offsetWidth || 66;
+                const bh = logo.offsetHeight || 66;
+                const minX = 8;
+                const maxX = Math.max(minX + 12, lw - bw - 8);
+                const minY = 4;
+                const maxY = Math.max(minY, lh - bh - 4);
+                const spanX = maxX - minX;
+                const curNorm = spanX > 0 ? (livingBrand.x - minX) / spanX : 0;
                 const goRight = curNorm < 0.5;
-                const randNorm = goRight ? (0.55 + Math.random() * 0.45) : (Math.random() * 0.45);
-                livingBrand.targetX = minX + span * randNorm;
-                livingBrand.roamPausedUntil = nowMs + 900 + Math.random() * 1700;
+                const randNorm = goRight ? (0.52 + Math.random() * 0.48) : (Math.random() * 0.48);
+                livingBrand.targetX = minX + spanX * randNorm;
+                livingBrand.targetY = minY + Math.random() * (maxY - minY);
+                livingBrand.roamPausedUntil = nowMs + 850 + Math.random() * 1650;
             };
             pickNextRoamTarget(now0);
 
-            logo.addEventListener('click', function() {
-                setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
-                livingBrand.nextSeasonAt = performance.now() + 14000;
+            // ---- ИНТЕРАКТИВ: ПРИКОСНОВЕНИЕ + ПЕРЕТАСКИВАНИЕ НА ПЛИТКИ ----
+            let dragPointerId = null;
+            let dragStartClientX = 0;
+            let dragStartClientY = 0;
+            let dragGrabOffX = 0;
+            let dragGrabOffY = 0;
+            let dragMoved = false;
+            let lastDragX = 0;
+
+            function moveLogoToLayer(targetLayer, modeName, vx, vy) {
+                if (targetLayer && logo.parentNode !== targetLayer) {
+                    targetLayer.appendChild(logo);
+                }
+                livingBrand.mode = modeName;
+                livingBrand.x = vx;
+                livingBrand.y = vy;
+                logo.classList.toggle('is-dragging', modeName === 'dragging');
+                logo.classList.toggle('is-hiding', modeName === 'hiding' || modeName === 'returning');
+            }
+
+            function startLogoPointer(clientX, clientY, pointerId) {
+                if (livingBrand.mode === 'hiding' || livingBrand.mode === 'returning') {
+                    // Можно перехватить его даже пока он прячется!
+                }
+                const rect = logo.getBoundingClientRect();
+                dragPointerId = pointerId;
+                dragStartClientX = clientX;
+                dragStartClientY = clientY;
+                dragGrabOffX = clientX - (rect.left + rect.width / 2);
+                dragGrabOffY = clientY - (rect.top + rect.height / 2);
+                lastDragX = clientX;
+                dragMoved = false;
+                livingBrand.isDragging = true;
+
+                // Сразу даём лёгкий тактильный отклик при касании
+                livingBrand.tapBounceStart = performance.now();
+                livingBrand.tapBounceDur = 460;
+                livingBrand.raySpeed = (livingBrand.raySpeed >= 0 ? 1 : -1) * Math.max(Math.abs(livingBrand.raySpeed), 180);
+            }
+
+            function moveLogoPointer(clientX, clientY) {
+                if (!livingBrand.isDragging) return;
+                const dist = Math.hypot(clientX - dragStartClientX, clientY - dragStartClientY);
+                if (!dragMoved && dist > 8) {
+                    dragMoved = true;
+                    const rect = logo.getBoundingClientRect();
+                    const bw = logo.offsetWidth || 66;
+                    const bh = logo.offsetHeight || 66;
+                    moveLogoToLayer(
+                        dragLayer,
+                        'dragging',
+                        rect.left + rect.width / 2 - bw / 2,
+                        rect.top + rect.height / 2 - bh / 2
+                    );
+                    livingBrand.sashTargetOpen = 0.72; // створки чуть приоткрываются от «ветра» при перетаскивании
+                }
+                if (dragMoved) {
+                    const bw = logo.offsetWidth || 66;
+                    const bh = logo.offsetHeight || 66;
+                    const targetVx = clientX - dragGrabOffX - bw / 2;
+                    const targetVy = clientY - dragGrabOffY - bh / 2;
+                    const stepDx = clientX - lastDragX;
+                    lastDragX = clientX;
+                    livingBrand.dragTilt = Math.max(-24, Math.min(24, stepDx * 1.6));
+                    livingBrand.x = targetVx;
+                    livingBrand.y = targetVy;
+                    livingBrand.targetX = targetVx;
+                    livingBrand.targetY = targetVy;
+                }
+            }
+
+            function finishLogoPointer() {
+                if (!livingBrand.isDragging) return;
+                livingBrand.isDragging = false;
+                dragPointerId = null;
+                const nowMs = performance.now();
+
+                if (!dragMoved) {
+                    // Короткое прикосновение (тап): весёлая реакция!
+                    const rect = logo.getBoundingClientRect();
+                    spawnBrandTapSparks(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                    livingBrand.tapBounceStart = nowMs;
+                    livingBrand.tapBounceDur = 620;
+                    livingBrand.raySpeed = 320;
+                    if (newYearActive) {
+                        openBrandSashesWide(2800);
+                    } else {
+                        setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
+                        livingBrand.nextSeasonAt = nowMs + 14500;
+                    }
+                    // Если створки уже были широко открыты — чуть подмигнём, иначе распахнём
+                    return;
+                }
+
+                // Пользователь перетащил и отпустил логотип
+                const headerRect = headerLayer.getBoundingClientRect();
+                const bw = logo.offsetWidth || 66;
+                const bh = logo.offsetHeight || 66;
+                const logoCenterY = livingBrand.y + bh / 2;
+
+                if (logoCenterY > headerRect.bottom - 6 && underLayer) {
+                    // Затащили на плитки! Сначала прячется под плитки на нижний слой, потом неспеша возвращается в шапку
+                    moveLogoToLayer(underLayer, 'hiding', livingBrand.x, livingBrand.y);
+                    livingBrand.vx = 0;
+                    livingBrand.vy = 0;
+                    livingBrand.sashTargetOpen = 0.45;
+                    livingBrand.hideUntil = nowMs + 1450 + Math.random() * 550;
+                    livingBrand.returnOriginX = livingBrand.x;
+                } else {
+                    // Отпустили внутри шапки — плавно возвращаем в слой шапки
+                    const localX = Math.max(6, Math.min((headerLayer.clientWidth || 300) - bw - 6, livingBrand.x - headerRect.left));
+                    const localY = Math.max(4, Math.min(Math.max(4, (headerLayer.clientHeight || 90) - bh - 4), livingBrand.y - headerRect.top));
+                    moveLogoToLayer(headerLayer, 'roam', localX, localY);
+                    livingBrand.sashTargetOpen = 0;
+                    livingBrand.tapBounceStart = nowMs;
+                    livingBrand.tapBounceDur = 520;
+                    pickNextRoamTarget(nowMs);
+                }
+            }
+
+            logo.addEventListener('pointerdown', function(e) {
+                if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+                e.stopPropagation();
+                try { logo.setPointerCapture(e.pointerId); } catch (err) {}
+                startLogoPointer(e.clientX, e.clientY, e.pointerId);
             });
+            window.addEventListener('pointermove', function(e) {
+                if (!livingBrand.isDragging || (dragPointerId !== null && e.pointerId !== dragPointerId)) return;
+                moveLogoPointer(e.clientX, e.clientY);
+            }, { passive: true });
+            window.addEventListener('pointerup', function(e) {
+                if (!livingBrand.isDragging || (dragPointerId !== null && e.pointerId !== dragPointerId)) return;
+                finishLogoPointer();
+            });
+            window.addEventListener('pointercancel', function(e) {
+                if (!livingBrand.isDragging || (dragPointerId !== null && e.pointerId !== dragPointerId)) return;
+                finishLogoPointer();
+            });
+            // Блокируем прокрутку страницы во время активного перетаскивания логотипа пальцем
+            document.addEventListener('touchmove', function(e) {
+                if (livingBrand.isDragging && dragMoved) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
 
             let lastT = now0;
             function frame(now) {
@@ -1653,90 +2101,216 @@
                 }
                 const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
                 lastT = now;
+                const tSec = now / 1000;
 
-                // 1. Вращение лучей: быстро при загрузке, в покое медленно туда-сюда с паузами
+                // 1. Вращение лучей (СТРОГО через SVG transform="rotate(deg 50 50)" без CSS origin — 0% рассинхрона!)
                 if (livingBrand.isLoading) {
                     livingBrand.targetRaySpeed = 340;
+                } else if (livingBrand.mode === 'dragging') {
+                    livingBrand.targetRaySpeed = 240;
+                } else if (livingBrand.mode === 'hiding') {
+                    livingBrand.targetRaySpeed = 12;
+                } else if (livingBrand.mode === 'returning') {
+                    livingBrand.targetRaySpeed = -65;
                 } else {
                     if (now >= livingBrand.nextRayChangeAt) {
                         livingBrand.idlePhase = (livingBrand.idlePhase + 1) % 4;
                         if (livingBrand.idlePhase === 0) {
-                            livingBrand.targetRaySpeed = 24;
+                            livingBrand.targetRaySpeed = 26;
                             livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
                         } else if (livingBrand.idlePhase === 1) {
                             livingBrand.targetRaySpeed = 0;
-                            livingBrand.nextRayChangeAt = now + 2200 + Math.random() * 2200;
+                            livingBrand.nextRayChangeAt = now + 2000 + Math.random() * 2000;
                         } else if (livingBrand.idlePhase === 2) {
-                            livingBrand.targetRaySpeed = -24;
+                            livingBrand.targetRaySpeed = -26;
                             livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
                         } else {
                             livingBrand.targetRaySpeed = 0;
-                            livingBrand.nextRayChangeAt = now + 2200 + Math.random() * 2200;
+                            livingBrand.nextRayChangeAt = now + 2000 + Math.random() * 2000;
                         }
                     }
                 }
                 livingBrand.raySpeed += (livingBrand.targetRaySpeed - livingBrand.raySpeed) * Math.min(1, dt * 4.5);
                 livingBrand.rayAngle = (livingBrand.rayAngle + livingBrand.raySpeed * dt) % 360;
                 const effectiveRayAngle = livingBrand.rayAngle + (livingBrand.ptrRayOffset || 0);
-                rays.setAttribute('transform', 'rotate(' + effectiveRayAngle.toFixed(1) + ' 50 50)');
+                rays.setAttribute('transform', 'rotate(' + effectiveRayAngle.toFixed(2) + ' 50 50)');
 
-                // 2. Плавное перемещение по всей верхней шапке (под кнопками)
-                const lw = layer.clientWidth || 320;
-                const bw = logo.offsetWidth || 68;
-                const minX = 6;
-                const maxX = Math.max(minX, lw - bw - 6);
-                if (livingBrand.targetX > maxX) livingBrand.targetX = maxX;
-                if (livingBrand.x > maxX) livingBrand.x = maxX;
+                // Плавное покачивание листка через чистый SVG transform (без CSS origin!)
+                if (leaf) {
+                    const leafAngle = Math.sin(tSec * 1.65) * 4.2;
+                    leaf.setAttribute('transform', 'rotate(' + leafAngle.toFixed(2) + ' 58 43)');
+                }
 
-                if (now >= livingBrand.roamPausedUntil) {
-                    const dx = livingBrand.targetX - livingBrand.x;
-                    if (Math.abs(dx) < 3) {
+                // 2. Анимация распашных створок окна (0° -> 138° на распашку!)
+                livingBrand.sashOpenProg += (livingBrand.sashTargetOpen - livingBrand.sashOpenProg) * Math.min(1, dt * 5.2);
+                if (Math.abs(livingBrand.sashOpenProg) < 0.002 && livingBrand.sashTargetOpen === 0) {
+                    livingBrand.sashOpenProg = 0;
+                }
+                const sashDeg = livingBrand.sashOpenProg * 138;
+                applySashMatrix(sashL, 27.5, 50, sashDeg, true);
+                applySashMatrix(sashR, 72.5, 50, sashDeg, false);
+
+                // 3. Позиционирование и масштаб по текущему режиму
+                const bw = logo.offsetWidth || 66;
+                const bh = logo.offsetHeight || 66;
+                let scaleX = 1, scaleY = 1, bodyRot = 0;
+
+                // Эффект отскока при прикосновении
+                if (livingBrand.tapBounceDur > 0) {
+                    const tp = Math.min(1, (now - livingBrand.tapBounceStart) / livingBrand.tapBounceDur);
+                    const amp = Math.sin(tp * Math.PI * 2.5) * (1 - tp) * 0.22;
+                    scaleX += amp;
+                    scaleY -= amp * 0.85;
+                    if (tp >= 1) livingBrand.tapBounceDur = 0;
+                }
+
+                if (livingBrand.mode === 'dragging') {
+                    livingBrand.dragTilt *= Math.max(0, 1 - dt * 8);
+                    scaleX *= 1.16;
+                    scaleY *= 1.16;
+                    bodyRot = livingBrand.dragTilt;
+                    logo.style.transform =
+                        'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + livingBrand.y.toFixed(1) + 'px, 0) ' +
+                        'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
+                } else if (livingBrand.mode === 'hiding') {
+                    // Скрылся под плитками на нижнем слое: слегка притаился и чуть покачивается
+                    const peekX = Math.sin(tSec * 2.4) * 5;
+                    const peekY = Math.cos(tSec * 2.0) * 3;
+                    scaleX *= 0.92;
+                    scaleY *= 0.92;
+                    bodyRot = Math.sin(tSec * 2.2) * 8;
+                    logo.style.transform =
+                        'translate3d(' + (livingBrand.x + peekX).toFixed(1) + 'px, ' + (livingBrand.y + peekY).toFixed(1) + 'px, 0) ' +
+                        'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
+                    if (now >= livingBrand.hideUntil) {
+                        livingBrand.mode = 'returning';
+                        livingBrand.returnStartAt = now;
+                        livingBrand.returnOriginX = livingBrand.x;
+                        livingBrand.sashTargetOpen = 0;
+                    }
+                } else if (livingBrand.mode === 'returning') {
+                    // Неспеша плывёт под плитками обратно в шапку
+                    const hRect = headerLayer.getBoundingClientRect();
+                    const goalX = Math.max(hRect.left + 12, Math.min(hRect.right - bw - 12, livingBrand.returnOriginX));
+                    const goalY = hRect.top + Math.max(4, (hRect.height - bh) * 0.45);
+                    const dx = goalX - livingBrand.x;
+                    const dy = goalY - livingBrand.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist < 10 || (livingBrand.y + bh * 0.5 <= hRect.bottom - 4 && livingBrand.y >= hRect.top - 10)) {
+                        // Заплыл обратно в шапку — бесшовно возвращаем в #headerRoamLayer!
+                        const localX = Math.max(6, Math.min((headerLayer.clientWidth || 300) - bw - 6, livingBrand.x - hRect.left));
+                        const localY = Math.max(4, Math.min(Math.max(4, (headerLayer.clientHeight || 90) - bh - 4), livingBrand.y - hRect.top));
+                        moveLogoToLayer(headerLayer, 'roam', localX, localY);
+                        livingBrand.tapBounceStart = now;
+                        livingBrand.tapBounceDur = 540;
+                        openBrandSashesWide(2000);
                         pickNextRoamTarget(now);
                     } else {
-                        const maxStepSpeed = livingBrand.isLoading ? 52 : 34; // px/sec
-                        const desiredV = Math.max(-maxStepSpeed, Math.min(maxStepSpeed, dx * 0.55));
-                        livingBrand.vx += (desiredV - livingBrand.vx) * Math.min(1, dt * 2.5);
-                        livingBrand.x = Math.max(minX, Math.min(maxX, livingBrand.x + livingBrand.vx * dt));
+                        const speed = 105; // неспеша ~105 px/сек
+                        const ux = dx / dist;
+                        const uy = dy / dist;
+                        const waveX = Math.sin((now - livingBrand.returnStartAt) / 360) * 28 * dt;
+                        livingBrand.x += ux * speed * dt + waveX;
+                        livingBrand.y += uy * speed * dt;
+                        scaleX *= 0.96;
+                        scaleY *= 0.96;
+                        bodyRot = Math.sin((now - livingBrand.returnStartAt) / 360) * 10;
+                        logo.style.transform =
+                            'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + livingBrand.y.toFixed(1) + 'px, 0) ' +
+                            'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
                     }
                 } else {
-                    livingBrand.vx *= Math.max(0, 1 - dt * 5);
-                    livingBrand.x = Math.max(minX, Math.min(maxX, livingBrand.x + livingBrand.vx * dt));
-                }
+                    // Обычный живой режим в шапке ('roam')
+                    const lw = headerLayer.clientWidth || 320;
+                    const lh = headerLayer.clientHeight || 96;
 
-                // 3. Дыхание, покачивание и периодический игривый поворот
-                const tSec = now / 1000;
-                const breathBase = livingBrand.isLoading ? 1.07 : 1.0;
-                const breathAmp = livingBrand.isLoading ? 0.065 : 0.055;
-                const scale = breathBase + Math.sin(tSec * (livingBrand.isLoading ? 3.2 : 1.65)) * breathAmp;
-                const floatY = Math.sin(tSec * 1.3) * 2.6;
+                    // Периодическое увеличение на всю высоту шапки («расцветает» на всю шапку, оставаясь под кнопками)
+                    if (!livingBrand.isLoading && now >= livingBrand.nextBloomAt && livingBrand.bloomDur === 0) {
+                        livingBrand.bloomStart = now;
+                        livingBrand.bloomDur = 5200;
+                        livingBrand.nextBloomAt = now + 11500 + Math.random() * 5500;
+                    }
+                    let bloomScale = 1.0;
+                    if (livingBrand.bloomDur > 0) {
+                        const bp = Math.min(1, (now - livingBrand.bloomStart) / livingBrand.bloomDur);
+                        const fullHeaderScale = Math.max(1.22, Math.min(2.35, (lh - 4) / Math.max(40, bh)));
+                        // Плавный купол sin(π·t) — вырастает на всю высоту шапки и плавно сдувается
+                        bloomScale = 1 + (fullHeaderScale - 1) * Math.sin(bp * Math.PI);
+                        if (bp >= 1) livingBrand.bloomDur = 0;
+                    }
 
-                let bodyRot = Math.sin(tSec * 0.85) * 4.2;
-                if (!livingBrand.isLoading && now >= livingBrand.nextTwistAt && livingBrand.twistAnimDur === 0) {
-                    livingBrand.twistAnimStart = now;
-                    livingBrand.twistAnimDur = 1400;
-                    livingBrand.twistTarget = (Math.random() < 0.5 ? 1 : -1) * 360;
-                    livingBrand.nextTwistAt = now + 11000 + Math.random() * 8000;
-                }
-                if (livingBrand.twistAnimDur > 0) {
-                    const p = Math.min(1, (now - livingBrand.twistAnimStart) / livingBrand.twistAnimDur);
-                    // easeInOutCubic
-                    const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-                    bodyRot += livingBrand.twistTarget * eased;
-                    if (p >= 1) livingBrand.twistAnimDur = 0;
-                }
+                    const breathBase = livingBrand.isLoading ? 1.08 : 1.0;
+                    const breathAmp = livingBrand.isLoading ? 0.065 : 0.05;
+                    const totalScale = (breathBase + Math.sin(tSec * (livingBrand.isLoading ? 3.2 : 1.65)) * breathAmp) * bloomScale;
+                    scaleX *= totalScale;
+                    scaleY *= totalScale;
 
-                logo.style.transform =
-                    'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + floatY.toFixed(1) + 'px, 0) ' +
-                    'scale(' + scale.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
+                    // Поправка границ при росте на всю шапку, чтобы логотип не уходил за края
+                    const effHalfW = (bw * totalScale - bw) / 2;
+                    const effHalfH = (bh * totalScale - bh) / 2;
+                    const minX = 4 + effHalfW;
+                    const maxX = Math.max(minX, lw - bw - 4 - effHalfW);
+                    const minY = 2 + effHalfH;
+                    const maxY = Math.max(minY, lh - bh - 2 - effHalfH);
 
-                // 4. Периодическая смена сезона (через закрытие/открытие ставен) и подмигивание ставнями
-                if (now >= livingBrand.nextSeasonAt) {
-                    livingBrand.nextSeasonAt = now + 14000 + Math.random() * 4000;
-                    livingBrand.nextShutterAt = now + 7000 + Math.random() * 3500;
-                    setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
-                } else if (now >= livingBrand.nextShutterAt) {
-                    livingBrand.nextShutterAt = now + 7500 + Math.random() * 4500;
-                    triggerBrandShuttersBlink();
+                    if (livingBrand.targetX < minX) livingBrand.targetX = minX;
+                    if (livingBrand.targetX > maxX) livingBrand.targetX = maxX;
+                    if (livingBrand.targetY < minY) livingBrand.targetY = minY;
+                    if (livingBrand.targetY > maxY) livingBrand.targetY = maxY;
+
+                    if (now >= livingBrand.roamPausedUntil) {
+                        const dx = livingBrand.targetX - livingBrand.x;
+                        const dy = livingBrand.targetY - livingBrand.y;
+                        if (Math.hypot(dx, dy) < 4) {
+                            pickNextRoamTarget(now);
+                        } else {
+                            const maxStepSpeed = livingBrand.isLoading ? 52 : 34;
+                            const desiredVx = Math.max(-maxStepSpeed, Math.min(maxStepSpeed, dx * 0.55));
+                            const desiredVy = Math.max(-22, Math.min(22, dy * 0.65));
+                            livingBrand.vx += (desiredVx - livingBrand.vx) * Math.min(1, dt * 2.5);
+                            livingBrand.vy += (desiredVy - livingBrand.vy) * Math.min(1, dt * 2.5);
+                            livingBrand.x += livingBrand.vx * dt;
+                            livingBrand.y += livingBrand.vy * dt;
+                        }
+                    } else {
+                        livingBrand.vx *= Math.max(0, 1 - dt * 5);
+                        livingBrand.vy *= Math.max(0, 1 - dt * 5);
+                        livingBrand.x += livingBrand.vx * dt;
+                        livingBrand.y += livingBrand.vy * dt;
+                    }
+                    livingBrand.x = Math.max(minX, Math.min(maxX, livingBrand.x));
+                    livingBrand.y = Math.max(minY, Math.min(maxY, livingBrand.y));
+
+                    const floatY = (maxY > minY + 4) ? (Math.sin(tSec * 1.35) * 2.4) : 0;
+
+                    bodyRot = Math.sin(tSec * 0.85) * 4.0;
+                    if (!livingBrand.isLoading && now >= livingBrand.nextTwistAt && livingBrand.twistAnimDur === 0) {
+                        livingBrand.twistAnimStart = now;
+                        livingBrand.twistAnimDur = 1450;
+                        livingBrand.twistTarget = (Math.random() < 0.5 ? 1 : -1) * 360;
+                        livingBrand.nextTwistAt = now + 12000 + Math.random() * 8000;
+                    }
+                    if (livingBrand.twistAnimDur > 0) {
+                        const p = Math.min(1, (now - livingBrand.twistAnimStart) / livingBrand.twistAnimDur);
+                        const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+                        bodyRot += livingBrand.twistTarget * eased;
+                        if (p >= 1) livingBrand.twistAnimDur = 0;
+                    }
+
+                    logo.style.transform =
+                        'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + (livingBrand.y + floatY).toFixed(1) + 'px, 0) ' +
+                        'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
+
+                    // 4. Периодическая смена сезона и распахивание створок
+                    if (!newYearActive && now >= livingBrand.nextSeasonAt) {
+                        livingBrand.nextSeasonAt = now + 14500 + Math.random() * 4000;
+                        livingBrand.nextSashEventAt = now + 6800 + Math.random() * 3500;
+                        setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
+                    } else if (now >= livingBrand.nextSashEventAt) {
+                        livingBrand.nextSashEventAt = now + 7000 + Math.random() * 4000;
+                        openBrandSashesWide(2800);
+                    }
                 }
             }
             requestAnimationFrame(frame);
@@ -1768,7 +2342,9 @@
             svg.setAttribute('viewBox', '0 0 ' + svgW.toFixed(1) + ' ' + svgH.toFixed(1));
             svg.style.left = (rect.left - pad).toFixed(1) + 'px';
             svg.style.top = (rect.top - pad).toFixed(1) + 'px';
-            svg.style.filter = 'drop-shadow(0 0 3px rgba(251, 150, 59, 0.7))';
+            svg.style.filter = newYearActive
+                ? 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))'
+                : 'drop-shadow(0 0 3px rgba(251, 150, 59, 0.7))';
 
             const defs = document.createElementNS(ns, 'defs');
             const lg = document.createElementNS(ns, 'linearGradient');
@@ -1777,13 +2353,9 @@
             lg.setAttribute('y1', '0%');
             lg.setAttribute('x2', '100%');
             lg.setAttribute('y2', '100%');
-            const stops = [
-                ['0%', '#FEC035'],
-                ['28%', '#FB963B'],
-                ['52%', '#EA8225'],
-                ['76%', '#B0DF65'],
-                ['100%', '#6FA551']
-            ];
+            const stops = newYearActive
+                ? [['0%', '#FFD700'], ['28%', '#FF4D4D'], ['55%', '#2ECC71'], ['80%', '#56CCF2'], ['100%', '#FFD700']]
+                : [['0%', '#FEC035'], ['28%', '#FB963B'], ['52%', '#EA8225'], ['76%', '#B0DF65'], ['100%', '#6FA551']];
             stops.forEach(([off, col]) => {
                 const st = document.createElementNS(ns, 'stop');
                 st.setAttribute('offset', off);
@@ -1793,7 +2365,6 @@
             defs.appendChild(lg);
             svg.appendChild(defs);
 
-            // Мягкая вспышка всего контура
             const glowRect = document.createElementNS(ns, 'rect');
             glowRect.setAttribute('x', pad);
             glowRect.setAttribute('y', pad);
@@ -1807,7 +2378,6 @@
             glowRect.setAttribute('opacity', '0');
             svg.appendChild(glowRect);
 
-            // Быстрый пробегающий градиентный луч по контуру
             const runRect = document.createElementNS(ns, 'rect');
             runRect.setAttribute('x', pad);
             runRect.setAttribute('y', pad);
@@ -1860,10 +2430,8 @@
         }
 
         function initBrandOutlineFeedback() {
-            const SELECTOR = 'button, .btn, .theme-toggle, .line-tab-btn, .date-block, .file-item, .folder-item, .bc-pill-btn, .bc-preview-box, .chart-control-btn, .btn-scan-barcode, .btn-barcode-gen-toggle, .summary-item, input[type="text"], input[type="number"], input[type="password"]';
-            let lastTouchMs = 0;
+            const SELECTOR = 'button, .btn, .theme-toggle, .line-tab-btn, .date-block, .file-item, .folder-item, .bc-pill-btn, .bc-preview-box, .chart-control-btn, .btn-scan-barcode, .btn-barcode-gen-toggle, .summary-item, input[type="text"], input[type="number"], input[type="password"], select';
             document.addEventListener('pointerdown', function(e) {
-                if (e.pointerType === 'touch') lastTouchMs = Date.now();
                 const target = e.target && e.target.closest ? e.target.closest(SELECTOR) : null;
                 if (target && !target.disabled) {
                     triggerBrandOutlinePulse(target);
@@ -2364,6 +2932,13 @@
                 if (!rawText) throw new Error('Пустой ответ cache.json');
                 const cacheObj = JSON.parse(rawText);
                 lastYandexCache = cacheObj;
+                const ydNyFlag = (typeof cacheObj.new_year_theme === 'boolean') ? cacheObj.new_year_theme
+                    : (cacheObj.ui_config && typeof cacheObj.ui_config.new_year_theme === 'boolean') ? cacheObj.ui_config.new_year_theme
+                    : (cacheObj.ui && typeof cacheObj.ui.new_year_theme === 'boolean') ? cacheObj.ui.new_year_theme
+                    : null;
+                if (typeof ydNyFlag === 'boolean') {
+                    applyServerNewYearFlag(ydNyFlag);
+                }
                 const remoteLines = Array.isArray(cacheObj.lines) ? cacheObj.lines : [];
                 if (remoteLines.length === 0) {
                     throw new Error('В cache.json на Яндекс Диске нет данных линий');
@@ -2743,6 +3318,9 @@
             document.getElementById('scalePercent').value = scalePercent;
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
+            const nySel = document.getElementById('newYearThemeMode');
+            if (nySel) nySel.value = newYearMode;
+            updateNewYearThemeState();
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
                 if (srvInp) srvInp.value = window.AndroidApp.getServerUrl() || '';
@@ -3589,6 +4167,7 @@
                 if (forceFullRecalc || !currentBlocks || currentBlocks.length === 0) updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Проверка локального сервера...', true);
                 const serverReachable = await quickProbeLocalServer(2200);
                 if (serverReachable) {
+                    fetchServerUiConfig();
                     for (const idx of configured) {
                         const ok = await scanFolderByIndex(idx, forceFullRecalc);
                         if (ok) anySuccess = true;
@@ -5168,6 +5747,7 @@
 
         function initializeApp() {
             initTheme();
+            initNewYearTheme();
             initLivingBrandLogo();
             initBrandOutlineFeedback();
             initBarcodeScanButtons();
@@ -5521,6 +6101,16 @@
                 const wantTheme = wantDark ? 'dark' : 'light';
                 if (wantTheme !== curTheme) applyTheme(wantTheme);
 
+                const nySelSave = document.getElementById('newYearThemeMode');
+                if (nySelSave) {
+                    const m = nySelSave.value;
+                    if (m === 'auto' || m === 'on' || m === 'off') {
+                        newYearMode = m;
+                        localStorage.setItem(LS_NY_MODE_KEY, newYearMode);
+                        updateNewYearThemeState();
+                    }
+                }
+
                 let newScale = parseInt(document.getElementById('scalePercent').value);
                 if (isNaN(newScale)) newScale = 100;
                 newScale = Math.min(200, Math.max(50, newScale));
@@ -5653,7 +6243,8 @@
 
             document.addEventListener('touchstart', function(e) {
                 if (e.touches.length !== 1) return;
-                if (isAnyModalOpen() || isSwipeAnimating) {
+                if (isAnyModalOpen() || isSwipeAnimating || livingBrand.isDragging ||
+                    (e.target && e.target.closest && e.target.closest('#headerBrandLogo'))) {
                     gestureMode = null;
                     return;
                 }
@@ -5672,7 +6263,7 @@
             }, { passive: true });
 
             document.addEventListener('touchmove', function(e) {
-                if (e.touches.length !== 1 || isAnyModalOpen() || isPtrRefreshing || isSwipeAnimating) return;
+                if (e.touches.length !== 1 || isAnyModalOpen() || isPtrRefreshing || isSwipeAnimating || livingBrand.isDragging) return;
                 const t = e.touches[0];
                 const dx = t.clientX - startX;
                 const dy = t.clientY - startY;
@@ -5779,8 +6370,8 @@
                     resetSwipeStagePosition(true);
                     hideSwipeToast();
                 }
-                if (gestureMode === 'ptr' && headerLogoRays) {
-                    headerLogoRays.style.transform = '';
+                if (gestureMode === 'ptr') {
+                    livingBrand.ptrRayOffset = 0;
                 }
                 gestureMode = null;
                 currentPull = 0;
