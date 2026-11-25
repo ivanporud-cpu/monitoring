@@ -125,8 +125,10 @@
         .container { max-width: 75rem; margin: 0 auto; }
 
         .header {
+            position: relative;
+            overflow: hidden;
             background: var(--bg-card);
-            padding: 1.25rem;
+            padding: 0.95rem 1.1rem;
             border-radius: 0.625rem;
             margin-bottom: 1.25rem;
             text-align: center;
@@ -351,7 +353,7 @@
         .folder-item:hover { background: var(--bg-soft); }
         .folder-icon { margin-right: 0.625rem; font-size: 1.25rem; }
         .current-path { background: var(--bg-current-path); padding: 0.9375rem; margin-bottom: 0.9375rem; border-radius: 0.5rem; font-size: 0.875rem; color: var(--text-primary); }
-        .auto-scan-info { background: var(--bg-auto-scan); color: var(--color-auto-scan-text); padding: 0.625rem; border-radius: 0.3125rem; margin-top: 0.625rem; font-size: 0.75rem; }
+        .auto-scan-info { position: relative; z-index: 5; background: var(--bg-auto-scan); color: var(--color-auto-scan-text); padding: 0.625rem; border-radius: 0.3125rem; margin-top: 0.625rem; font-size: 0.75rem; }
 
         .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; }
         .settings-content {
@@ -536,20 +538,53 @@
         html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
         html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
-        .header-inner { display: flex; align-items: center; gap: 0.5rem; }
-        .header-inner h1 { flex: 1; min-width: 0; text-align: left; font-size: 1.25rem; line-height: 1.18; }
-        .header-actions { display: flex; align-items: center; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
-        @media (max-width: 480px) {
-            .header-inner h1 { font-size: 1.05rem; }
-            .header-actions { gap: 0.28rem; }
-            .header-actions .theme-toggle { width: 2.25rem; height: 2.25rem; }
+        .header-roam-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5.4rem;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
         }
-        .header-actions .theme-toggle { margin-left: 0; }
+        .header-inner {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            min-height: 3.75rem;
+            pointer-events: none;
+        }
+        .header-actions {
+            position: relative;
+            z-index: 6;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.38rem;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .header-actions .theme-toggle {
+            margin-left: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        @media (max-width: 480px) {
+            .header-roam-layer { height: 4.9rem; }
+            .header-inner { min-height: 3.35rem; }
+            .header-actions { gap: 0.3rem; }
+            .header-actions .theme-toggle { width: 2.3rem; height: 2.3rem; }
+        }
         .line-tabs {
+            position: relative;
+            z-index: 5;
             display: flex;
             flex-wrap: wrap;
             gap: 0.45rem;
-            margin-top: 0.75rem;
+            margin-top: 0.65rem;
             justify-content: flex-start;
         }
         .line-tabs:empty { display: none; }
@@ -778,38 +813,166 @@
         }
 
         .brand-logo-wrap {
+            position: absolute;
+            top: 0.42rem;
+            left: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 3.15rem;
-            height: 3.15rem;
-            flex-shrink: 0;
-            transition: transform 0.22s ease, filter 0.22s ease;
+            width: 4.55rem;
+            height: 4.55rem;
+            will-change: transform;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: filter 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
         }
         @media (max-width: 480px) {
             .brand-logo-wrap {
-                width: 2.85rem;
-                height: 2.85rem;
+                top: 0.38rem;
+                width: 4.05rem;
+                height: 4.05rem;
             }
         }
         .brand-logo-wrap.is-loading {
-            transform: scale(1.12);
-            filter: drop-shadow(0 0 6px rgba(246, 152, 65, 0.55));
+            filter: drop-shadow(0 0 8px rgba(246, 152, 65, 0.7));
         }
         .brand-logo-svg {
             width: 100%;
             height: 100%;
             display: block;
+            overflow: visible;
         }
         .brand-rays {
             transform-box: view-box;
             transform-origin: 50px 50px;
         }
-        .brand-logo-wrap.is-loading .brand-rays {
-            animation: ptrSpin 1.35s linear infinite;
+        .brand-leaf {
+            transform-box: view-box;
+            transform-origin: 58px 43px;
+            transition: fill 0.6s ease;
+            animation: leafSway 4.2s ease-in-out infinite;
         }
-        @keyframes ptrSpin {
-            to { transform: rotate(360deg); }
+        @keyframes leafSway {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(4.5deg) scale(1.03); }
+        }
+
+        /* Сезонные сценки за окном внутри солнышка */
+        .season-scene {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .brand-logo-wrap.season-summer .scene-summer,
+        .brand-logo-wrap.season-autumn .scene-autumn,
+        .brand-logo-wrap.season-winter .scene-winter,
+        .brand-logo-wrap.season-spring .scene-spring {
+            opacity: 1;
+        }
+        .brand-logo-wrap.season-summer .win-sky { fill: url(#hdr_sky_summer); }
+        .brand-logo-wrap.season-autumn .win-sky { fill: url(#hdr_sky_autumn); }
+        .brand-logo-wrap.season-winter .win-sky { fill: url(#hdr_sky_winter); }
+        .brand-logo-wrap.season-spring .win-sky { fill: url(#hdr_sky_spring); }
+
+        .brand-logo-wrap.season-summer .brand-leaf-shape { fill: url(#hdr_leaf_summer); }
+        .brand-logo-wrap.season-autumn .brand-leaf-shape { fill: url(#hdr_leaf_autumn); }
+        .brand-logo-wrap.season-winter .brand-leaf-shape { fill: url(#hdr_leaf_winter); }
+        .brand-logo-wrap.season-spring .brand-leaf-shape { fill: url(#hdr_leaf_spring); }
+
+        .brand-logo-wrap.season-winter .winter-frost-dot { opacity: 0.95; }
+        .winter-frost-dot { opacity: 0; transition: opacity 0.5s ease; }
+
+        /* Летнее облачко */
+        .summer-cloud {
+            animation: cloudDrift 7s linear infinite;
+        }
+        @keyframes cloudDrift {
+            0% { transform: translateX(-14px); opacity: 0.4; }
+            20%, 80% { opacity: 0.95; }
+            100% { transform: translateX(18px); opacity: 0.4; }
+        }
+
+        /* Осенний дождь */
+        .rain-drop {
+            stroke: #4A90D9;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            animation: rainFall 0.85s linear infinite;
+        }
+        .rain-drop.r2 { animation-delay: -0.22s; animation-duration: 0.78s; }
+        .rain-drop.r3 { animation-delay: -0.45s; animation-duration: 0.92s; }
+        .rain-drop.r4 { animation-delay: -0.64s; animation-duration: 0.8s; }
+        .rain-drop.r5 { animation-delay: -0.12s; animation-duration: 0.88s; }
+        .rain-drop.r6 { animation-delay: -0.52s; animation-duration: 0.75s; }
+        @keyframes rainFall {
+            0%   { transform: translate(3px, -16px); opacity: 0; }
+            20%  { opacity: 0.95; }
+            85%  { opacity: 0.9; }
+            100% { transform: translate(-5px, 24px); opacity: 0; }
+        }
+
+        /* Зимний снег */
+        .snow-flake {
+            fill: #FFFFFF;
+            animation: snowFall 2.4s ease-in-out infinite;
+        }
+        .snow-flake.s2 { animation-delay: -0.55s; animation-duration: 2.1s; }
+        .snow-flake.s3 { animation-delay: -1.1s; animation-duration: 2.7s; }
+        .snow-flake.s4 { animation-delay: -1.65s; animation-duration: 2.25s; }
+        .snow-flake.s5 { animation-delay: -0.85s; animation-duration: 2.55s; }
+        .snow-flake.s6 { animation-delay: -1.9s; animation-duration: 2.35s; }
+        @keyframes snowFall {
+            0%   { transform: translate(0px, -14px); opacity: 0; }
+            18%  { opacity: 1; }
+            50%  { transform: translate(4px, 5px); opacity: 0.95; }
+            85%  { opacity: 0.9; }
+            100% { transform: translate(-3px, 23px); opacity: 0; }
+        }
+
+        /* Весенние птички */
+        .spring-bird {
+            fill: none;
+            stroke: #37474F;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: birdGlide 3.4s linear infinite;
+        }
+        .spring-bird.b2 { animation-delay: -1.15s; animation-duration: 3.9s; }
+        .spring-bird.b3 { animation-delay: -2.3s; animation-duration: 3.1s; }
+        @keyframes birdGlide {
+            0%   { transform: translate(-20px, 5px) scale(0.85); opacity: 0; }
+            15%  { opacity: 1; }
+            50%  { transform: translate(0px, -4px) scale(1); opacity: 1; }
+            85%  { opacity: 1; }
+            100% { transform: translate(22px, 3px) scale(0.88); opacity: 0; }
+        }
+
+        /* Ставни в окне солнышка (периодически открываются и закрываются) */
+        .win-shutter {
+            transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .win-shutter-left {
+            transform-box: view-box;
+            transform-origin: 26.5px 50px;
+            transform: scaleX(0.05);
+        }
+        .win-shutter-right {
+            transform-box: view-box;
+            transform-origin: 73.5px 50px;
+            transform: scaleX(0.05);
+        }
+        .brand-logo-wrap.shutters-closed .win-shutter-left,
+        .brand-logo-wrap.shutters-closed .win-shutter-right {
+            transform: scaleX(1);
+        }
+
+        /* Пробегающий градиент в цветах лейбла по контуру нажимаемого элемента */
+        .brand-outline-fx {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: visible;
         }
 
         /* Всплывающая плашка при свайпе между линиями */
@@ -860,10 +1023,81 @@
 <body>
     <div class="swipe-toast" id="swipeToast" aria-hidden="true"></div>
     <div class="container" id="mainContainer">
-        <div class="header">
+        <div class="header" id="mainHeader">
+            <div class="header-roam-layer" id="headerRoamLayer">
+                <div class="brand-logo-wrap season-summer" id="headerBrandLogo" title="Нажмите, чтобы сменить сезон"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+  <clipPath id="winGlassClip"><circle cx="50" cy="50" r="22.4"/></clipPath>
+  <linearGradient id="hdr_og" x1="15%" y1="10%" x2="85%" y2="90%"><stop offset="0%" stop-color="#FEC035"/><stop offset="45%" stop-color="#FB963B"/><stop offset="100%" stop-color="#EA8225"/></linearGradient>
+  <linearGradient id="hdr_leaf_summer" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#B0DF65"/><stop offset="55%" stop-color="#98CB56"/><stop offset="100%" stop-color="#6FA551"/></linearGradient>
+  <linearGradient id="hdr_leaf_autumn" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#FFE066"/><stop offset="55%" stop-color="#F5A623"/><stop offset="100%" stop-color="#D35400"/></linearGradient>
+  <linearGradient id="hdr_leaf_winter" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#F5FAFF"/><stop offset="55%" stop-color="#B3E5FC"/><stop offset="100%" stop-color="#5CACEE"/></linearGradient>
+  <linearGradient id="hdr_leaf_spring" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#D4F07A"/><stop offset="55%" stop-color="#8BC34A"/><stop offset="100%" stop-color="#4CAF50"/></linearGradient>
+  <linearGradient id="hdr_sky_summer" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8EEFF"/><stop offset="100%" stop-color="#FFF7D6"/></linearGradient>
+  <linearGradient id="hdr_sky_autumn" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#B8C7D9"/><stop offset="100%" stop-color="#E8DFD1"/></linearGradient>
+  <linearGradient id="hdr_sky_winter" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#A8D1F5"/><stop offset="100%" stop-color="#EDF6FF"/></linearGradient>
+  <linearGradient id="hdr_sky_spring" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#BCEBFF"/><stop offset="100%" stop-color="#ECFFE8"/></linearGradient>
+  <linearGradient id="hdr_shutter" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD480"/><stop offset="100%" stop-color="#E68A2E"/></linearGradient>
+</defs>
+<g class="brand-rays" id="headerBrandRays"><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(0 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(15 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(30 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(45 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(60 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(75 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(90 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(105 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(120 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(135 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(150 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(165 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(180 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(195 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(210 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(225 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(240 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(255 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(270 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(285 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(300 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(315 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(330 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(345 50 50)"/></g>
+<g clip-path="url(#winGlassClip)">
+  <circle cx="50" cy="50" r="23" class="win-sky"/>
+  <g class="season-scene scene-summer">
+    <circle cx="38" cy="36" r="5" fill="#FFF3B0" opacity="0.9"/>
+    <g class="summer-cloud">
+      <ellipse cx="44" cy="61" rx="7" ry="3.4" fill="#FFFFFF" opacity="0.88"/>
+      <ellipse cx="48" cy="59.5" rx="5" ry="3" fill="#FFFFFF" opacity="0.92"/>
+    </g>
+  </g>
+  <g class="season-scene scene-autumn">
+    <line class="rain-drop r1" x1="36" y1="34" x2="34" y2="41"/>
+    <line class="rain-drop r2" x1="45" y1="32" x2="43" y2="39"/>
+    <line class="rain-drop r3" x1="56" y1="36" x2="54" y2="43"/>
+    <line class="rain-drop r4" x1="63" y1="33" x2="61" y2="40"/>
+    <line class="rain-drop r5" x1="41" y1="49" x2="39" y2="56"/>
+    <line class="rain-drop r6" x1="59" y1="50" x2="57" y2="57"/>
+  </g>
+  <g class="season-scene scene-winter">
+    <path d="M26 67 Q38 61 50 65 Q62 61 74 67 L74 75 L26 75 Z" fill="#FFFFFF" opacity="0.95"/>
+    <circle class="snow-flake s1" cx="35" cy="36" r="2.1"/>
+    <circle class="snow-flake s2" cx="44" cy="33" r="1.7"/>
+    <circle class="snow-flake s3" cx="55" cy="37" r="2.2"/>
+    <circle class="snow-flake s4" cx="63" cy="34" r="1.6"/>
+    <circle class="snow-flake s5" cx="40" cy="51" r="1.9"/>
+    <circle class="snow-flake s6" cx="58" cy="52" r="2.0"/>
+  </g>
+  <g class="season-scene scene-spring">
+    <path class="spring-bird b1" d="M36 41 Q39 37 42 41 Q45 37 48 41"/>
+    <path class="spring-bird b2" d="M47 59 Q49.5 55.5 52 59 Q54.5 55.5 57 59"/>
+    <path class="spring-bird b3" d="M41 34 Q43 31 45 34 Q47 31 49 34"/>
+  </g>
+  <g class="win-shutter win-shutter-left">
+    <rect x="26.5" y="26.5" width="23.5" height="47" fill="url(#hdr_shutter)" stroke="#C96816" stroke-width="1.2"/>
+    <line x1="29.5" y1="36" x2="46.5" y2="36" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="29.5" y1="43" x2="46.5" y2="43" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="29.5" y1="57" x2="46.5" y2="57" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="29.5" y1="64" x2="46.5" y2="64" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+  </g>
+  <g class="win-shutter win-shutter-right">
+    <rect x="50" y="26.5" width="23.5" height="47" fill="url(#hdr_shutter)" stroke="#C96816" stroke-width="1.2"/>
+    <line x1="53.5" y1="36" x2="70.5" y2="36" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="53.5" y1="43" x2="70.5" y2="43" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="53.5" y1="57" x2="70.5" y2="57" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+    <line x1="53.5" y1="64" x2="70.5" y2="64" stroke="#FFF4D6" stroke-width="1.4" opacity="0.7"/>
+  </g>
+</g>
+<rect x="47.2" y="25.5" width="5.6" height="49" fill="url(#hdr_og)"/>
+<rect x="25.5" y="47.2" width="49" height="5.6" fill="url(#hdr_og)"/>
+<circle cx="50" cy="50" r="24.8" fill="none" stroke="url(#hdr_og)" stroke-width="6.2"/>
+<path d="M 30.5 41 A 21.8 21.8 0 0 1 48 28.4" fill="none" stroke="#FFF4C2" stroke-width="2.1" stroke-linecap="round" opacity="0.85"/>
+<g class="brand-leaf">
+  <path class="brand-leaf-shape" d="M 54.5 34 C 54.5 25.8 60.2 22 68.5 22 L 77.2 22 C 78.2 22 79 22.8 79 23.8 L 79 34.5 C 79 42.8 73.5 46.8 64.5 46.8 L 54.5 46.8 Z" fill="url(#hdr_leaf_summer)" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M 69.5 26.2 L 74.8 26.2 L 74.8 31.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+  <circle class="winter-frost-dot" cx="63" cy="36" r="2.2" fill="#FFFFFF"/>
+</g>
+</svg></div>
+            </div>
             <div class="header-inner">
-                <div class="brand-logo-wrap" id="headerBrandLogo" title="Загрузка производства"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="hdr_og" x1="15%" y1="10%" x2="85%" y2="90%"><stop offset="0%" stop-color="#FEC035"/><stop offset="45%" stop-color="#FB963B"/><stop offset="100%" stop-color="#EA8225"/></linearGradient><linearGradient id="hdr_gg" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#B0DF65"/><stop offset="55%" stop-color="#98CB56"/><stop offset="100%" stop-color="#6FA551"/></linearGradient></defs><g class="brand-rays"><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(0 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(15 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(30 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(45 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(60 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(75 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(90 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(105 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(120 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(135 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(150 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(165 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(180 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(195 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(210 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(225 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(240 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(255 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(270 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(285 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(300 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(315 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(330 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(345 50 50)"/></g><circle cx="50" cy="50" r="24.8" fill="none" stroke="url(#hdr_og)" stroke-width="6.4"/><rect x="46.9" y="25.5" width="6.2" height="49" fill="url(#hdr_og)"/><rect x="25.5" y="46.9" width="49" height="6.2" fill="url(#hdr_og)"/><path d="M 30.5 41 A 21.8 21.8 0 0 1 48 28.4" fill="none" stroke="#FFF4C2" stroke-width="2.1" stroke-linecap="round" opacity="0.85"/><path d="M 54.5 34 C 54.5 25.8 60.2 22 68.5 22 L 77.2 22 C 78.2 22 79 22.8 79 23.8 L 79 34.5 C 79 42.8 73.5 46.8 64.5 46.8 L 54.5 46.8 Z" fill="url(#hdr_gg)" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round"/><path d="M 69.5 26.2 L 74.8 26.2 L 74.8 31.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/></svg></div>
-                <h1>Загрузка производства</h1>
                 <div class="header-actions">
                     <button class="theme-toggle" id="globalSearchBtn" title="Поиск заказа по всем датам и линиям" aria-label="Глобальный поиск заказа">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1149,6 +1383,17 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="settings-section-title">О приложении</div>
+                <div class="settings-group">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <div>
+                            <div style="font-weight:bold; color:var(--text-primary);" id="appVersionText">Веб-версия</div>
+                            <div class="hint" id="appVersionHint" style="margin-top:0.15rem;">Проверка новых сборок APK на GitHub Releases</div>
+                        </div>
+                        <button class="btn btn-sm" id="checkAppUpdateBtn" type="button" style="display:none;">Проверить обновления</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1280,6 +1525,9 @@
             if (theme !== 'dark' && theme !== 'light') theme = 'light';
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem(LS_THEME_KEY, theme);
+            if (window.AndroidApp && typeof window.AndroidApp.syncTheme === 'function') {
+                try { window.AndroidApp.syncTheme(theme); } catch (e) {}
+            }
             if (typeof productionChart !== 'undefined' && productionChart) {
                 updateChart();
             }
@@ -1295,9 +1543,332 @@
             }
         }
 
+        // ==================== ЖИВОЙ АНИМИРОВАННЫЙ ЛОГОТИП В ШАПКЕ ====================
+        const livingBrand = {
+            isLoading: false,
+            ptrRayOffset: 0,
+            rayAngle: 0,
+            raySpeed: 18,
+            targetRaySpeed: 18,
+            nextRayChangeAt: 0,
+            idleDir: 1,
+            idlePhase: 0,
+            x: 10,
+            targetX: 120,
+            vx: 0,
+            roamPausedUntil: 0,
+            bodyTwist: 0,
+            twistAnimStart: 0,
+            twistAnimDur: 0,
+            twistTarget: 0,
+            nextTwistAt: 0,
+            seasons: ['summer', 'autumn', 'winter', 'spring'],
+            seasonIdx: 0,
+            nextSeasonAt: 0,
+            nextShutterAt: 0,
+            shuttersClosingTimer: null,
+            started: false
+        };
+
         function setHeaderBrandLoading(active) {
+            livingBrand.isLoading = !!active;
             const logo = document.getElementById('headerBrandLogo');
             if (logo) logo.classList.toggle('is-loading', !!active);
+        }
+
+        function setBrandLogoSeason(nextIdx, animateShutters) {
+            const logo = document.getElementById('headerBrandLogo');
+            if (!logo) return;
+            const idx = ((nextIdx % livingBrand.seasons.length) + livingBrand.seasons.length) % livingBrand.seasons.length;
+            const applyClass = () => {
+                livingBrand.seasonIdx = idx;
+                livingBrand.seasons.forEach(s => logo.classList.remove('season-' + s));
+                logo.classList.add('season-' + livingBrand.seasons[idx]);
+            };
+            if (animateShutters) {
+                logo.classList.add('shutters-closed');
+                clearTimeout(livingBrand.shuttersClosingTimer);
+                livingBrand.shuttersClosingTimer = setTimeout(() => {
+                    applyClass();
+                    livingBrand.shuttersClosingTimer = setTimeout(() => {
+                        logo.classList.remove('shutters-closed');
+                    }, 320);
+                }, 650);
+            } else {
+                applyClass();
+            }
+        }
+
+        function triggerBrandShuttersBlink() {
+            const logo = document.getElementById('headerBrandLogo');
+            if (!logo || logo.classList.contains('shutters-closed')) return;
+            logo.classList.add('shutters-closed');
+            clearTimeout(livingBrand.shuttersClosingTimer);
+            livingBrand.shuttersClosingTimer = setTimeout(() => {
+                logo.classList.remove('shutters-closed');
+            }, 1250);
+        }
+
+        function initLivingBrandLogo() {
+            if (livingBrand.started) return;
+            const logo = document.getElementById('headerBrandLogo');
+            const layer = document.getElementById('headerRoamLayer');
+            const rays = document.getElementById('headerBrandRays');
+            if (!logo || !layer || !rays) return;
+            livingBrand.started = true;
+
+            const now0 = performance.now();
+            livingBrand.nextRayChangeAt = now0 + 3800;
+            livingBrand.nextSeasonAt = now0 + 13000;
+            livingBrand.nextShutterAt = now0 + 6200;
+            livingBrand.nextTwistAt = now0 + 9500;
+            livingBrand.x = 12;
+
+            const pickNextRoamTarget = (nowMs) => {
+                const lw = layer.clientWidth || 320;
+                const bw = logo.offsetWidth || 68;
+                const minX = 6;
+                const maxX = Math.max(minX + 10, lw - bw - 6);
+                const span = maxX - minX;
+                // Выбираем точку в другой половине шапки, чтобы логотип действительно гулял по всей ширине
+                const curNorm = span > 0 ? (livingBrand.x - minX) / span : 0;
+                const goRight = curNorm < 0.5;
+                const randNorm = goRight ? (0.55 + Math.random() * 0.45) : (Math.random() * 0.45);
+                livingBrand.targetX = minX + span * randNorm;
+                livingBrand.roamPausedUntil = nowMs + 900 + Math.random() * 1700;
+            };
+            pickNextRoamTarget(now0);
+
+            logo.addEventListener('click', function() {
+                setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
+                livingBrand.nextSeasonAt = performance.now() + 14000;
+            });
+
+            let lastT = now0;
+            function frame(now) {
+                requestAnimationFrame(frame);
+                if (document.hidden) {
+                    lastT = now;
+                    return;
+                }
+                const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
+                lastT = now;
+
+                // 1. Вращение лучей: быстро при загрузке, в покое медленно туда-сюда с паузами
+                if (livingBrand.isLoading) {
+                    livingBrand.targetRaySpeed = 340;
+                } else {
+                    if (now >= livingBrand.nextRayChangeAt) {
+                        livingBrand.idlePhase = (livingBrand.idlePhase + 1) % 4;
+                        if (livingBrand.idlePhase === 0) {
+                            livingBrand.targetRaySpeed = 24;
+                            livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
+                        } else if (livingBrand.idlePhase === 1) {
+                            livingBrand.targetRaySpeed = 0;
+                            livingBrand.nextRayChangeAt = now + 2200 + Math.random() * 2200;
+                        } else if (livingBrand.idlePhase === 2) {
+                            livingBrand.targetRaySpeed = -24;
+                            livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
+                        } else {
+                            livingBrand.targetRaySpeed = 0;
+                            livingBrand.nextRayChangeAt = now + 2200 + Math.random() * 2200;
+                        }
+                    }
+                }
+                livingBrand.raySpeed += (livingBrand.targetRaySpeed - livingBrand.raySpeed) * Math.min(1, dt * 4.5);
+                livingBrand.rayAngle = (livingBrand.rayAngle + livingBrand.raySpeed * dt) % 360;
+                const effectiveRayAngle = livingBrand.rayAngle + (livingBrand.ptrRayOffset || 0);
+                rays.setAttribute('transform', 'rotate(' + effectiveRayAngle.toFixed(1) + ' 50 50)');
+
+                // 2. Плавное перемещение по всей верхней шапке (под кнопками)
+                const lw = layer.clientWidth || 320;
+                const bw = logo.offsetWidth || 68;
+                const minX = 6;
+                const maxX = Math.max(minX, lw - bw - 6);
+                if (livingBrand.targetX > maxX) livingBrand.targetX = maxX;
+                if (livingBrand.x > maxX) livingBrand.x = maxX;
+
+                if (now >= livingBrand.roamPausedUntil) {
+                    const dx = livingBrand.targetX - livingBrand.x;
+                    if (Math.abs(dx) < 3) {
+                        pickNextRoamTarget(now);
+                    } else {
+                        const maxStepSpeed = livingBrand.isLoading ? 52 : 34; // px/sec
+                        const desiredV = Math.max(-maxStepSpeed, Math.min(maxStepSpeed, dx * 0.55));
+                        livingBrand.vx += (desiredV - livingBrand.vx) * Math.min(1, dt * 2.5);
+                        livingBrand.x = Math.max(minX, Math.min(maxX, livingBrand.x + livingBrand.vx * dt));
+                    }
+                } else {
+                    livingBrand.vx *= Math.max(0, 1 - dt * 5);
+                    livingBrand.x = Math.max(minX, Math.min(maxX, livingBrand.x + livingBrand.vx * dt));
+                }
+
+                // 3. Дыхание, покачивание и периодический игривый поворот
+                const tSec = now / 1000;
+                const breathBase = livingBrand.isLoading ? 1.07 : 1.0;
+                const breathAmp = livingBrand.isLoading ? 0.065 : 0.055;
+                const scale = breathBase + Math.sin(tSec * (livingBrand.isLoading ? 3.2 : 1.65)) * breathAmp;
+                const floatY = Math.sin(tSec * 1.3) * 2.6;
+
+                let bodyRot = Math.sin(tSec * 0.85) * 4.2;
+                if (!livingBrand.isLoading && now >= livingBrand.nextTwistAt && livingBrand.twistAnimDur === 0) {
+                    livingBrand.twistAnimStart = now;
+                    livingBrand.twistAnimDur = 1400;
+                    livingBrand.twistTarget = (Math.random() < 0.5 ? 1 : -1) * 360;
+                    livingBrand.nextTwistAt = now + 11000 + Math.random() * 8000;
+                }
+                if (livingBrand.twistAnimDur > 0) {
+                    const p = Math.min(1, (now - livingBrand.twistAnimStart) / livingBrand.twistAnimDur);
+                    // easeInOutCubic
+                    const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+                    bodyRot += livingBrand.twistTarget * eased;
+                    if (p >= 1) livingBrand.twistAnimDur = 0;
+                }
+
+                logo.style.transform =
+                    'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + floatY.toFixed(1) + 'px, 0) ' +
+                    'scale(' + scale.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
+
+                // 4. Периодическая смена сезона (через закрытие/открытие ставен) и подмигивание ставнями
+                if (now >= livingBrand.nextSeasonAt) {
+                    livingBrand.nextSeasonAt = now + 14000 + Math.random() * 4000;
+                    livingBrand.nextShutterAt = now + 7000 + Math.random() * 3500;
+                    setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
+                } else if (now >= livingBrand.nextShutterAt) {
+                    livingBrand.nextShutterAt = now + 7500 + Math.random() * 4500;
+                    triggerBrandShuttersBlink();
+                }
+            }
+            requestAnimationFrame(frame);
+        }
+
+        // ==================== ВИЗУАЛЬНЫЙ ОТКЛИК: ПРОБЕГАЮЩИЙ ГРАДИЕНТ ПО КОНТУРУ ====================
+        let brandFxCounter = 0;
+        let activeBrandFxCount = 0;
+
+        function triggerBrandOutlinePulse(targetEl) {
+            if (!targetEl || activeBrandFxCount >= 6) return;
+            const rect = targetEl.getBoundingClientRect();
+            if (!rect || rect.width < 12 || rect.height < 12) return;
+
+            const cs = window.getComputedStyle(targetEl);
+            const rawR = parseFloat(cs.borderTopLeftRadius) || 8;
+            const radius = Math.min(rawR, rect.width / 2, rect.height / 2);
+
+            const pad = 3;
+            const svgW = rect.width + pad * 2;
+            const svgH = rect.height + pad * 2;
+            const ns = 'http://www.w3.org/2000/svg';
+            const gradId = 'br_fx_g_' + (++brandFxCounter);
+
+            const svg = document.createElementNS(ns, 'svg');
+            svg.setAttribute('class', 'brand-outline-fx');
+            svg.setAttribute('width', svgW.toFixed(1));
+            svg.setAttribute('height', svgH.toFixed(1));
+            svg.setAttribute('viewBox', '0 0 ' + svgW.toFixed(1) + ' ' + svgH.toFixed(1));
+            svg.style.left = (rect.left - pad).toFixed(1) + 'px';
+            svg.style.top = (rect.top - pad).toFixed(1) + 'px';
+            svg.style.filter = 'drop-shadow(0 0 3px rgba(251, 150, 59, 0.7))';
+
+            const defs = document.createElementNS(ns, 'defs');
+            const lg = document.createElementNS(ns, 'linearGradient');
+            lg.setAttribute('id', gradId);
+            lg.setAttribute('x1', '0%');
+            lg.setAttribute('y1', '0%');
+            lg.setAttribute('x2', '100%');
+            lg.setAttribute('y2', '100%');
+            const stops = [
+                ['0%', '#FEC035'],
+                ['28%', '#FB963B'],
+                ['52%', '#EA8225'],
+                ['76%', '#B0DF65'],
+                ['100%', '#6FA551']
+            ];
+            stops.forEach(([off, col]) => {
+                const st = document.createElementNS(ns, 'stop');
+                st.setAttribute('offset', off);
+                st.setAttribute('stop-color', col);
+                lg.appendChild(st);
+            });
+            defs.appendChild(lg);
+            svg.appendChild(defs);
+
+            // Мягкая вспышка всего контура
+            const glowRect = document.createElementNS(ns, 'rect');
+            glowRect.setAttribute('x', pad);
+            glowRect.setAttribute('y', pad);
+            glowRect.setAttribute('width', rect.width.toFixed(1));
+            glowRect.setAttribute('height', rect.height.toFixed(1));
+            glowRect.setAttribute('rx', radius.toFixed(1));
+            glowRect.setAttribute('ry', radius.toFixed(1));
+            glowRect.setAttribute('fill', 'none');
+            glowRect.setAttribute('stroke', 'url(#' + gradId + ')');
+            glowRect.setAttribute('stroke-width', '2');
+            glowRect.setAttribute('opacity', '0');
+            svg.appendChild(glowRect);
+
+            // Быстрый пробегающий градиентный луч по контуру
+            const runRect = document.createElementNS(ns, 'rect');
+            runRect.setAttribute('x', pad);
+            runRect.setAttribute('y', pad);
+            runRect.setAttribute('width', rect.width.toFixed(1));
+            runRect.setAttribute('height', rect.height.toFixed(1));
+            runRect.setAttribute('rx', radius.toFixed(1));
+            runRect.setAttribute('ry', radius.toFixed(1));
+            runRect.setAttribute('fill', 'none');
+            runRect.setAttribute('stroke', 'url(#' + gradId + ')');
+            runRect.setAttribute('stroke-width', '3');
+            runRect.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(runRect);
+
+            document.body.appendChild(svg);
+            activeBrandFxCount++;
+
+            let perim = (rect.width + rect.height) * 2;
+            try { perim = runRect.getTotalLength() || perim; } catch (e) {}
+            const dashLen = Math.max(46, perim * 0.42);
+            runRect.setAttribute('stroke-dasharray', dashLen.toFixed(1) + ' ' + perim.toFixed(1));
+            runRect.setAttribute('stroke-dashoffset', perim.toFixed(1));
+
+            const dur = 500;
+            if (typeof runRect.animate === 'function') {
+                runRect.animate([
+                    { strokeDashoffset: perim, opacity: 0.95 },
+                    { strokeDashoffset: perim * 0.15, opacity: 1, offset: 0.65 },
+                    { strokeDashoffset: -dashLen, opacity: 0 }
+                ], { duration: dur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+                glowRect.animate([
+                    { opacity: 0.48 },
+                    { opacity: 0 }
+                ], { duration: dur, easing: 'ease-out', fill: 'forwards' });
+            } else {
+                const startT = performance.now();
+                function step(now) {
+                    const p = Math.min(1, (now - startT) / dur);
+                    const off = perim - (perim + dashLen) * p;
+                    runRect.setAttribute('stroke-dashoffset', off.toFixed(1));
+                    runRect.setAttribute('opacity', (1 - p).toFixed(2));
+                    if (p < 1) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+            }
+
+            setTimeout(() => {
+                if (svg.parentNode) svg.parentNode.removeChild(svg);
+                activeBrandFxCount = Math.max(0, activeBrandFxCount - 1);
+            }, dur + 40);
+        }
+
+        function initBrandOutlineFeedback() {
+            const SELECTOR = 'button, .btn, .theme-toggle, .line-tab-btn, .date-block, .file-item, .folder-item, .bc-pill-btn, .bc-preview-box, .chart-control-btn, .btn-scan-barcode, .btn-barcode-gen-toggle, .summary-item, input[type="text"], input[type="number"], input[type="password"]';
+            let lastTouchMs = 0;
+            document.addEventListener('pointerdown', function(e) {
+                if (e.pointerType === 'touch') lastTouchMs = Date.now();
+                const target = e.target && e.target.closest ? e.target.closest(SELECTOR) : null;
+                if (target && !target.disabled) {
+                    triggerBrandOutlinePulse(target);
+                }
+            }, { passive: true });
         }
 
         // ==================== КОНСТАНТЫ ====================
@@ -2175,6 +2746,14 @@
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
                 if (srvInp) srvInp.value = window.AndroidApp.getServerUrl() || '';
+                const verEl = document.getElementById('appVersionText');
+                const updBtn = document.getElementById('checkAppUpdateBtn');
+                if (verEl && typeof window.AndroidApp.getAppVersion === 'function') {
+                    try { verEl.textContent = 'Версия приложения: ' + window.AndroidApp.getAppVersion(); } catch (e) {}
+                }
+                if (updBtn && typeof window.AndroidApp.checkAppUpdateManual === 'function') {
+                    updBtn.style.display = 'inline-block';
+                }
             }
         }
         function hideSettingsModal() {
@@ -2514,21 +3093,80 @@
             if (!yandexToken) yandexToken = DEFAULT_YANDEX_TOKEN;
         }
 
+        const DAY_CACHE_MAX_AGE_DAYS = 45;
+        const DAY_CACHE_MAX_ENTRIES = 220;
+
+        function pruneDayCache(aggressive = false) {
+            if (!dayCache || typeof dayCache !== 'object') {
+                dayCache = {};
+                return false;
+            }
+            const nowMs = Date.now();
+            const maxAgeMs = (aggressive ? 14 : DAY_CACHE_MAX_AGE_DAYS) * 86400000;
+            const maxEntries = aggressive ? 80 : DAY_CACHE_MAX_ENTRIES;
+            const cutoffMs = nowMs - maxAgeMs;
+
+            const kept = [];
+            let removed = 0;
+            for (const [k, entry] of Object.entries(dayCache)) {
+                if (!entry || !entry.block) {
+                    removed++;
+                    continue;
+                }
+                const savedAt = Number(entry.savedAt) || 0;
+                const bDate = getBlockDate(entry.block);
+                const blockTs = bDate ? bDate.getTime() : savedAt;
+                if ((savedAt > 0 && savedAt < cutoffMs) || (blockTs > 0 && blockTs < cutoffMs)) {
+                    removed++;
+                    continue;
+                }
+                kept.push({ k, entry, sortTs: Math.max(savedAt, blockTs || 0) });
+            }
+
+            if (kept.length > maxEntries) {
+                kept.sort((a, b) => b.sortTs - a.sortTs);
+                removed += (kept.length - maxEntries);
+                kept.length = maxEntries;
+            }
+
+            if (removed > 0) {
+                const nextObj = {};
+                for (const item of kept) nextObj[item.k] = item.entry;
+                dayCache = nextObj;
+                return true;
+            }
+            return false;
+        }
+
         function saveCachedData() {
+            const times = lastScanTime.map(t => (t instanceof Date && !isNaN(t.getTime())) ? t.toISOString() : null);
             try {
                 localStorage.setItem(STORAGE_KEYS.CACHED_BLOCKS, JSON.stringify(blocksByFolder));
-                const times = lastScanTime.map(t => (t instanceof Date && !isNaN(t.getTime())) ? t.toISOString() : null);
                 localStorage.setItem(STORAGE_KEYS.CACHED_SCAN_TIME, JSON.stringify(times));
             } catch (e) {
-                console.warn('Не удалось сохранить кэш данных в localStorage:', e);
+                // При переполнении квоты чистим старый dayCache и повторяем сохранение
+                pruneDayCache(true);
+                try {
+                    localStorage.setItem(STORAGE_KEYS.DAY_CACHE, JSON.stringify(dayCache));
+                    localStorage.setItem(STORAGE_KEYS.CACHED_BLOCKS, JSON.stringify(blocksByFolder));
+                    localStorage.setItem(STORAGE_KEYS.CACHED_SCAN_TIME, JSON.stringify(times));
+                } catch (e2) {
+                    console.warn('Не удалось сохранить кэш данных в localStorage:', e2);
+                }
             }
         }
 
         function saveDayCache() {
+            pruneDayCache(false);
             try {
                 localStorage.setItem(STORAGE_KEYS.DAY_CACHE, JSON.stringify(dayCache));
             } catch (e) {
-                console.warn('Не удалось сохранить dayCache в localStorage:', e);
+                pruneDayCache(true);
+                try {
+                    localStorage.setItem(STORAGE_KEYS.DAY_CACHE, JSON.stringify(dayCache));
+                } catch (e2) {
+                    console.warn('Не удалось сохранить dayCache в localStorage:', e2);
+                }
             }
         }
 
@@ -2539,6 +3177,9 @@
                     const parsed = JSON.parse(raw);
                     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
                         dayCache = parsed;
+                        if (pruneDayCache(false)) {
+                            saveDayCache();
+                        }
                     }
                 }
             } catch (e) {
@@ -4527,6 +5168,8 @@
 
         function initializeApp() {
             initTheme();
+            initLivingBrandLogo();
+            initBrandOutlineFeedback();
             initBarcodeScanButtons();
 
             document.getElementById('themeToggle').addEventListener('click', function() {
@@ -4793,6 +5436,17 @@
                         window.AndroidApp.setServerUrl(val);
                     });
                 }
+                const updBtn = document.getElementById('checkAppUpdateBtn');
+                const verEl = document.getElementById('appVersionText');
+                if (verEl && typeof window.AndroidApp.getAppVersion === 'function') {
+                    try { verEl.textContent = 'Версия приложения: ' + window.AndroidApp.getAppVersion(); } catch (e) {}
+                }
+                if (updBtn && typeof window.AndroidApp.checkAppUpdateManual === 'function') {
+                    updBtn.style.display = 'inline-block';
+                    updBtn.addEventListener('click', function() {
+                        window.AndroidApp.checkAppUpdateManual();
+                    });
+                }
             }
             setupTouchGestures();
             const autoSwCheckboxEl = document.getElementById('autoSwitchEnabledCheckbox');
@@ -5041,13 +5695,11 @@
                 if (gestureMode === 'ptr') {
                     if (dy <= 0) {
                         currentPull = 0;
-                        if (headerLogoRays) headerLogoRays.style.transform = '';
+                        livingBrand.ptrRayOffset = 0;
                         return;
                     }
                     currentPull = Math.min(PTR_MAX, dy * 0.45);
-                    if (headerLogoRays) {
-                        headerLogoRays.style.transform = 'rotate(' + Math.round(currentPull * 2.5) + 'deg)';
-                    }
+                    livingBrand.ptrRayOffset = Math.round(currentPull * 2.8);
                 } else if (gestureMode === 'swipe' && swipeStage) {
                     const configured = getConfiguredIndexes();
                     if (configured.length <= 1) {
@@ -5077,7 +5729,7 @@
 
             async function finishTouchGesture(e) {
                 if (gestureMode === 'ptr') {
-                    if (headerLogoRays) headerLogoRays.style.transform = '';
+                    livingBrand.ptrRayOffset = 0;
                     if (currentPull >= PTR_THRESHOLD && !isPtrRefreshing && !isScanning) {
                         isPtrRefreshing = true;
                         setHeaderBrandLoading(true);
