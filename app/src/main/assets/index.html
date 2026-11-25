@@ -871,68 +871,152 @@
             transition: fill 0.6s ease;
         }
 
-        /* Сезонные сценки за окном внутри солнышка */
-        .season-scene {
-            opacity: 0;
-            transition: opacity 0.45s ease;
+        /* ==================== РЕАЛЬНАЯ ПОГОДА, ВРЕМЯ СУТОК И СЕЗОН (САРАТОВ) ==================== */
+        .brand-logo-wrap .brand-rays rect {
+            transition: fill 0.8s ease, opacity 0.8s ease;
         }
-        .brand-logo-wrap.season-summer .scene-summer,
-        .brand-logo-wrap.season-autumn .scene-autumn,
-        .brand-logo-wrap.season-winter .scene-winter,
-        .brand-logo-wrap.season-spring .scene-spring {
-            opacity: 1;
-        }
-        html.theme-new-year .brand-logo-wrap .season-scene { opacity: 0; }
-        html.theme-new-year .brand-logo-wrap .scene-newyear { opacity: 1; }
+        .brand-logo-wrap.tod-morning .brand-rays rect { fill: #FFAD60; }
+        .brand-logo-wrap.tod-day .brand-rays rect     { fill: #F69841; }
+        .brand-logo-wrap.tod-evening .brand-rays rect { fill: #FF7B54; }
+        .brand-logo-wrap.tod-night .brand-rays rect   { fill: #AFC4E8; opacity: 0.78; }
+        .brand-logo-wrap.weather-storm .brand-rays rect { fill: #8FA3BF; opacity: 0.85; }
+        .brand-logo-wrap.weather-fog .brand-rays rect   { opacity: 0.72; }
 
-        .brand-logo-wrap.season-summer .win-sky { fill: url(#hdr_sky_summer); }
-        .brand-logo-wrap.season-autumn .win-sky { fill: url(#hdr_sky_autumn); }
-        .brand-logo-wrap.season-winter .win-sky { fill: url(#hdr_sky_winter); }
-        .brand-logo-wrap.season-spring .win-sky { fill: url(#hdr_sky_spring); }
-        html.theme-new-year .brand-logo-wrap .win-sky { fill: url(#hdr_sky_newyear); }
+        /* Небо за окном по времени суток и погоде */
+        .brand-logo-wrap.tod-morning .win-sky { fill: url(#hdr_sky_morning); }
+        .brand-logo-wrap.tod-day .win-sky     { fill: url(#hdr_sky_day); }
+        .brand-logo-wrap.tod-evening .win-sky { fill: url(#hdr_sky_evening); }
+        .brand-logo-wrap.tod-night .win-sky   { fill: url(#hdr_sky_night); }
+        .brand-logo-wrap.weather-cloudy.tod-day .win-sky,
+        .brand-logo-wrap.weather-rain.tod-day .win-sky,
+        .brand-logo-wrap.weather-fog.tod-day .win-sky   { fill: url(#hdr_sky_overcast); }
+        .brand-logo-wrap.weather-snow.tod-day .win-sky  { fill: url(#hdr_sky_winter_day); }
+        .brand-logo-wrap.weather-storm .win-sky         { fill: url(#hdr_sky_storm); }
+        html.theme-new-year .brand-logo-wrap .win-sky   { fill: url(#hdr_sky_newyear); }
 
+        /* Листок по реальному времени года */
         .brand-logo-wrap.season-summer .brand-leaf-shape { fill: url(#hdr_leaf_summer); }
         .brand-logo-wrap.season-autumn .brand-leaf-shape { fill: url(#hdr_leaf_autumn); }
         .brand-logo-wrap.season-winter .brand-leaf-shape { fill: url(#hdr_leaf_winter); }
         .brand-logo-wrap.season-spring .brand-leaf-shape { fill: url(#hdr_leaf_spring); }
         html.theme-new-year .brand-logo-wrap .brand-leaf-shape { fill: url(#hdr_leaf_newyear); }
 
-        .winter-frost-dot { opacity: 0; transition: opacity 0.5s ease; }
+        .winter-frost-dot { opacity: 0; transition: opacity 0.6s ease; }
         .brand-logo-wrap.season-winter .winter-frost-dot,
+        .brand-logo-wrap.is-freezing .winter-frost-dot,
         html.theme-new-year .brand-logo-wrap .winter-frost-dot { opacity: 0.95; }
 
-        /* Летнее облачко */
-        .summer-cloud { animation: cloudDrift 7s linear infinite; }
+        /* Базовая видимость погодных слоёв внутри окна */
+        .wx-layer {
+            opacity: 0;
+            transition: opacity 0.55s ease;
+        }
+        /* Небесные тела (солнце / луна и звёзды) */
+        .brand-logo-wrap.tod-day.weather-clear .wx-sun-day,
+        .brand-logo-wrap.tod-day.weather-partly .wx-sun-day,
+        .brand-logo-wrap.tod-morning.weather-clear .wx-sun-morning,
+        .brand-logo-wrap.tod-morning.weather-partly .wx-sun-morning,
+        .brand-logo-wrap.tod-evening.weather-clear .wx-sun-evening,
+        .brand-logo-wrap.tod-evening.weather-partly .wx-sun-evening { opacity: 1; }
+
+        .brand-logo-wrap.tod-night.weather-clear .wx-night-sky,
+        .brand-logo-wrap.tod-night.weather-partly .wx-night-sky { opacity: 1; }
+        .brand-logo-wrap.tod-night.weather-cloudy .wx-night-sky { opacity: 0.45; }
+
+        /* Облака */
+        .brand-logo-wrap.weather-partly .wx-clouds-light { opacity: 0.95; }
+        .brand-logo-wrap.weather-cloudy .wx-clouds-heavy,
+        .brand-logo-wrap.weather-rain .wx-clouds-heavy,
+        .brand-logo-wrap.weather-snow .wx-clouds-heavy   { opacity: 1; }
+        .brand-logo-wrap.weather-storm .wx-clouds-storm  { opacity: 1; }
+        .brand-logo-wrap.tod-night .wx-cloud-fill        { fill: #637692; }
+        .brand-logo-wrap.tod-evening .wx-cloud-fill      { fill: #F5C3A6; }
+        .brand-logo-wrap.tod-morning .wx-cloud-fill      { fill: #FFE1C6; }
+
+        /* Осадки и явления */
+        .brand-logo-wrap.weather-fog .wx-fog       { opacity: 1; }
+        .brand-logo-wrap.weather-rain .wx-rain,
+        .brand-logo-wrap.weather-storm .wx-rain    { opacity: 1; }
+        .brand-logo-wrap.weather-snow .wx-snow     { opacity: 1; }
+        .brand-logo-wrap.weather-storm .wx-lightning { opacity: 1; }
+        .brand-logo-wrap.is-windy .wx-wind         { opacity: 0.92; }
+
+        /* Сезонные штрихи (птички весной/летом, осенний листик, сугроб зимой, светлячки летней ночью) */
+        .brand-logo-wrap.season-winter .wx-snow-ground,
+        .brand-logo-wrap.weather-snow .wx-snow-ground { opacity: 0.95; }
+
+        .brand-logo-wrap.season-spring.weather-clear:not(.tod-night) .wx-birds,
+        .brand-logo-wrap.season-spring.weather-partly:not(.tod-night) .wx-birds,
+        .brand-logo-wrap.season-summer.weather-clear:not(.tod-night) .wx-birds { opacity: 1; }
+
+        .brand-logo-wrap.season-autumn:not(.weather-storm):not(.weather-snow) .wx-autumn-leaves { opacity: 0.95; }
+
+        .brand-logo-wrap.season-summer.tod-night.weather-clear .wx-fireflies,
+        .brand-logo-wrap.season-spring.tod-night.weather-clear .wx-fireflies { opacity: 1; }
+
+        /* В новогоднюю тему поверх обычной погоды показываем праздничную ёлку и снежок в окне */
+        html.theme-new-year .brand-logo-wrap .wx-layer { opacity: 0; }
+        html.theme-new-year .brand-logo-wrap .wx-newyear { opacity: 1; }
+
+        /* Анимации погодных явлений */
+        .wx-cloud-drift { animation: cloudDrift 7.5s linear infinite; }
+        .wx-cloud-drift-slow { animation: cloudDrift 10.5s linear infinite; animation-delay: -4s; }
+        .brand-logo-wrap.is-windy .wx-cloud-drift { animation-duration: 3.8s; }
+        .brand-logo-wrap.is-windy .wx-cloud-drift-slow { animation-duration: 5.2s; }
         @keyframes cloudDrift {
-            0% { transform: translateX(-14px); opacity: 0.4; }
-            20%, 80% { opacity: 0.95; }
-            100% { transform: translateX(18px); opacity: 0.4; }
+            0%   { transform: translateX(-16px); opacity: 0.45; }
+            20%, 80% { opacity: 0.96; }
+            100% { transform: translateX(18px); opacity: 0.45; }
         }
 
-        /* Осенний дождь */
-        .rain-drop {
-            stroke: #4A90D9;
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            animation: rainFall 0.85s linear infinite;
+        .wx-star { animation: starTwinkle 2.4s ease-in-out infinite alternate; }
+        .wx-star.st2 { animation-delay: -0.7s; animation-duration: 1.9s; }
+        .wx-star.st3 { animation-delay: -1.4s; animation-duration: 2.8s; }
+        .wx-star.st4 { animation-delay: -2.0s; animation-duration: 2.1s; }
+        @keyframes starTwinkle {
+            0%   { opacity: 0.28; }
+            100% { opacity: 1; }
         }
-        .rain-drop.r2 { animation-delay: -0.22s; animation-duration: 0.78s; }
-        .rain-drop.r3 { animation-delay: -0.45s; animation-duration: 0.92s; }
-        .rain-drop.r4 { animation-delay: -0.64s; animation-duration: 0.8s; }
-        .rain-drop.r5 { animation-delay: -0.12s; animation-duration: 0.88s; }
-        .rain-drop.r6 { animation-delay: -0.52s; animation-duration: 0.75s; }
+
+        .wx-fog-band { animation: fogDrift 6.5s ease-in-out infinite alternate; }
+        .wx-fog-band.f2 { animation-delay: -2.2s; animation-duration: 8s; }
+        .wx-fog-band.f3 { animation-delay: -4.1s; animation-duration: 7.2s; }
+        @keyframes fogDrift {
+            0%   { transform: translateX(-7px); opacity: 0.52; }
+            100% { transform: translateX(7px); opacity: 0.86; }
+        }
+
+        .rain-drop {
+            stroke: #56A8F5;
+            stroke-width: 1.65;
+            stroke-linecap: round;
+            animation: rainFall 0.82s linear infinite;
+        }
+        .brand-logo-wrap.tod-night .rain-drop { stroke: #9CC8FF; }
+        .brand-logo-wrap.is-windy .rain-drop { animation-name: rainFallWindy; animation-duration: 0.62s; }
+        .rain-drop.r2 { animation-delay: -0.22s; animation-duration: 0.76s; }
+        .rain-drop.r3 { animation-delay: -0.45s; animation-duration: 0.88s; }
+        .rain-drop.r4 { animation-delay: -0.64s; animation-duration: 0.78s; }
+        .rain-drop.r5 { animation-delay: -0.12s; animation-duration: 0.84s; }
+        .rain-drop.r6 { animation-delay: -0.52s; animation-duration: 0.72s; }
         @keyframes rainFall {
             0%   { transform: translate(3px, -16px); opacity: 0; }
             20%  { opacity: 0.95; }
             85%  { opacity: 0.9; }
             100% { transform: translate(-5px, 24px); opacity: 0; }
         }
+        @keyframes rainFallWindy {
+            0%   { transform: translate(11px, -16px); opacity: 0; }
+            20%  { opacity: 0.95; }
+            85%  { opacity: 0.9; }
+            100% { transform: translate(-13px, 24px); opacity: 0; }
+        }
 
-        /* Зимний и новогодний снег в окне */
         .snow-flake {
             fill: #FFFFFF;
             animation: snowFall 2.4s ease-in-out infinite;
         }
+        .brand-logo-wrap.is-windy .snow-flake { animation-name: snowFallWindy; animation-duration: 1.75s; }
         .snow-flake.s2 { animation-delay: -0.55s; animation-duration: 2.1s; }
         .snow-flake.s3 { animation-delay: -1.1s; animation-duration: 2.7s; }
         .snow-flake.s4 { animation-delay: -1.65s; animation-duration: 2.25s; }
@@ -945,18 +1029,61 @@
             85%  { opacity: 0.9; }
             100% { transform: translate(-3px, 23px); opacity: 0; }
         }
+        @keyframes snowFallWindy {
+            0%   { transform: translate(12px, -14px); opacity: 0; }
+            18%  { opacity: 1; }
+            100% { transform: translate(-14px, 23px); opacity: 0; }
+        }
 
-        /* Весенние птички */
+        .wx-bolt {
+            fill: #FFE866;
+            stroke: #FFFFFF;
+            stroke-width: 0.6;
+            animation: lightningFlash 3.6s ease-in-out infinite;
+        }
+        .wx-flash-bg {
+            fill: #FFF7C2;
+            animation: lightningSkyFlash 3.6s ease-in-out infinite;
+        }
+        @keyframes lightningFlash {
+            0%, 74%, 82%, 86%, 100% { opacity: 0; }
+            76%, 80% { opacity: 1; }
+            84% { opacity: 0.75; }
+        }
+        @keyframes lightningSkyFlash {
+            0%, 74%, 82%, 86%, 100% { opacity: 0; }
+            76% { opacity: 0.55; }
+            80% { opacity: 0.35; }
+            84% { opacity: 0.45; }
+        }
+
+        .wx-wind-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.85);
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-dasharray: 14 26;
+            animation: windGust 1.5s linear infinite;
+        }
+        .wx-wind-line.w2 { animation-delay: -0.55s; animation-duration: 1.3s; }
+        .wx-wind-line.w3 { animation-delay: -1.05s; animation-duration: 1.7s; }
+        @keyframes windGust {
+            0%   { stroke-dashoffset: 40; opacity: 0; }
+            25%  { opacity: 0.95; }
+            80%  { opacity: 0.85; }
+            100% { stroke-dashoffset: -12; opacity: 0; }
+        }
+
         .spring-bird {
             fill: none;
             stroke: #37474F;
             stroke-width: 1.75;
             stroke-linecap: round;
             stroke-linejoin: round;
-            animation: birdGlide 3.4s linear infinite;
+            animation: birdGlide 3.6s linear infinite;
         }
-        .spring-bird.b2 { animation-delay: -1.15s; animation-duration: 3.9s; }
-        .spring-bird.b3 { animation-delay: -2.3s; animation-duration: 3.1s; }
+        .spring-bird.b2 { animation-delay: -1.2s; animation-duration: 4.1s; }
+        .spring-bird.b3 { animation-delay: -2.4s; animation-duration: 3.3s; }
         @keyframes birdGlide {
             0%   { transform: translate(-20px, 5px) scale(0.85); opacity: 0; }
             15%  { opacity: 1; }
@@ -965,54 +1092,66 @@
             100% { transform: translate(22px, 3px) scale(0.88); opacity: 0; }
         }
 
-        /* Новогодняя шапочка и ёлочные огоньки внутри лейбла */
+        .autumn-fall-leaf {
+            animation: autumnLeafDrift 3.8s ease-in-out infinite;
+        }
+        .autumn-fall-leaf.al2 { animation-delay: -1.9s; animation-duration: 4.3s; }
+        @keyframes autumnLeafDrift {
+            0%   { transform: translate(8px, -16px); opacity: 0; }
+            18%  { opacity: 0.95; }
+            50%  { transform: translate(-5px, 4px); opacity: 0.95; }
+            85%  { opacity: 0.9; }
+            100% { transform: translate(6px, 24px); opacity: 0; }
+        }
+
+        .wx-firefly {
+            fill: #FFF176;
+            animation: fireflyFloat 3.2s ease-in-out infinite alternate;
+        }
+        .wx-firefly.ff2 { animation-delay: -1.1s; animation-duration: 2.7s; }
+        .wx-firefly.ff3 { animation-delay: -2.0s; animation-duration: 3.6s; }
+        @keyframes fireflyFloat {
+            0%   { transform: translate(-3px, 3px); opacity: 0.25; }
+            50%  { opacity: 1; }
+            100% { transform: translate(4px, -4px); opacity: 0.4; }
+        }
+
+        /* Всплывающая мини-подсказка погоды Саратова при нажатии на логотип */
+        .brand-weather-pill {
+            position: fixed;
+            z-index: 2600;
+            pointer-events: none;
+            background: rgba(24, 32, 48, 0.92);
+            color: #FFFFFF;
+            border: 0.0625rem solid rgba(254, 192, 53, 0.5);
+            border-radius: 999px;
+            padding: 0.34rem 0.78rem;
+            font-size: 0.78rem;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 5px 14px rgba(0,0,0,0.28);
+            opacity: 0;
+            transform: translateY(-4px) scale(0.95);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        .brand-weather-pill.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Новогодняя тема (сюрприз — включается с сервера, без гирлянды и без пункта в настройках) */
         .ny-santa-hat {
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.45s ease;
         }
-        html.theme-new-year .ny-santa-hat {
-            opacity: 1;
-        }
-        .ny-ornament {
-            animation: nyBlink 1.6s ease-in-out infinite alternate;
-        }
+        html.theme-new-year .ny-santa-hat { opacity: 1; }
+        .ny-ornament { animation: nyBlink 1.6s ease-in-out infinite alternate; }
         .ny-ornament.o2 { animation-delay: -0.5s; }
         .ny-ornament.o3 { animation-delay: -1.0s; }
         .ny-ornament.o4 { animation-delay: -1.3s; }
         @keyframes nyBlink {
             0% { opacity: 0.45; }
-            100% { opacity: 1; }
-        }
-
-        /* Новогодняя гирлянда в шапке */
-        .ny-garland {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1.45rem;
-            pointer-events: none;
-            z-index: 4;
-            overflow: hidden;
-        }
-        html.theme-new-year .ny-garland {
-            display: block;
-        }
-        .ny-garland svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .ny-bulb {
-            animation: nyBulbTwinkle 1.8s ease-in-out infinite alternate;
-        }
-        .ny-bulb.b2 { animation-delay: -0.45s; }
-        .ny-bulb.b3 { animation-delay: -0.9s; }
-        .ny-bulb.b4 { animation-delay: -1.35s; }
-        @keyframes nyBulbTwinkle {
-            0% { opacity: 0.4; }
             100% { opacity: 1; }
         }
 
@@ -1025,9 +1164,7 @@
             z-index: 3;
             overflow: hidden;
         }
-        html.theme-new-year .ny-snow-layer {
-            display: block;
-        }
+        html.theme-new-year .ny-snow-layer { display: block; }
         .ny-bg-flake {
             position: absolute;
             top: -14px;
@@ -1123,26 +1260,12 @@
     <div class="brand-under-layer" id="brandUnderLayer" aria-hidden="true"></div>
     <div class="ny-snow-layer" id="nySnowLayer" aria-hidden="true"></div>
     <div class="brand-drag-layer" id="brandDragLayer" aria-hidden="true"></div>
+    <div class="brand-weather-pill" id="brandWeatherPill" aria-hidden="true"></div>
     <div class="swipe-toast" id="swipeToast" aria-hidden="true"></div>
     <div class="container" id="mainContainer">
         <div class="header" id="mainHeader">
-            <div class="ny-garland" aria-hidden="true">
-                <svg viewBox="0 0 360 24" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0,4 Q45,16 90,6 Q135,16 180,6 Q225,16 270,6 Q315,16 360,4" fill="none" stroke="#2D5A27" stroke-width="1.6" opacity="0.85"/>
-                    <circle class="ny-bulb b1" cx="26" cy="10" r="3.2" fill="#FF4D4D"/>
-                    <circle class="ny-bulb b2" cx="62" cy="11" r="3.2" fill="#FFD700"/>
-                    <circle class="ny-bulb b3" cx="98" cy="8" r="3.2" fill="#2ECC71"/>
-                    <circle class="ny-bulb b4" cx="134" cy="11" r="3.2" fill="#56CCF2"/>
-                    <circle class="ny-bulb b1" cx="170" cy="8" r="3.2" fill="#FFD700"/>
-                    <circle class="ny-bulb b2" cx="206" cy="11" r="3.2" fill="#FF4D4D"/>
-                    <circle class="ny-bulb b3" cx="242" cy="10" r="3.2" fill="#56CCF2"/>
-                    <circle class="ny-bulb b4" cx="278" cy="8" r="3.2" fill="#2ECC71"/>
-                    <circle class="ny-bulb b1" cx="314" cy="11" r="3.2" fill="#FFD700"/>
-                    <circle class="ny-bulb b2" cx="344" cy="8" r="3.2" fill="#FF4D4D"/>
-                </svg>
-            </div>
             <div class="header-roam-layer" id="headerRoamLayer">
-                <div class="brand-logo-wrap season-summer" id="headerBrandLogo" title="Нажмите или потяните на плитки"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <div class="brand-logo-wrap season-summer tod-day weather-clear" id="headerBrandLogo" title="Погода в Саратове — нажмите или потяните на плитки"><svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <defs>
   <clipPath id="winGlassClip"><circle cx="50" cy="50" r="22.4"/></clipPath>
   <linearGradient id="hdr_og" x1="15%" y1="10%" x2="85%" y2="90%"><stop offset="0%" stop-color="#FEC035"/><stop offset="45%" stop-color="#FB963B"/><stop offset="100%" stop-color="#EA8225"/></linearGradient>
@@ -1151,46 +1274,140 @@
   <linearGradient id="hdr_leaf_winter" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#F5FAFF"/><stop offset="55%" stop-color="#B3E5FC"/><stop offset="100%" stop-color="#5CACEE"/></linearGradient>
   <linearGradient id="hdr_leaf_spring" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#D4F07A"/><stop offset="55%" stop-color="#8BC34A"/><stop offset="100%" stop-color="#4CAF50"/></linearGradient>
   <linearGradient id="hdr_leaf_newyear" x1="10%" y1="10%" x2="90%" y2="90%"><stop offset="0%" stop-color="#5CD68D"/><stop offset="55%" stop-color="#27AE60"/><stop offset="100%" stop-color="#145A32"/></linearGradient>
-  <linearGradient id="hdr_sky_summer" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C8EEFF"/><stop offset="100%" stop-color="#FFF7D6"/></linearGradient>
-  <linearGradient id="hdr_sky_autumn" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#B8C7D9"/><stop offset="100%" stop-color="#E8DFD1"/></linearGradient>
-  <linearGradient id="hdr_sky_winter" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#A8D1F5"/><stop offset="100%" stop-color="#EDF6FF"/></linearGradient>
-  <linearGradient id="hdr_sky_spring" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#BCEBFF"/><stop offset="100%" stop-color="#ECFFE8"/></linearGradient>
+  <linearGradient id="hdr_sky_morning" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8EC5FC"/><stop offset="55%" stop-color="#FFD1A9"/><stop offset="100%" stop-color="#FFF0C2"/></linearGradient>
+  <linearGradient id="hdr_sky_day" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6EC6FF"/><stop offset="65%" stop-color="#BCE8FF"/><stop offset="100%" stop-color="#FFF7DF"/></linearGradient>
+  <linearGradient id="hdr_sky_evening" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3E497A"/><stop offset="52%" stop-color="#D96B52"/><stop offset="100%" stop-color="#FFB86C"/></linearGradient>
+  <linearGradient id="hdr_sky_night" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0B142B"/><stop offset="60%" stop-color="#1A2C54"/><stop offset="100%" stop-color="#2A4270"/></linearGradient>
+  <linearGradient id="hdr_sky_overcast" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#8E9EAD"/><stop offset="100%" stop-color="#CFD8DF"/></linearGradient>
+  <linearGradient id="hdr_sky_winter_day" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#9AC6EC"/><stop offset="100%" stop-color="#EBF5FF"/></linearGradient>
+  <linearGradient id="hdr_sky_storm" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1F2937"/><stop offset="100%" stop-color="#4B5563"/></linearGradient>
   <linearGradient id="hdr_sky_newyear" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#13294B"/><stop offset="100%" stop-color="#2A548A"/></linearGradient>
   <linearGradient id="hdr_sash_glass" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.52"/><stop offset="45%" stop-color="#DDF4FF" stop-opacity="0.22"/><stop offset="100%" stop-color="#B8E4FF" stop-opacity="0.34"/></linearGradient>
 </defs>
 <g class="brand-rays" id="headerBrandRays"><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(0 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(15 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(30 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(45 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(60 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(75 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(90 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(105 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(120 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(135 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(150 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(165 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(180 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(195 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(210 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(225 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(240 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(255 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(270 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(285 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(300 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(315 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(330 50 50)"/><rect x="48.55" y="4.5" width="2.9" height="12.2" rx="0.9" fill="#F69841" transform="rotate(345 50 50)"/></g>
 <g clip-path="url(#winGlassClip)">
   <circle cx="50" cy="50" r="23" class="win-sky"/>
-  <g class="season-scene scene-summer">
-    <circle cx="38" cy="36" r="5" fill="#FFF3B0" opacity="0.92"/>
-    <g class="summer-cloud">
-      <ellipse cx="44" cy="61" rx="7" ry="3.4" fill="#FFFFFF" opacity="0.88"/>
-      <ellipse cx="48" cy="59.5" rx="5" ry="3" fill="#FFFFFF" opacity="0.92"/>
+
+  <!-- Солнце: день / утро / вечер -->
+  <g class="wx-layer wx-sun-day">
+    <circle cx="40" cy="38" r="6.5" fill="#FFF3B0" opacity="0.5"/>
+    <circle cx="40" cy="38" r="4.3" fill="#FFE066"/>
+  </g>
+  <g class="wx-layer wx-sun-morning">
+    <circle cx="37" cy="55" r="8.2" fill="#FFE8A3" opacity="0.48"/>
+    <circle cx="37" cy="55" r="5.0" fill="#FFD166"/>
+  </g>
+  <g class="wx-layer wx-sun-evening">
+    <circle cx="62" cy="56" r="8.4" fill="#FF9E64" opacity="0.5"/>
+    <circle cx="62" cy="56" r="5.2" fill="#FF7043"/>
+  </g>
+
+  <!-- Ночное небо: луна и мерцающие звёзды -->
+  <g class="wx-layer wx-night-sky">
+    <path d="M45 33 A7.4 7.4 0 1 0 45 47.6 A5.7 5.7 0 1 1 45 33 Z" fill="#FFF4B8"/>
+    <circle class="wx-star st1" cx="58" cy="36" r="1.25" fill="#FFFFFF"/>
+    <circle class="wx-star st2" cx="64" cy="43" r="1.0" fill="#FFEFA8"/>
+    <circle class="wx-star st3" cx="35" cy="53" r="1.15" fill="#FFFFFF"/>
+    <circle class="wx-star st4" cx="55" cy="57" r="1.05" fill="#DDF0FF"/>
+    <circle class="wx-star st2" cx="62" cy="59" r="0.95" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Летние/весенние светлячки ясной ночью -->
+  <g class="wx-layer wx-fireflies">
+    <circle class="wx-firefly ff1" cx="38" cy="61" r="1.35"/>
+    <circle class="wx-firefly ff2" cx="52" cy="64" r="1.2"/>
+    <circle class="wx-firefly ff3" cx="61" cy="56" r="1.3"/>
+  </g>
+
+  <!-- Лёгкие облака (переменная облачность) -->
+  <g class="wx-layer wx-clouds-light">
+    <g class="wx-cloud-drift">
+      <ellipse class="wx-cloud-fill" cx="46" cy="57" rx="8.5" ry="4" fill="#FFFFFF" opacity="0.9"/>
+      <ellipse class="wx-cloud-fill" cx="51" cy="54.8" rx="5.5" ry="3.4" fill="#FFFFFF" opacity="0.95"/>
     </g>
   </g>
-  <g class="season-scene scene-autumn">
-    <line class="rain-drop r1" x1="36" y1="34" x2="34" y2="41"/>
-    <line class="rain-drop r2" x1="45" y1="32" x2="43" y2="39"/>
-    <line class="rain-drop r3" x1="56" y1="36" x2="54" y2="43"/>
-    <line class="rain-drop r4" x1="63" y1="33" x2="61" y2="40"/>
-    <line class="rain-drop r5" x1="41" y1="49" x2="39" y2="56"/>
-    <line class="rain-drop r6" x1="59" y1="50" x2="57" y2="57"/>
+
+  <!-- Плотные облака (облачно / дождь / снег) -->
+  <g class="wx-layer wx-clouds-heavy">
+    <g class="wx-cloud-drift-slow">
+      <ellipse class="wx-cloud-fill" cx="42" cy="39" rx="10" ry="4.6" fill="#E3EAF2" opacity="0.94"/>
+      <ellipse class="wx-cloud-fill" cx="49" cy="37" rx="7.5" ry="4.2" fill="#F2F6FA" opacity="0.95"/>
+    </g>
+    <g class="wx-cloud-drift">
+      <ellipse class="wx-cloud-fill" cx="56" cy="43" rx="9.5" ry="4.4" fill="#DCE5EF" opacity="0.92"/>
+      <ellipse class="wx-cloud-fill" cx="61" cy="41" rx="6.5" ry="3.8" fill="#EEF3F8" opacity="0.94"/>
+    </g>
   </g>
-  <g class="season-scene scene-winter">
+
+  <!-- Грозовые тучи -->
+  <g class="wx-layer wx-clouds-storm">
+    <g class="wx-cloud-drift">
+      <ellipse cx="44" cy="38" rx="11" ry="5" fill="#374151"/>
+      <ellipse cx="55" cy="40" rx="10.5" ry="4.8" fill="#1F2937"/>
+      <ellipse cx="49" cy="35.5" rx="8" ry="4.2" fill="#4B5563"/>
+    </g>
+  </g>
+
+  <!-- Туман -->
+  <g class="wx-layer wx-fog">
+    <rect class="wx-fog-band f1" x="24" y="38" width="52" height="5.5" rx="2.75" fill="#FFFFFF" opacity="0.72"/>
+    <rect class="wx-fog-band f2" x="22" y="48" width="56" height="6" rx="3" fill="#EDF2F7" opacity="0.8"/>
+    <rect class="wx-fog-band f3" x="25" y="59" width="50" height="5.5" rx="2.75" fill="#FFFFFF" opacity="0.74"/>
+  </g>
+
+  <!-- Сугроб внизу окна (зимой и в снегопад) -->
+  <g class="wx-layer wx-snow-ground">
     <path d="M26 67 Q38 61 50 65 Q62 61 74 67 L74 75 L26 75 Z" fill="#FFFFFF" opacity="0.95"/>
-    <circle class="snow-flake s1" cx="35" cy="36" r="2.1"/>
-    <circle class="snow-flake s2" cx="44" cy="33" r="1.7"/>
-    <circle class="snow-flake s3" cx="55" cy="37" r="2.2"/>
-    <circle class="snow-flake s4" cx="63" cy="34" r="1.6"/>
-    <circle class="snow-flake s5" cx="40" cy="51" r="1.9"/>
-    <circle class="snow-flake s6" cx="58" cy="52" r="2.0"/>
   </g>
-  <g class="season-scene scene-spring">
-    <path class="spring-bird b1" d="M36 41 Q39 37 42 41 Q45 37 48 41"/>
+
+  <!-- Дождь -->
+  <g class="wx-layer wx-rain">
+    <line class="rain-drop r1" x1="36" y1="40" x2="34" y2="47"/>
+    <line class="rain-drop r2" x1="45" y1="38" x2="43" y2="45"/>
+    <line class="rain-drop r3" x1="56" y1="41" x2="54" y2="48"/>
+    <line class="rain-drop r4" x1="63" y1="39" x2="61" y2="46"/>
+    <line class="rain-drop r5" x1="41" y1="53" x2="39" y2="60"/>
+    <line class="rain-drop r6" x1="59" y1="54" x2="57" y2="61"/>
+  </g>
+
+  <!-- Снег -->
+  <g class="wx-layer wx-snow">
+    <circle class="snow-flake s1" cx="35" cy="38" r="2.1"/>
+    <circle class="snow-flake s2" cx="44" cy="35" r="1.7"/>
+    <circle class="snow-flake s3" cx="55" cy="39" r="2.2"/>
+    <circle class="snow-flake s4" cx="63" cy="36" r="1.6"/>
+    <circle class="snow-flake s5" cx="40" cy="52" r="1.9"/>
+    <circle class="snow-flake s6" cx="58" cy="53" r="2.0"/>
+  </g>
+
+  <!-- Молния и вспышка грозы -->
+  <g class="wx-layer wx-lightning">
+    <circle class="wx-flash-bg" cx="50" cy="50" r="23"/>
+    <polygon class="wx-bolt" points="51,40 44,53 50,53 46,66 57,50 51,50"/>
+  </g>
+
+  <!-- Порывы ветра -->
+  <g class="wx-layer wx-wind">
+    <path class="wx-wind-line w1" d="M27 42 Q40 38 54 42 T72 40"/>
+    <path class="wx-wind-line w2" d="M26 53 Q42 49 56 53 T73 51"/>
+    <path class="wx-wind-line w3" d="M29 63 Q43 60 58 63 T71 61"/>
+  </g>
+
+  <!-- Весенне-летние птички -->
+  <g class="wx-layer wx-birds">
+    <path class="spring-bird b1" d="M36 42 Q39 38 42 42 Q45 38 48 42"/>
     <path class="spring-bird b2" d="M47 59 Q49.5 55.5 52 59 Q54.5 55.5 57 59"/>
-    <path class="spring-bird b3" d="M41 34 Q43 31 45 34 Q47 31 49 34"/>
+    <path class="spring-bird b3" d="M41 35 Q43 32 45 35 Q47 32 49 35"/>
   </g>
-  <g class="season-scene scene-newyear">
+
+  <!-- Осенние падающие листья -->
+  <g class="wx-layer wx-autumn-leaves">
+    <ellipse class="autumn-fall-leaf al1" cx="42" cy="44" rx="2.7" ry="1.5" fill="#F5A623" transform="rotate(-25 42 44)"/>
+    <ellipse class="autumn-fall-leaf al2" cx="57" cy="48" rx="2.5" ry="1.4" fill="#D35400" transform="rotate(20 57 48)"/>
+  </g>
+
+  <!-- Новогодняя ёлка (сюрприз при включении с сервера) -->
+  <g class="wx-layer wx-newyear">
     <path d="M26 68 Q38 63 50 66 Q62 63 74 68 L74 75 L26 75 Z" fill="#FFFFFF" opacity="0.95"/>
     <rect x="48.2" y="61" width="3.6" height="6" fill="#7B4B2A"/>
     <polygon points="50,35 39,50 61,50" fill="#1E8449"/>
@@ -1378,16 +1595,6 @@
                         <label for="darkThemeCheckbox" style="font-weight: bold; margin:0;">Тёмная тема</label>
                     </div>
                     <div class="hint">Тёмное оформление экрана. Также переключается кнопкой в шапке.</div>
-                </div>
-
-                <div class="settings-group">
-                    <label for="newYearThemeMode">Новогодняя тема</label>
-                    <select id="newYearThemeMode" style="width:100%; padding:0.55rem 0.65rem; border:0.125rem solid var(--border-input); border-radius:0.375rem; font-size:0.95rem; background:var(--bg-input); color:var(--text-primary);">
-                        <option value="auto">Авто (по флажку с сервера)</option>
-                        <option value="on">Включена (просмотр)</option>
-                        <option value="off">Выключена</option>
-                    </select>
-                    <div class="hint" id="newYearThemeHint">Управляется флажком на сервере (и через cache.json на Яндекс Диске). Сейчас от сервера: выкл.</div>
                 </div>
 
                 <div class="settings-group">
@@ -1699,10 +1906,8 @@
             }
         }
 
-        // ==================== НОВОГОДНЯЯ ТЕМА (УПРАВЛЯЕТСЯ С СЕРВЕРА) ====================
-        const LS_NY_MODE_KEY = 'monitoring_new_year_mode';     // 'auto' | 'on' | 'off'
-        const LS_NY_SERVER_KEY = 'monitoring_new_year_server'; // 'true' | 'false'
-        let newYearMode = 'auto';
+        // ==================== НОВОГОДНЯЯ ТЕМА (СЮРПРИЗ — ТОЛЬКО С СЕРВЕРА) ====================
+        const LS_NY_SERVER_KEY = 'monitoring_new_year_server';
         let newYearServerFlag = false;
         let newYearActive = false;
 
@@ -1726,42 +1931,23 @@
         }
 
         function updateNewYearThemeState() {
-            const active = (newYearMode === 'on') ? true : (newYearMode === 'off' ? false : !!newYearServerFlag);
-            newYearActive = active;
-            document.documentElement.classList.toggle('theme-new-year', active);
-            if (active) ensureNySnowFlakes();
-            const hint = document.getElementById('newYearThemeHint');
-            if (hint) {
-                hint.textContent = 'Управляется флажком на сервере (и через cache.json на Яндекс Диске). Сейчас от сервера: ' +
-                    (newYearServerFlag ? 'вкл.' : 'выкл.');
-            }
+            newYearActive = !!newYearServerFlag;
+            document.documentElement.classList.toggle('theme-new-year', newYearActive);
+            if (newYearActive) ensureNySnowFlakes();
         }
 
         function initNewYearTheme() {
-            const savedMode = localStorage.getItem(LS_NY_MODE_KEY);
-            if (savedMode === 'auto' || savedMode === 'on' || savedMode === 'off') {
-                newYearMode = savedMode;
-            }
             newYearServerFlag = localStorage.getItem(LS_NY_SERVER_KEY) === 'true';
             updateNewYearThemeState();
         }
 
         function applyServerNewYearFlag(val) {
             if (typeof val !== 'boolean') return;
-            if (newYearServerFlag !== val) {
-                newYearServerFlag = val;
-                localStorage.setItem(LS_NY_SERVER_KEY, String(val));
-                updateNewYearThemeState();
-            } else {
-                localStorage.setItem(LS_NY_SERVER_KEY, String(val));
-            }
+            const changed = (newYearServerFlag !== val);
+            newYearServerFlag = val;
+            localStorage.setItem(LS_NY_SERVER_KEY, String(val));
+            if (changed) updateNewYearThemeState();
         }
-
-        window.setNewYearTheme = function(enabled) {
-            newYearMode = enabled ? 'on' : 'off';
-            localStorage.setItem(LS_NY_MODE_KEY, newYearMode);
-            updateNewYearThemeState();
-        };
 
         async function fetchServerUiConfig() {
             if (!isLocalNetworkAvailable()) return;
@@ -1777,9 +1963,335 @@
                 if (typeof flag === 'boolean') {
                     applyServerNewYearFlag(flag);
                 }
+                if (d.weather && typeof d.weather === 'object') {
+                    applyExternalWeatherPayload(d.weather);
+                }
             } catch (e) {
                 // Сервер пока не поддерживает /api/ui-config — тихо игнорируем
             }
+        }
+
+        // ==================== РЕАЛЬНАЯ ПОГОДА И ВРЕМЯ СУТОК (САРАТОВ, UTC+4) ====================
+        const SARATOV_LAT = 51.5336;
+        const SARATOV_LON = 46.0343;
+        const SARATOV_TZ_OFFSET_MIN = 240; // UTC+4 (постоянное саратовское время)
+        const LS_WEATHER_KEY = 'monitoring_saratov_weather_v1';
+        const WEATHER_REFRESH_MS = 20 * 60 * 1000; // обновление раз в 20 минут
+
+        const saratovWeather = {
+            season: 'autumn',       // 'winter' | 'spring' | 'summer' | 'autumn'
+            timeOfDay: 'day',       // 'morning' | 'day' | 'evening' | 'night'
+            condition: 'clear',     // 'clear' | 'partly' | 'cloudy' | 'fog' | 'rain' | 'snow' | 'storm'
+            conditionRu: 'Ясно',
+            tempC: null,
+            windKmh: 0,
+            windMs: 0,
+            isWindy: false,
+            sunriseMin: null,       // минуты от полуночи по Саратову
+            sunsetMin: null,
+            updatedAt: 0,
+            source: 'clock'
+        };
+
+        function getSaratovNowParts() {
+            const shifted = new Date(Date.now() + SARATOV_TZ_OFFSET_MIN * 60000);
+            return {
+                year: shifted.getUTCFullYear(),
+                month: shifted.getUTCMonth() + 1, // 1..12
+                day: shifted.getUTCDate(),
+                hour: shifted.getUTCHours(),
+                minute: shifted.getUTCMinutes(),
+                minsOfDay: shifted.getUTCHours() * 60 + shifted.getUTCMinutes()
+            };
+        }
+
+        function computeRealSeasonForMonth(month1to12) {
+            if (month1to12 === 12 || month1to12 <= 2) return 'winter';
+            if (month1to12 >= 3 && month1to12 <= 5) return 'spring';
+            if (month1to12 >= 6 && month1to12 <= 8) return 'summer';
+            return 'autumn';
+        }
+
+        // Астрономическая оценка рассвета/заката в Саратове (51.53°N, UTC+4) на случай офлайна
+        function estimateSaratovSunMinutes(month1to12, dayOfMonth) {
+            // Приближённые средние по месяцам для Саратова (в минутах от 00:00 SAMT)
+            const table = [
+                [535, 1020], // Янв: ~08:55 - 17:00
+                [485, 1075], // Фев: ~08:05 - 17:55
+                [425, 1130], // Мар: ~07:05 - 18:50
+                [355, 1185], // Апр: ~05:55 - 19:45
+                [300, 1235], // Май: ~05:00 - 20:35
+                [280, 1265], // Июн: ~04:40 - 21:05
+                [300, 1250], // Июл: ~05:00 - 20:50
+                [345, 1200], // Авг: ~05:45 - 20:00
+                [400, 1135], // Сен: ~06:40 - 18:55
+                [455, 1070], // Окт: ~07:35 - 17:50
+                [510, 1015], // Ноя: ~08:30 - 16:55
+                [545, 995]   // Дек: ~09:05 - 16:35
+            ];
+            const idx = Math.max(0, Math.min(11, (month1to12 || 1) - 1));
+            return { sunriseMin: table[idx][0], sunsetMin: table[idx][1] };
+        }
+
+        function parseIsoTimeToMinutes(isoStr) {
+            if (!isoStr || typeof isoStr !== 'string') return null;
+            const m = isoStr.match(/T(\d{2}):(\d{2})/);
+            if (!m) return null;
+            return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+        }
+
+        function mapWmoWeatherCode(code) {
+            const c = Number(code);
+            if (isNaN(c)) return { cond: 'clear', label: 'Ясно' };
+            if (c === 0) return { cond: 'clear', label: 'Ясно' };
+            if (c === 1) return { cond: 'clear', label: 'Малооблачно' };
+            if (c === 2) return { cond: 'partly', label: 'Переменная облачность' };
+            if (c === 3) return { cond: 'cloudy', label: 'Пасмурно' };
+            if (c === 45 || c === 48) return { cond: 'fog', label: 'Туман' };
+            if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return { cond: 'rain', label: (c >= 63 || c >= 81) ? 'Сильный дождь' : 'Дождь' };
+            if ((c >= 71 && c <= 77) || c === 85 || c === 86) return { cond: 'snow', label: (c === 75 || c === 86) ? 'Снегопад' : 'Снег' };
+            if (c >= 95 && c <= 99) return { cond: 'storm', label: 'Гроза' };
+            return { cond: 'cloudy', label: 'Облачно' };
+        }
+
+        function mapWttrCode(code) {
+            const c = Number(code);
+            if (c === 113) return { cond: 'clear', label: 'Ясно' };
+            if (c === 116) return { cond: 'partly', label: 'Переменная облачность' };
+            if (c === 119 || c === 122) return { cond: 'cloudy', label: 'Облачно' };
+            if (c === 143 || c === 248 || c === 260) return { cond: 'fog', label: 'Туман' };
+            if ([200, 386, 389, 392, 395].includes(c)) return { cond: 'storm', label: 'Гроза' };
+            if ([179, 182, 185, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371, 374, 377].includes(c)) return { cond: 'snow', label: 'Снег' };
+            if ([176, 263, 266, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 353, 356, 359, 362, 365].includes(c)) return { cond: 'rain', label: 'Дождь' };
+            return { cond: 'cloudy', label: 'Облачно' };
+        }
+
+        function mapGenericConditionString(rawCond) {
+            const s = String(rawCond || '').toLowerCase();
+            if (s.includes('thunder') || s.includes('storm') || s.includes('гроз')) return { cond: 'storm', label: 'Гроза' };
+            if (s.includes('snow') || s.includes('sleet') || s.includes('снег') || s.includes('метел')) return { cond: 'snow', label: 'Снег' };
+            if (s.includes('rain') || s.includes('drizzle') || s.includes('shower') || s.includes('дожд') || s.includes('ливн')) return { cond: 'rain', label: 'Дождь' };
+            if (s.includes('fog') || s.includes('mist') || s.includes('haze') || s.includes('туман')) return { cond: 'fog', label: 'Туман' };
+            if (s.includes('partly') || s.includes('перемен')) return { cond: 'partly', label: 'Переменная облачность' };
+            if (s.includes('cloud') || s.includes('overcast') || s.includes('облач') || s.includes('пасмур')) return { cond: 'cloudy', label: 'Облачно' };
+            if (s.includes('clear') || s.includes('sun') || s.includes('ясн')) return { cond: 'clear', label: 'Ясно' };
+            return null;
+        }
+
+        function applyExternalWeatherPayload(w) {
+            if (!w || typeof w !== 'object') return;
+            const mapped = (w.weather_code !== undefined) ? mapWmoWeatherCode(w.weather_code)
+                : mapGenericConditionString(w.condition || w.condition_ru || '');
+            if (mapped) {
+                saratovWeather.condition = mapped.cond;
+                saratovWeather.conditionRu = w.condition_ru || mapped.label;
+            }
+            if (typeof w.temp_c === 'number' && !isNaN(w.temp_c)) saratovWeather.tempC = Math.round(w.temp_c);
+            if (typeof w.wind_ms === 'number' && !isNaN(w.wind_ms)) {
+                saratovWeather.windMs = Math.round(w.wind_ms);
+                saratovWeather.windKmh = w.wind_ms * 3.6;
+                saratovWeather.isWindy = saratovWeather.windKmh >= 18;
+            }
+            saratovWeather.updatedAt = Date.now();
+            saratovWeather.source = 'server';
+            saveSaratovWeatherCache();
+            applySaratovWeatherVisuals();
+        }
+
+        function saveSaratovWeatherCache() {
+            try {
+                localStorage.setItem(LS_WEATHER_KEY, JSON.stringify({
+                    condition: saratovWeather.condition,
+                    conditionRu: saratovWeather.conditionRu,
+                    tempC: saratovWeather.tempC,
+                    windKmh: saratovWeather.windKmh,
+                    windMs: saratovWeather.windMs,
+                    isWindy: saratovWeather.isWindy,
+                    sunriseMin: saratovWeather.sunriseMin,
+                    sunsetMin: saratovWeather.sunsetMin,
+                    updatedAt: saratovWeather.updatedAt,
+                    source: saratovWeather.source
+                }));
+            } catch (e) {}
+        }
+
+        function loadSaratovWeatherCache() {
+            try {
+                const raw = localStorage.getItem(LS_WEATHER_KEY);
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                if (!d || typeof d !== 'object') return;
+                // Кэш погоды актуален до 6 часов
+                if (d.updatedAt && (Date.now() - d.updatedAt) < 6 * 3600 * 1000) {
+                    if (d.condition) saratovWeather.condition = d.condition;
+                    if (d.conditionRu) saratovWeather.conditionRu = d.conditionRu;
+                    if (typeof d.tempC === 'number') saratovWeather.tempC = d.tempC;
+                    if (typeof d.windKmh === 'number') saratovWeather.windKmh = d.windKmh;
+                    if (typeof d.windMs === 'number') saratovWeather.windMs = d.windMs;
+                    saratovWeather.isWindy = !!d.isWindy;
+                    if (typeof d.sunriseMin === 'number') saratovWeather.sunriseMin = d.sunriseMin;
+                    if (typeof d.sunsetMin === 'number') saratovWeather.sunsetMin = d.sunsetMin;
+                    saratovWeather.updatedAt = d.updatedAt;
+                    saratovWeather.source = d.source || 'cache';
+                }
+            } catch (e) {}
+        }
+
+        function refreshSaratovSeasonAndTimeOfDay() {
+            const p = getSaratovNowParts();
+            saratovWeather.season = computeRealSeasonForMonth(p.month);
+
+            const est = estimateSaratovSunMinutes(p.month, p.day);
+            const sr = (typeof saratovWeather.sunriseMin === 'number') ? saratovWeather.sunriseMin : est.sunriseMin;
+            const ss = (typeof saratovWeather.sunsetMin === 'number') ? saratovWeather.sunsetMin : est.sunsetMin;
+            const m = p.minsOfDay;
+
+            if (m >= sr - 45 && m < sr + 105) {
+                saratovWeather.timeOfDay = 'morning';
+            } else if (m >= sr + 105 && m < ss - 90) {
+                saratovWeather.timeOfDay = 'day';
+            } else if (m >= ss - 90 && m <= ss + 45) {
+                saratovWeather.timeOfDay = 'evening';
+            } else {
+                saratovWeather.timeOfDay = 'night';
+            }
+        }
+
+        function applySaratovWeatherVisuals() {
+            refreshSaratovSeasonAndTimeOfDay();
+            const logo = document.getElementById('headerBrandLogo');
+            if (!logo) return;
+
+            ['season-winter', 'season-spring', 'season-summer', 'season-autumn'].forEach(c => logo.classList.remove(c));
+            ['tod-morning', 'tod-day', 'tod-evening', 'tod-night'].forEach(c => logo.classList.remove(c));
+            ['weather-clear', 'weather-partly', 'weather-cloudy', 'weather-fog', 'weather-rain', 'weather-snow', 'weather-storm'].forEach(c => logo.classList.remove(c));
+
+            logo.classList.add('season-' + saratovWeather.season);
+            logo.classList.add('tod-' + saratovWeather.timeOfDay);
+            logo.classList.add('weather-' + saratovWeather.condition);
+            logo.classList.toggle('is-windy', !!saratovWeather.isWindy);
+            logo.classList.toggle('is-freezing', typeof saratovWeather.tempC === 'number' && saratovWeather.tempC <= 0);
+        }
+
+        function formatSaratovWeatherSummary() {
+            if (newYearActive) {
+                const tStr = (typeof saratovWeather.tempC === 'number') ? (' • ' + (saratovWeather.tempC > 0 ? '+' : '') + saratovWeather.tempC + '°C') : '';
+                return 'С наступающим! • Саратов' + tStr;
+            }
+            const todNames = { morning: 'Утро', day: 'День', evening: 'Вечер', night: 'Ночь' };
+            const parts = ['Саратов'];
+            if (typeof saratovWeather.tempC === 'number') {
+                parts.push((saratovWeather.tempC > 0 ? '+' : '') + saratovWeather.tempC + '°C');
+            }
+            if (saratovWeather.updatedAt > 0) {
+                parts.push(saratovWeather.conditionRu || 'Ясно');
+            } else {
+                parts.push(todNames[saratovWeather.timeOfDay] || 'День');
+            }
+            if (saratovWeather.windMs >= 5) {
+                parts.push('Ветер ' + saratovWeather.windMs + ' м/с');
+            }
+            return parts.join(' • ');
+        }
+
+        let weatherPillTimer = null;
+        function showBrandWeatherPill(cx, cy) {
+            const pill = document.getElementById('brandWeatherPill');
+            if (!pill) return;
+            pill.textContent = formatSaratovWeatherSummary();
+            pill.classList.add('visible');
+            const pw = pill.offsetWidth || 190;
+            const left = Math.max(10, Math.min(window.innerWidth - pw - 10, cx - pw / 2));
+            const top = Math.max(8, Math.min(window.innerHeight - 44, cy + 40));
+            pill.style.left = left.toFixed(0) + 'px';
+            pill.style.top = top.toFixed(0) + 'px';
+            clearTimeout(weatherPillTimer);
+            weatherPillTimer = setTimeout(() => {
+                pill.classList.remove('visible');
+            }, 3400);
+        }
+
+        async function fetchSaratovWeather(force = false) {
+            if (!force && saratovWeather.updatedAt && (Date.now() - saratovWeather.updatedAt < WEATHER_REFRESH_MS)) {
+                applySaratovWeatherVisuals();
+                return true;
+            }
+            // 1. Open-Meteo (бесплатно, без API-ключа, точные WMO-коды + рассвет/закат для Саратова)
+            try {
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + SARATOV_LAT +
+                    '&longitude=' + SARATOV_LON +
+                    '&current=temperature_2m,is_day,weather_code,cloud_cover,wind_speed_10m' +
+                    '&daily=sunrise,sunset&timezone=Europe%2FSaratov&forecast_days=1';
+                const resp = await fetchWithTimeout(url, {}, 5500);
+                if (resp && resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.current) {
+                        const cur = data.current;
+                        const mapped = mapWmoWeatherCode(cur.weather_code);
+                        saratovWeather.condition = mapped.cond;
+                        saratovWeather.conditionRu = mapped.label;
+                        if (typeof cur.temperature_2m === 'number') {
+                            saratovWeather.tempC = Math.round(cur.temperature_2m);
+                        }
+                        if (typeof cur.wind_speed_10m === 'number') {
+                            saratovWeather.windKmh = cur.wind_speed_10m;
+                            saratovWeather.windMs = Math.round(cur.wind_speed_10m / 3.6);
+                            saratovWeather.isWindy = cur.wind_speed_10m >= 18;
+                        }
+                        if (data.daily && Array.isArray(data.daily.sunrise) && data.daily.sunrise[0]) {
+                            const sr = parseIsoTimeToMinutes(data.daily.sunrise[0]);
+                            if (sr !== null) saratovWeather.sunriseMin = sr;
+                        }
+                        if (data.daily && Array.isArray(data.daily.sunset) && data.daily.sunset[0]) {
+                            const ss = parseIsoTimeToMinutes(data.daily.sunset[0]);
+                            if (ss !== null) saratovWeather.sunsetMin = ss;
+                        }
+                        saratovWeather.updatedAt = Date.now();
+                        saratovWeather.source = 'open-meteo';
+                        saveSaratovWeatherCache();
+                        applySaratovWeatherVisuals();
+                        return true;
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Резервный источник: wttr.in для Саратова
+            try {
+                const resp = await fetchWithTimeout('https://wttr.in/Saratov?format=j1', {}, 5000);
+                if (resp && resp.ok) {
+                    const data = await resp.json();
+                    const cur = data && Array.isArray(data.current_condition) ? data.current_condition[0] : null;
+                    if (cur) {
+                        const mapped = mapWttrCode(cur.weatherCode);
+                        saratovWeather.condition = mapped.cond;
+                        saratovWeather.conditionRu = mapped.label;
+                        const tc = parseFloat(cur.temp_C);
+                        if (!isNaN(tc)) saratovWeather.tempC = Math.round(tc);
+                        const wk = parseFloat(cur.windspeedKmph);
+                        if (!isNaN(wk)) {
+                            saratovWeather.windKmh = wk;
+                            saratovWeather.windMs = Math.round(wk / 3.6);
+                            saratovWeather.isWindy = wk >= 18;
+                        }
+                        saratovWeather.updatedAt = Date.now();
+                        saratovWeather.source = 'wttr';
+                        saveSaratovWeatherCache();
+                        applySaratovWeatherVisuals();
+                        return true;
+                    }
+                }
+            } catch (e) {}
+
+            applySaratovWeatherVisuals();
+            return false;
+        }
+
+        function initSaratovWeatherSync() {
+            loadSaratovWeatherCache();
+            applySaratovWeatherVisuals();
+            fetchSaratovWeather(false);
+            setInterval(() => applySaratovWeatherVisuals(), 60 * 1000);
+            setInterval(() => fetchSaratovWeather(true), WEATHER_REFRESH_MS);
         }
 
         // ==================== ЖИВОЙ АНИМИРОВАННЫЙ ЛОГОТИП В ШАПКЕ ====================
@@ -1796,7 +2308,6 @@
             mode: 'roam',
             isDragging: false,
 
-            // Координаты в текущем слое (в 'roam' — относительно .header, в 'dragging'/'hiding'/'returning' — viewport px)
             x: 10,
             y: 4,
             targetX: 120,
@@ -1805,7 +2316,6 @@
             vy: 0,
             roamPausedUntil: 0,
 
-            // Размеры, дыхание, расширение на всю шапку, отклик на тап
             bloomStart: 0,
             bloomDur: 0,
             nextBloomAt: 0,
@@ -1816,16 +2326,12 @@
             returnStartAt: 0,
             returnOriginX: 0,
 
-            // Периодический поворот корпуса
             twistAnimStart: 0,
             twistAnimDur: 0,
             twistTarget: 0,
             nextTwistAt: 0,
 
-            // Сезоны и распашные створки окна (openProg: 0 = закрыты, 1 = 138° на распашку)
-            seasons: ['summer', 'autumn', 'winter', 'spring'],
-            seasonIdx: 0,
-            nextSeasonAt: 0,
+            // Распашные створки окна (openProg: 0 = закрыты, 1 = 138° на распашку)
             sashOpenProg: 0,
             sashTargetOpen: 0,
             nextSashEventAt: 0,
@@ -1839,19 +2345,7 @@
             if (logo) logo.classList.toggle('is-loading', !!active);
         }
 
-        function setBrandLogoSeason(nextIdx, swingSashes) {
-            const logo = document.getElementById('headerBrandLogo');
-            if (!logo) return;
-            const idx = ((nextIdx % livingBrand.seasons.length) + livingBrand.seasons.length) % livingBrand.seasons.length;
-            livingBrand.seasonIdx = idx;
-            livingBrand.seasons.forEach(s => logo.classList.remove('season-' + s));
-            logo.classList.add('season-' + livingBrand.seasons[idx]);
-            if (swingSashes) {
-                openBrandSashesWide(2800);
-            }
-        }
-
-        function openBrandSashesWide(holdMs = 2600) {
+        function openBrandSashesWide(holdMs = 3000) {
             livingBrand.sashTargetOpen = 1;
             clearTimeout(livingBrand.sashCloseTimer);
             livingBrand.sashCloseTimer = setTimeout(() => {
@@ -1878,7 +2372,9 @@
         function spawnBrandTapSparks(cx, cy) {
             const palette = newYearActive
                 ? ['#FFD700', '#FF4D4D', '#2ECC71', '#56CCF2', '#FFFFFF']
-                : ['#FEC035', '#FB963B', '#EA8225', '#B0DF65', '#6FA551'];
+                : (saratovWeather.timeOfDay === 'night'
+                    ? ['#FFF4B8', '#AFC4E8', '#56CCF2', '#FEC035', '#FFFFFF']
+                    : ['#FEC035', '#FB963B', '#EA8225', '#B0DF65', '#6FA551']);
             const count = 8;
             for (let i = 0; i < count; i++) {
                 const sp = document.createElement('span');
@@ -1921,8 +2417,7 @@
 
             const now0 = performance.now();
             livingBrand.nextRayChangeAt = now0 + 3600;
-            livingBrand.nextSeasonAt = now0 + 13500;
-            livingBrand.nextSashEventAt = now0 + 5200;
+            livingBrand.nextSashEventAt = now0 + 3800;
             livingBrand.nextTwistAt = now0 + 10500;
             livingBrand.nextBloomAt = now0 + 7500;
             livingBrand.x = 12;
@@ -1968,9 +2463,6 @@
             }
 
             function startLogoPointer(clientX, clientY, pointerId) {
-                if (livingBrand.mode === 'hiding' || livingBrand.mode === 'returning') {
-                    // Можно перехватить его даже пока он прячется!
-                }
                 const rect = logo.getBoundingClientRect();
                 dragPointerId = pointerId;
                 dragStartClientX = clientX;
@@ -1981,7 +2473,6 @@
                 dragMoved = false;
                 livingBrand.isDragging = true;
 
-                // Сразу даём лёгкий тактильный отклик при касании
                 livingBrand.tapBounceStart = performance.now();
                 livingBrand.tapBounceDur = 460;
                 livingBrand.raySpeed = (livingBrand.raySpeed >= 0 ? 1 : -1) * Math.max(Math.abs(livingBrand.raySpeed), 180);
@@ -2001,7 +2492,7 @@
                         rect.left + rect.width / 2 - bw / 2,
                         rect.top + rect.height / 2 - bh / 2
                     );
-                    livingBrand.sashTargetOpen = 0.72; // створки чуть приоткрываются от «ветра» при перетаскивании
+                    livingBrand.sashTargetOpen = 0.72;
                 }
                 if (dragMoved) {
                     const bw = logo.offsetWidth || 66;
@@ -2025,19 +2516,19 @@
                 const nowMs = performance.now();
 
                 if (!dragMoved) {
-                    // Короткое прикосновение (тап): весёлая реакция!
+                    // Короткое прикосновение: искры + отскок + распахнуть створки + показать живую погоду Саратова
                     const rect = logo.getBoundingClientRect();
-                    spawnBrandTapSparks(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    spawnBrandTapSparks(cx, cy);
                     livingBrand.tapBounceStart = nowMs;
                     livingBrand.tapBounceDur = 620;
                     livingBrand.raySpeed = 320;
-                    if (newYearActive) {
-                        openBrandSashesWide(2800);
-                    } else {
-                        setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
-                        livingBrand.nextSeasonAt = nowMs + 14500;
+                    openBrandSashesWide(3400);
+                    showBrandWeatherPill(cx, cy);
+                    if (!saratovWeather.updatedAt || (Date.now() - saratovWeather.updatedAt > 5 * 60 * 1000)) {
+                        fetchSaratovWeather(true);
                     }
-                    // Если створки уже были широко открыты — чуть подмигнём, иначе распахнём
                     return;
                 }
 
@@ -2048,7 +2539,6 @@
                 const logoCenterY = livingBrand.y + bh / 2;
 
                 if (logoCenterY > headerRect.bottom - 6 && underLayer) {
-                    // Затащили на плитки! Сначала прячется под плитки на нижний слой, потом неспеша возвращается в шапку
                     moveLogoToLayer(underLayer, 'hiding', livingBrand.x, livingBrand.y);
                     livingBrand.vx = 0;
                     livingBrand.vy = 0;
@@ -2056,7 +2546,6 @@
                     livingBrand.hideUntil = nowMs + 1450 + Math.random() * 550;
                     livingBrand.returnOriginX = livingBrand.x;
                 } else {
-                    // Отпустили внутри шапки — плавно возвращаем в слой шапки
                     const localX = Math.max(6, Math.min((headerLayer.clientWidth || 300) - bw - 6, livingBrand.x - headerRect.left));
                     const localY = Math.max(4, Math.min(Math.max(4, (headerLayer.clientHeight || 90) - bh - 4), livingBrand.y - headerRect.top));
                     moveLogoToLayer(headerLayer, 'roam', localX, localY);
@@ -2085,7 +2574,6 @@
                 if (!livingBrand.isDragging || (dragPointerId !== null && e.pointerId !== dragPointerId)) return;
                 finishLogoPointer();
             });
-            // Блокируем прокрутку страницы во время активного перетаскивания логотипа пальцем
             document.addEventListener('touchmove', function(e) {
                 if (livingBrand.isDragging && dragMoved) {
                     e.preventDefault();
@@ -2103,7 +2591,8 @@
                 lastT = now;
                 const tSec = now / 1000;
 
-                // 1. Вращение лучей (СТРОГО через SVG transform="rotate(deg 50 50)" без CSS origin — 0% рассинхрона!)
+                // 1. Вращение лучей (СТРОГО через SVG transform="rotate(deg 50 50)" — 0% рассинхрона!)
+                const windBoost = saratovWeather.isWindy ? 1.55 : 1.0;
                 if (livingBrand.isLoading) {
                     livingBrand.targetRaySpeed = 340;
                 } else if (livingBrand.mode === 'dragging') {
@@ -2116,13 +2605,13 @@
                     if (now >= livingBrand.nextRayChangeAt) {
                         livingBrand.idlePhase = (livingBrand.idlePhase + 1) % 4;
                         if (livingBrand.idlePhase === 0) {
-                            livingBrand.targetRaySpeed = 26;
+                            livingBrand.targetRaySpeed = 24 * windBoost;
                             livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
                         } else if (livingBrand.idlePhase === 1) {
                             livingBrand.targetRaySpeed = 0;
                             livingBrand.nextRayChangeAt = now + 2000 + Math.random() * 2000;
                         } else if (livingBrand.idlePhase === 2) {
-                            livingBrand.targetRaySpeed = -26;
+                            livingBrand.targetRaySpeed = -24 * windBoost;
                             livingBrand.nextRayChangeAt = now + 3500 + Math.random() * 2500;
                         } else {
                             livingBrand.targetRaySpeed = 0;
@@ -2135,13 +2624,15 @@
                 const effectiveRayAngle = livingBrand.rayAngle + (livingBrand.ptrRayOffset || 0);
                 rays.setAttribute('transform', 'rotate(' + effectiveRayAngle.toFixed(2) + ' 50 50)');
 
-                // Плавное покачивание листка через чистый SVG transform (без CSS origin!)
+                // Покачивание листка (при ветре в Саратове — живей и сильнее!)
                 if (leaf) {
-                    const leafAngle = Math.sin(tSec * 1.65) * 4.2;
+                    const leafAmp = saratovWeather.isWindy ? 9.5 : 4.2;
+                    const leafFreq = saratovWeather.isWindy ? 3.8 : 1.65;
+                    const leafAngle = Math.sin(tSec * leafFreq) * leafAmp;
                     leaf.setAttribute('transform', 'rotate(' + leafAngle.toFixed(2) + ' 58 43)');
                 }
 
-                // 2. Анимация распашных створок окна (0° -> 138° на распашку!)
+                // 2. Распашные створки окна (0° -> 138° на распашку!)
                 livingBrand.sashOpenProg += (livingBrand.sashTargetOpen - livingBrand.sashOpenProg) * Math.min(1, dt * 5.2);
                 if (Math.abs(livingBrand.sashOpenProg) < 0.002 && livingBrand.sashTargetOpen === 0) {
                     livingBrand.sashOpenProg = 0;
@@ -2155,7 +2646,6 @@
                 const bh = logo.offsetHeight || 66;
                 let scaleX = 1, scaleY = 1, bodyRot = 0;
 
-                // Эффект отскока при прикосновении
                 if (livingBrand.tapBounceDur > 0) {
                     const tp = Math.min(1, (now - livingBrand.tapBounceStart) / livingBrand.tapBounceDur);
                     const amp = Math.sin(tp * Math.PI * 2.5) * (1 - tp) * 0.22;
@@ -2173,7 +2663,6 @@
                         'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + livingBrand.y.toFixed(1) + 'px, 0) ' +
                         'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
                 } else if (livingBrand.mode === 'hiding') {
-                    // Скрылся под плитками на нижнем слое: слегка притаился и чуть покачивается
                     const peekX = Math.sin(tSec * 2.4) * 5;
                     const peekY = Math.cos(tSec * 2.0) * 3;
                     scaleX *= 0.92;
@@ -2189,7 +2678,6 @@
                         livingBrand.sashTargetOpen = 0;
                     }
                 } else if (livingBrand.mode === 'returning') {
-                    // Неспеша плывёт под плитками обратно в шапку
                     const hRect = headerLayer.getBoundingClientRect();
                     const goalX = Math.max(hRect.left + 12, Math.min(hRect.right - bw - 12, livingBrand.returnOriginX));
                     const goalY = hRect.top + Math.max(4, (hRect.height - bh) * 0.45);
@@ -2198,16 +2686,15 @@
                     const dist = Math.hypot(dx, dy);
 
                     if (dist < 10 || (livingBrand.y + bh * 0.5 <= hRect.bottom - 4 && livingBrand.y >= hRect.top - 10)) {
-                        // Заплыл обратно в шапку — бесшовно возвращаем в #headerRoamLayer!
                         const localX = Math.max(6, Math.min((headerLayer.clientWidth || 300) - bw - 6, livingBrand.x - hRect.left));
                         const localY = Math.max(4, Math.min(Math.max(4, (headerLayer.clientHeight || 90) - bh - 4), livingBrand.y - hRect.top));
                         moveLogoToLayer(headerLayer, 'roam', localX, localY);
                         livingBrand.tapBounceStart = now;
                         livingBrand.tapBounceDur = 540;
-                        openBrandSashesWide(2000);
+                        openBrandSashesWide(2400);
                         pickNextRoamTarget(now);
                     } else {
-                        const speed = 105; // неспеша ~105 px/сек
+                        const speed = 105;
                         const ux = dx / dist;
                         const uy = dy / dist;
                         const waveX = Math.sin((now - livingBrand.returnStartAt) / 360) * 28 * dt;
@@ -2221,11 +2708,9 @@
                             'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
                     }
                 } else {
-                    // Обычный живой режим в шапке ('roam')
                     const lw = headerLayer.clientWidth || 320;
                     const lh = headerLayer.clientHeight || 96;
 
-                    // Периодическое увеличение на всю высоту шапки («расцветает» на всю шапку, оставаясь под кнопками)
                     if (!livingBrand.isLoading && now >= livingBrand.nextBloomAt && livingBrand.bloomDur === 0) {
                         livingBrand.bloomStart = now;
                         livingBrand.bloomDur = 5200;
@@ -2235,7 +2720,6 @@
                     if (livingBrand.bloomDur > 0) {
                         const bp = Math.min(1, (now - livingBrand.bloomStart) / livingBrand.bloomDur);
                         const fullHeaderScale = Math.max(1.22, Math.min(2.35, (lh - 4) / Math.max(40, bh)));
-                        // Плавный купол sin(π·t) — вырастает на всю высоту шапки и плавно сдувается
                         bloomScale = 1 + (fullHeaderScale - 1) * Math.sin(bp * Math.PI);
                         if (bp >= 1) livingBrand.bloomDur = 0;
                     }
@@ -2246,7 +2730,6 @@
                     scaleX *= totalScale;
                     scaleY *= totalScale;
 
-                    // Поправка границ при росте на всю шапку, чтобы логотип не уходил за края
                     const effHalfW = (bw * totalScale - bw) / 2;
                     const effHalfH = (bh * totalScale - bh) / 2;
                     const minX = 4 + effHalfW;
@@ -2302,14 +2785,10 @@
                         'translate3d(' + livingBrand.x.toFixed(1) + 'px, ' + (livingBrand.y + floatY).toFixed(1) + 'px, 0) ' +
                         'scale(' + scaleX.toFixed(3) + ', ' + scaleY.toFixed(3) + ') rotate(' + bodyRot.toFixed(1) + 'deg)';
 
-                    // 4. Периодическая смена сезона и распахивание створок
-                    if (!newYearActive && now >= livingBrand.nextSeasonAt) {
-                        livingBrand.nextSeasonAt = now + 14500 + Math.random() * 4000;
-                        livingBrand.nextSashEventAt = now + 6800 + Math.random() * 3500;
-                        setBrandLogoSeason(livingBrand.seasonIdx + 1, true);
-                    } else if (now >= livingBrand.nextSashEventAt) {
-                        livingBrand.nextSashEventAt = now + 7000 + Math.random() * 4000;
-                        openBrandSashesWide(2800);
+                    // 4. Периодически распахиваем створки на распашку, чтобы было видно живую погоду за окном
+                    if (now >= livingBrand.nextSashEventAt) {
+                        livingBrand.nextSashEventAt = now + 7200 + Math.random() * 4200;
+                        openBrandSashesWide(3200);
                     }
                 }
             }
@@ -2939,6 +3418,9 @@
                 if (typeof ydNyFlag === 'boolean') {
                     applyServerNewYearFlag(ydNyFlag);
                 }
+                if (cacheObj.weather && typeof cacheObj.weather === 'object') {
+                    applyExternalWeatherPayload(cacheObj.weather);
+                }
                 const remoteLines = Array.isArray(cacheObj.lines) ? cacheObj.lines : [];
                 if (remoteLines.length === 0) {
                     throw new Error('В cache.json на Яндекс Диске нет данных линий');
@@ -3318,9 +3800,7 @@
             document.getElementById('scalePercent').value = scalePercent;
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
-            const nySel = document.getElementById('newYearThemeMode');
-            if (nySel) nySel.value = newYearMode;
-            updateNewYearThemeState();
+
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
                 if (srvInp) srvInp.value = window.AndroidApp.getServerUrl() || '';
@@ -5748,6 +6228,7 @@
         function initializeApp() {
             initTheme();
             initNewYearTheme();
+            initSaratovWeatherSync();
             initLivingBrandLogo();
             initBrandOutlineFeedback();
             initBarcodeScanButtons();
@@ -6101,15 +6582,7 @@
                 const wantTheme = wantDark ? 'dark' : 'light';
                 if (wantTheme !== curTheme) applyTheme(wantTheme);
 
-                const nySelSave = document.getElementById('newYearThemeMode');
-                if (nySelSave) {
-                    const m = nySelSave.value;
-                    if (m === 'auto' || m === 'on' || m === 'off') {
-                        newYearMode = m;
-                        localStorage.setItem(LS_NY_MODE_KEY, newYearMode);
-                        updateNewYearThemeState();
-                    }
-                }
+
 
                 let newScale = parseInt(document.getElementById('scalePercent').value);
                 if (isNaN(newScale)) newScale = 100;
