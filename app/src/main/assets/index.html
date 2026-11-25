@@ -872,15 +872,6 @@
         }
 
         /* ==================== РЕАЛЬНАЯ ПОГОДА, ВРЕМЯ СУТОК И СЕЗОН (САРАТОВ) ==================== */
-        .brand-logo-wrap .brand-rays rect {
-            transition: fill 0.8s ease, opacity 0.8s ease;
-        }
-        .brand-logo-wrap.tod-morning .brand-rays rect { fill: #FFAD60; }
-        .brand-logo-wrap.tod-day .brand-rays rect     { fill: #F69841; }
-        .brand-logo-wrap.tod-evening .brand-rays rect { fill: #FF7B54; }
-        .brand-logo-wrap.tod-night .brand-rays rect   { fill: #AFC4E8; opacity: 0.78; }
-        .brand-logo-wrap.weather-storm .brand-rays rect { fill: #8FA3BF; opacity: 0.85; }
-        .brand-logo-wrap.weather-fog .brand-rays rect   { opacity: 0.72; }
 
         /* Небо за окном по времени суток и погоде */
         .brand-logo-wrap.tod-morning .win-sky { fill: url(#hdr_sky_morning); }
@@ -1574,6 +1565,17 @@
                         <button class="btn btn-success btn-sm" id="yandexLoadNowBtn" type="button">Загрузить сейчас</button>
                     </div>
                     <div class="hint">Когда локальный сервер недоступен, приложение автоматически подгружает смены и чертежи с Яндекс Диска.</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>Погода за окном (Open-Meteo • Саратов)</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <span id="openMeteoStatusText" style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
+                            Проверка связи с сервисом погоды Open-Meteo
+                        </span>
+                        <button class="btn btn-sm" id="checkOpenMeteoBtn" type="button">Проверить связь</button>
+                    </div>
+                    <div class="hint">Используется для отображения реальной погоды в Саратове на логотипе.</div>
                 </div>
 
                 <div class="settings-group">
@@ -2284,6 +2286,95 @@
 
             applySaratovWeatherVisuals();
             return false;
+        }
+
+        function updateOpenMeteoStatusInSettings(customText, isError) {
+            const el = document.getElementById('openMeteoStatusText');
+            if (!el) return;
+            if (customText) {
+                el.textContent = customText;
+                el.style.color = isError ? 'var(--color-danger)' : 'var(--color-success)';
+                return;
+            }
+            el.style.color = 'var(--text-muted)';
+            if (saratovWeather.updatedAt > 0 && saratovWeather.source === 'open-meteo') {
+                const tStr = (typeof saratovWeather.tempC === 'number')
+                    ? ((saratovWeather.tempC > 0 ? '+' : '') + saratovWeather.tempC + '°C, ')
+                    : '';
+                el.textContent = 'Последнее обновление: ' + formatCacheTime(new Date(saratovWeather.updatedAt)) +
+                    ' (' + tStr + (saratovWeather.conditionRu || 'Ясно') + ')';
+            } else {
+                el.textContent = 'Нажмите «Проверить связь», чтобы протестировать Open-Meteo';
+            }
+        }
+
+        async function testOpenMeteoConnection() {
+            const btn = document.getElementById('checkOpenMeteoBtn');
+            const el = document.getElementById('openMeteoStatusText');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Проверка...';
+            }
+            if (el) {
+                el.style.color = 'var(--text-muted)';
+                el.textContent = 'Подключение к api.open-meteo.com...';
+            }
+            const t0 = performance.now();
+            try {
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + SARATOV_LAT +
+                    '&longitude=' + SARATOV_LON +
+                    '&current=temperature_2m,is_day,weather_code,cloud_cover,wind_speed_10m' +
+                    '&daily=sunrise,sunset&timezone=Europe%2FSaratov&forecast_days=1';
+                const resp = await fetchWithTimeout(url, {}, 6500);
+                const ms = Math.round(performance.now() - t0);
+                if (!resp || !resp.ok) {
+                    throw new Error('HTTP ' + (resp ? resp.status : 'ошибка'));
+                }
+                const data = await resp.json();
+                if (!data || !data.current) {
+                    throw new Error('Пустой ответ JSON');
+                }
+                const cur = data.current;
+                const mapped = mapWmoWeatherCode(cur.weather_code);
+                saratovWeather.condition = mapped.cond;
+                saratovWeather.conditionRu = mapped.label;
+                if (typeof cur.temperature_2m === 'number') {
+                    saratovWeather.tempC = Math.round(cur.temperature_2m);
+                }
+                if (typeof cur.wind_speed_10m === 'number') {
+                    saratovWeather.windKmh = cur.wind_speed_10m;
+                    saratovWeather.windMs = Math.round(cur.wind_speed_10m / 3.6);
+                    saratovWeather.isWindy = cur.wind_speed_10m >= 18;
+                }
+                if (data.daily && Array.isArray(data.daily.sunrise) && data.daily.sunrise[0]) {
+                    const sr = parseIsoTimeToMinutes(data.daily.sunrise[0]);
+                    if (sr !== null) saratovWeather.sunriseMin = sr;
+                }
+                if (data.daily && Array.isArray(data.daily.sunset) && data.daily.sunset[0]) {
+                    const ss = parseIsoTimeToMinutes(data.daily.sunset[0]);
+                    if (ss !== null) saratovWeather.sunsetMin = ss;
+                }
+                saratovWeather.updatedAt = Date.now();
+                saratovWeather.source = 'open-meteo';
+                saveSaratovWeatherCache();
+                applySaratovWeatherVisuals();
+
+                const tStr = (typeof saratovWeather.tempC === 'number')
+                    ? ((saratovWeather.tempC > 0 ? '+' : '') + saratovWeather.tempC + '°C')
+                    : '—';
+                updateOpenMeteoStatusInSettings(
+                    'Связь есть (' + ms + ' мс): ' + tStr + ', ' + saratovWeather.conditionRu + ', ветер ' + saratovWeather.windMs + ' м/с',
+                    false
+                );
+            } catch (e) {
+                const msg = (e && e.name === 'AbortError') ? 'таймаут (6.5 сек)' : (e && e.message ? e.message : 'ошибка сети');
+                updateOpenMeteoStatusInSettings('Нет связи с Open-Meteo: ' + msg, true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Проверить связь';
+                }
+            }
         }
 
         function initSaratovWeatherSync() {
@@ -3800,6 +3891,7 @@
             document.getElementById('scalePercent').value = scalePercent;
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
+            updateOpenMeteoStatusInSettings();
 
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
@@ -6513,6 +6605,10 @@
             const autoSwCheckboxEl = document.getElementById('autoSwitchEnabledCheckbox');
             if (autoSwCheckboxEl) {
                 autoSwCheckboxEl.addEventListener('change', updateSwitchIntervalState);
+            }
+            const checkOpenMeteoBtnEl = document.getElementById('checkOpenMeteoBtn');
+            if (checkOpenMeteoBtnEl) {
+                checkOpenMeteoBtnEl.addEventListener('click', testOpenMeteoConnection);
             }
             const resetCacheBtnEl = document.getElementById('resetDataCacheBtn');
             if (resetCacheBtnEl) {
