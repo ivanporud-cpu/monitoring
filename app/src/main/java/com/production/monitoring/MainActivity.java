@@ -396,6 +396,9 @@ public class MainActivity extends Activity {
     // ==================== ТИХИЙ АВТОПОИСК СЕРВЕРА ====================
 
     private void silentDiscoverServer(final boolean forceFullScan) {
+        if (!NewDayWorker.isWifiOrLanConnected(this)) {
+            return;
+        }
         long now = System.currentTimeMillis();
         if (!forceFullScan && (now - lastAutoDiscoveryMs < 15000L)) {
             return;
@@ -407,7 +410,7 @@ public class MainActivity extends Activity {
 
         new Thread(() -> {
             try {
-                List<String> found = NewDayWorker.findWorkingServers(prefs, forceFullScan);
+                List<String> found = NewDayWorker.findWorkingServers(MainActivity.this, prefs, forceFullScan);
                 if (found == null || found.isEmpty()) {
                     return;
                 }
@@ -610,6 +613,11 @@ public class MainActivity extends Activity {
     }
 
     private void manualScanNetworkForServer(final boolean isFirstRun) {
+        if (!NewDayWorker.isWifiOrLanConnected(this)) {
+            Toast.makeText(this, "Wi-Fi отключён — подключение к локальному серверу невозможно", Toast.LENGTH_LONG).show();
+            showServerUrlDialog(isFirstRun);
+            return;
+        }
         final String localPrefix = NewDayWorker.getLocalSubnetPrefix();
         final String firstPrefix = (localPrefix != null) ? localPrefix : NewDayWorker.FALLBACK_SUBNET;
 
@@ -736,8 +744,15 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public boolean isWifiConnected() {
+            return NewDayWorker.isWifiOrLanConnected(MainActivity.this);
+        }
+
+        @JavascriptInterface
         public void onServerUnreachable() {
-            silentDiscoverServer(true);
+            if (NewDayWorker.isWifiOrLanConnected(MainActivity.this)) {
+                silentDiscoverServer(true);
+            }
         }
 
         @JavascriptInterface
@@ -871,6 +886,22 @@ public class MainActivity extends Activity {
             hideVisualizerOverlay();
             return;
         }
+        if (webView != null) {
+            webView.evaluateJavascript(
+                    "(window.closeTopModalIfOpen && window.closeTopModalIfOpen()) ? '1' : '0'",
+                    val -> {
+                        if ("\"1\"".equals(val) || "1".equals(val)) {
+                            return;
+                        }
+                        handleBackExitPress();
+                    }
+            );
+            return;
+        }
+        handleBackExitPress();
+    }
+
+    private void handleBackExitPress() {
         long now = System.currentTimeMillis();
         if (now - lastBackPressMs < 2000L) {
             super.onBackPressed();
