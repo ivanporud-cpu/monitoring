@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -690,7 +691,8 @@ public class NewDayWorker extends Worker {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setSmallIcon(R.drawable.ic_stat_monitoring)
+                .setColor(Color.parseColor("#E07A22"))
                 .setContentTitle(title)
                 .setContentText(summaryText)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

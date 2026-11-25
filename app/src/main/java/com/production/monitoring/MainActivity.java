@@ -31,6 +31,8 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.NetworkType;
@@ -62,6 +64,7 @@ public class MainActivity extends Activity {
 
     private static final String PREFS_NAME = "monitoring_prefs";
     private static final String KEY_SERVER_URL = "server_url";
+    private static final String KEY_APP_THEME = "app_theme";
     private static final String GITHUB_LATEST_RELEASE_API =
             "https://api.github.com/repos/ivanporud-cpu/monitoring/releases/latest";
     private static final String PERIODIC_WORK_NAME = "new_day_periodic_check";
@@ -91,12 +94,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean startDark = "dark".equals(prefs.getString(KEY_APP_THEME, "light"));
+        int startBgColor = Color.parseColor(startDark ? "#0f1626" : "#F2F2F2");
+
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#0f1626"));
-        window.setNavigationBarColor(Color.parseColor("#0f1626"));
-
-        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         // Инициализируем токен Яндекс Диска по умолчанию, если он ещё не сохранён
         if (!prefs.contains(NewDayWorker.KEY_YANDEX_TOKEN)) {
@@ -113,11 +116,12 @@ public class MainActivity extends Activity {
         scheduleBackgroundNewDayCheck();
 
         rootContainer = new FrameLayout(this);
-        rootContainer.setBackgroundColor(Color.parseColor("#0f1626"));
+        rootContainer.setBackgroundColor(startBgColor);
         setContentView(rootContainer);
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.parseColor("#0f1626"));
+        webView.setBackgroundColor(startBgColor);
+        applySystemBarsTheme(startDark);
         configureWebViewSettings(webView);
         rootContainer.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -169,7 +173,7 @@ public class MainActivity extends Activity {
 
         // Тихая фоновая проверка и автопоиск сервера без всплывающих окон
         silentDiscoverServer(false);
-        checkForAppUpdate();
+        checkForAppUpdate(false);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -203,7 +207,8 @@ public class MainActivity extends Activity {
                     cachedVisualizerHtml = readAssetHtml("frame_visualizer-v7.html");
                 }
                 visualizerWebView = new WebView(MainActivity.this);
-                visualizerWebView.setBackgroundColor(Color.parseColor("#0d1117"));
+                boolean visDark = "dark".equals(prefs.getString(KEY_APP_THEME, "light"));
+                visualizerWebView.setBackgroundColor(Color.parseColor(visDark ? "#0d1117" : "#F2F2F2"));
                 configureWebViewSettings(visualizerWebView);
                 visualizerWebView.addJavascriptInterface(new VisualizerBridge(), "AndroidVisualizer");
 
@@ -438,6 +443,32 @@ public class MainActivity extends Activity {
 
     // ==================== АВТООБНОВЛЕНИЕ ЧЕРЕЗ GITHUB RELEASES ====================
 
+    private void applySystemBarsTheme(final boolean isDark) {
+        try {
+            Window window = getWindow();
+            int barColor = Color.parseColor(isDark ? "#0f1626" : "#F2F2F2");
+            window.setStatusBarColor(barColor);
+            window.setNavigationBarColor(barColor);
+
+            WindowInsetsControllerCompat controller =
+                    WindowCompat.getInsetsController(window, window.getDecorView());
+            if (controller != null) {
+                controller.setAppearanceLightStatusBars(!isDark);
+                controller.setAppearanceLightNavigationBars(!isDark);
+            }
+            if (rootContainer != null) {
+                rootContainer.setBackgroundColor(barColor);
+            }
+            if (webView != null) {
+                webView.setBackgroundColor(barColor);
+            }
+            if (visualizerWebView != null) {
+                visualizerWebView.setBackgroundColor(Color.parseColor(isDark ? "#0d1117" : "#F2F2F2"));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     private int getCurrentVersionCode() {
         try {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -450,7 +481,21 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void checkForAppUpdate() {
+    private String getCurrentVersionName() {
+        try {
+            PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            if (pi.versionName != null && !pi.versionName.trim().isEmpty()) {
+                return pi.versionName.trim();
+            }
+        } catch (Exception ignored) {
+        }
+        return "1." + getCurrentVersionCode();
+    }
+
+    private void checkForAppUpdate(final boolean manual) {
+        if (manual) {
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Проверка обновлений...", Toast.LENGTH_SHORT).show());
+        }
         new Thread(() -> {
             HttpURLConnection conn = null;
             try {
@@ -462,7 +507,14 @@ public class MainActivity extends Activity {
                 conn.setRequestProperty("Accept", "application/vnd.github+json");
                 conn.setRequestProperty("User-Agent", "ProductionMonitoringApp");
 
-                if (conn.getResponseCode() != 200) return;
+                int code = conn.getResponseCode();
+                if (code != 200) {
+                    if (manual) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                                "Не удалось проверить обновления (HTTP " + code + ")", Toast.LENGTH_LONG).show());
+                    }
+                    return;
+                }
 
                 StringBuilder sb = new StringBuilder();
                 try (BufferedReader br = new BufferedReader(
@@ -476,7 +528,20 @@ public class MainActivity extends Activity {
                 int remoteBuild = parseBuildNumber(tagName);
                 int localBuild = getCurrentVersionCode();
 
-                if (remoteBuild <= localBuild) return;
+                if (remoteBuild <= localBuild) {
+                    if (manual) {
+                        final String curVer = getCurrentVersionName();
+                        runOnUiThread(() -> {
+                            if (isFinishing() || isDestroyed()) return;
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("Обновлений нет")
+                                    .setMessage("У вас установлена актуальная версия приложения: v" + curVer + " (сборка #" + localBuild + ").")
+                                    .setPositiveButton("ОК", null)
+                                    .show();
+                        });
+                    }
+                    return;
+                }
 
                 String apkUrl = null;
                 JSONArray assets = json.optJSONArray("assets");
@@ -490,7 +555,13 @@ public class MainActivity extends Activity {
                         }
                     }
                 }
-                if (apkUrl == null || apkUrl.isEmpty()) return;
+                if (apkUrl == null || apkUrl.isEmpty()) {
+                    if (manual) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                                "В релизе " + tagName + " ещё нет APK-файла", Toast.LENGTH_LONG).show());
+                    }
+                    return;
+                }
 
                 final String finalApkUrl = apkUrl;
                 final String finalTag = tagName;
@@ -498,12 +569,19 @@ public class MainActivity extends Activity {
                     if (isFinishing() || isDestroyed()) return;
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Доступно обновление " + finalTag)
-                            .setMessage("Вышла новая версия приложения. Скачать и установить сейчас?")
+                            .setMessage("Текущая версия: v" + getCurrentVersionName() + "
+Новая версия: " + finalTag + "
+
+Скачать и установить сейчас?")
                             .setPositiveButton("Обновить", (d, w) -> downloadAndInstallApk(finalApkUrl))
                             .setNegativeButton("Позже", null)
                             .show();
                 });
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                if (manual) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                            "Нет связи с GitHub для проверки обновлений", Toast.LENGTH_LONG).show());
+                }
             } finally {
                 if (conn != null) conn.disconnect();
             }
@@ -746,6 +824,27 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isWifiConnected() {
             return NewDayWorker.isWifiOrLanConnected(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void syncTheme(final String theme) {
+            final boolean isDark = "dark".equals(theme);
+            prefs.edit().putString(KEY_APP_THEME, isDark ? "dark" : "light").apply();
+            runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    applySystemBarsTheme(isDark);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String getAppVersion() {
+            return "v" + getCurrentVersionName() + " (сборка #" + getCurrentVersionCode() + ")";
+        }
+
+        @JavascriptInterface
+        public void checkAppUpdateManual() {
+            checkForAppUpdate(true);
         }
 
         @JavascriptInterface
