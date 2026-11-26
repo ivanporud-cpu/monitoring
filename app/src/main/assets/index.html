@@ -1668,6 +1668,14 @@
                 </div>
 
                 <div class="settings-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoScrollTilesCheckbox">
+                        <label for="autoScrollTilesCheckbox" style="font-weight: bold; margin:0;">Автоскроллинг плиток к актуальной дате</label>
+                    </div>
+                    <div class="hint">По умолчанию выключено. Приоритет: 1) завтра, 2) ближайшая будущая дата, 3) ближайшая прошедшая дата.</div>
+                </div>
+
+                <div class="settings-group">
                     <label>Масштаб страницы</label>
                     <div class="scale-control">
                         <button class="btn btn-sm" id="scaleDecBtn" type="button">−</button>
@@ -3275,6 +3283,8 @@
         };
 
         let showChart = false;
+        let autoScrollTiles = false;
+        let autoScrollTimerId = null;
         let autoSwitchEnabled = false;
         let notifyNewDays = true;
         let scalePercent = 100;
@@ -3304,6 +3314,7 @@
             WEIGHTS_BY_LINE: 'monitoring_weights_by_line_v2',
             FONTS: 'monitoring_font_sizes',
             SHOW_CHART: 'monitoring_show_chart',
+            AUTO_SCROLL_TILES: 'monitoring_auto_scroll_tiles',
             SCALE: 'monitoring_scale_percent',
             CACHED_BLOCKS: 'monitoring_cached_blocks',
             CACHED_SCAN_TIME: 'monitoring_cached_scan_time',
@@ -4092,6 +4103,8 @@
             document.getElementById('folderPattern1').value = folderPatterns[1] || '';
             document.getElementById('folderPattern2').value = folderPatterns[2] || '';
             document.getElementById('showChartCheckbox').checked = showChart;
+            const autoScrollCb = document.getElementById('autoScrollTilesCheckbox');
+            if (autoScrollCb) autoScrollCb.checked = autoScrollTiles;
             const autoSwCb = document.getElementById('autoSwitchEnabledCheckbox');
             if (autoSwCb) autoSwCb.checked = autoSwitchEnabled;
             updateSwitchIntervalState();
@@ -4311,6 +4324,7 @@
             localStorage.setItem(STORAGE_KEYS.WEIGHTS, JSON.stringify(LINE_WINDOW_COEFFS[0]));
             localStorage.setItem(STORAGE_KEYS.FONTS, JSON.stringify(fontSizes));
             localStorage.setItem(STORAGE_KEYS.SHOW_CHART, String(showChart));
+            localStorage.setItem(STORAGE_KEYS.AUTO_SCROLL_TILES, String(autoScrollTiles));
             localStorage.setItem(STORAGE_KEYS.SCALE, String(scalePercent));
             localStorage.setItem(STORAGE_KEYS.NOTIFY_NEW_DAYS, String(notifyNewDays));
             localStorage.setItem(STORAGE_KEYS.YANDEX_ENABLED, String(yandexDiskEnabled));
@@ -4441,6 +4455,10 @@
             const show = localStorage.getItem(STORAGE_KEYS.SHOW_CHART);
             if (show !== null) {
                 showChart = show === 'true';
+            }
+            const autoScrollSaved = localStorage.getItem(STORAGE_KEYS.AUTO_SCROLL_TILES);
+            if (autoScrollSaved !== null) {
+                autoScrollTiles = autoScrollSaved === 'true';
             }
             const scale = localStorage.getItem(STORAGE_KEYS.SCALE);
             if (scale !== null) {
@@ -4649,6 +4667,7 @@
             localStorage.removeItem(STORAGE_KEYS.WEIGHTS_BY_LINE);
             localStorage.removeItem(STORAGE_KEYS.FONTS);
             localStorage.removeItem(STORAGE_KEYS.SHOW_CHART);
+            localStorage.removeItem(STORAGE_KEYS.AUTO_SCROLL_TILES);
             localStorage.removeItem(STORAGE_KEYS.SCALE);
             localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
             localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
@@ -4672,6 +4691,7 @@
             lastScanTime = [null, null, null];
             fontSizes = { dateTitle:20, weekday:18, lineName:14, countValue:18 };
             showChart = false;
+            autoScrollTiles = false;
             notifyNewDays = true;
             scalePercent = 100;
             applyFontSizes();
@@ -4835,9 +4855,9 @@
                 }
             }
 
-            // При автопереключении по таймеру плавно прокручиваем к сегодняшнему/завтрашнему блоку
-            if (!isManualSwipe && prevIdx !== nextIdx) {
-                setTimeout(() => scrollToTodayOrTomorrowBlock(), 400);
+            // Автоскролл к приоритетной плитке (если включён в настройках)
+            if (autoScrollTiles && prevIdx !== nextIdx) {
+                scheduleAutoScrollToPriorityBlock(380);
             }
         }
 
@@ -5717,6 +5737,10 @@
                     }
                 });
             });
+
+            if (autoScrollTiles && !isAnyModalOpen()) {
+                scheduleAutoScrollToPriorityBlock(300);
+            }
         }
 
 
@@ -6451,35 +6475,74 @@
         };
 
         // ==================== ПРОКРУТКА ====================
+        function scheduleAutoScrollToPriorityBlock(delayMs = 300) {
+            if (!autoScrollTiles) return;
+            if (autoScrollTimerId) {
+                clearTimeout(autoScrollTimerId);
+                autoScrollTimerId = null;
+            }
+            autoScrollTimerId = setTimeout(() => {
+                autoScrollTimerId = null;
+                if (autoScrollTiles && !isAnyModalOpen()) {
+                    scrollToTodayOrTomorrowBlock();
+                }
+            }, delayMs);
+        }
+
         function scrollToTodayOrTomorrowBlock() {
             const blocks = document.querySelectorAll('.date-block[data-folder]');
             if (blocks.length === 0) return;
 
+            const now = new Date();
             const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-            const todayTs = startOfDay(new Date());
-            const tomorrowTs = todayTs + 86400000;
+            const todayTs = startOfDay(now);
+            const tomorrowTs = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
 
             let targetBlock = null;
-            // 1) сегодня, 2) завтра
-            for (const ts of [todayTs, tomorrowTs]) {
-                for (const block of blocks) {
-                    const v = parseInt(block.getAttribute('data-ts'));
-                    if (!isNaN(v) && startOfDay(new Date(v)) === ts) { targetBlock = block; break; }
+
+            // Приоритет 1: завтрашний день
+            for (const block of blocks) {
+                const v = parseInt(block.getAttribute('data-ts'), 10);
+                if (!isNaN(v) && startOfDay(new Date(v)) === tomorrowTs) {
+                    targetBlock = block;
+                    break;
                 }
-                if (targetBlock) break;
             }
-            // 3) ближайший прошедший
+
+            // Приоритет 2: если завтрашнего нет — ближайшая будущая дата (послезавтра и далее)
             if (!targetBlock) {
-                let bestTs = -Infinity;
+                let bestFutureTs = Infinity;
                 blocks.forEach(block => {
-                    const v = parseInt(block.getAttribute('data-ts'));
-                    if (!isNaN(v) && v <= todayTs && v > bestTs) { bestTs = v; targetBlock = block; }
+                    const v = parseInt(block.getAttribute('data-ts'), 10);
+                    if (!isNaN(v)) {
+                        const dayTs = startOfDay(new Date(v));
+                        if (dayTs > tomorrowTs && dayTs < bestFutureTs) {
+                            bestFutureTs = dayTs;
+                            targetBlock = block;
+                        }
+                    }
                 });
             }
+
+            // Приоритет 3: если нет ни завтрашней, ни будущей даты — ближайшая прошедшая дата (включая сегодня)
+            if (!targetBlock) {
+                let bestPastTs = -Infinity;
+                blocks.forEach(block => {
+                    const v = parseInt(block.getAttribute('data-ts'), 10);
+                    if (!isNaN(v)) {
+                        const dayTs = startOfDay(new Date(v));
+                        if (dayTs <= todayTs && dayTs > bestPastTs) {
+                            bestPastTs = dayTs;
+                            targetBlock = block;
+                        }
+                    }
+                });
+            }
+
             if (!targetBlock) targetBlock = blocks[blocks.length - 1];
 
             const rect = targetBlock.getBoundingClientRect();
-            const scrollToY = rect.top + window.pageYOffset - window.innerHeight * 0.52;
+            const scrollToY = rect.top + window.pageYOffset - window.innerHeight * 0.22;
             window.scrollTo({ top: Math.max(0, scrollToY), behavior: 'smooth' });
         }
 
@@ -6917,6 +6980,9 @@
                 showChart = document.getElementById('showChartCheckbox').checked;
                 applyChartVisibility();
 
+                const autoScrollCbSave = document.getElementById('autoScrollTilesCheckbox');
+                if (autoScrollCbSave) autoScrollTiles = autoScrollCbSave.checked;
+
                 const notifyCbSave = document.getElementById('notifyNewDaysCheckbox');
                 if (notifyCbSave) notifyNewDays = notifyCbSave.checked;
 
@@ -6983,6 +7049,8 @@
                 // Линии, которые только что получили название, ещё не сканировались — загружаем
                 if (limitChanged || configuredNow.some(i => !blocksByFolder[i])) {
                     refreshAllFolders();
+                } else if (autoScrollTiles) {
+                    scheduleAutoScrollToPriorityBlock(250);
                 }
             });
 
