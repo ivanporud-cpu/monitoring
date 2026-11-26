@@ -3,15 +3,18 @@ package com.production.monitoring;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.UiModeManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -84,6 +87,7 @@ public class MainActivity extends Activity {
     private String activeBaseUrl = "";
     private long lastBackPressMs = 0L;
     private int pendingOpenLineIdx = -1;
+    private boolean isAndroidTvDevice = false;
 
     private final AtomicBoolean isAutoDiscovering = new AtomicBoolean(false);
     private volatile long lastAutoDiscoveryMs = 0L;
@@ -94,6 +98,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        isAndroidTvDevice = detectAndroidTv();
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean startDark = "dark".equals(prefs.getString(KEY_APP_THEME, "light"));
         int startBgColor = Color.parseColor(startDark ? "#0f1626" : "#F2F2F2");
@@ -123,12 +128,19 @@ public class MainActivity extends Activity {
         webView.setBackgroundColor(startBgColor);
         applySystemBarsTheme(startDark);
         configureWebViewSettings(webView);
+        if (isAndroidTvDevice) {
+            webView.setFocusable(true);
+            webView.setFocusableInTouchMode(true);
+        }
         rootContainer.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
         webView.addJavascriptInterface(new AndroidBridge(), "AndroidApp");
+        if (isAndroidTvDevice) {
+            webView.requestFocus();
+        }
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -797,6 +809,11 @@ public class MainActivity extends Activity {
 
     private class AndroidBridge {
         @JavascriptInterface
+        public boolean isAndroidTv() {
+            return isAndroidTvDevice;
+        }
+
+        @JavascriptInterface
         public String getServerUrl() {
             return displayUrl(prefs.getString(KEY_SERVER_URL, ""));
         }
@@ -974,6 +991,85 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    private boolean detectAndroidTv() {
+        try {
+            UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+            if (uiModeManager != null
+                    && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            PackageManager pm = getPackageManager();
+            if (pm != null) {
+                if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                        || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+                    return true;
+                }
+                if (!pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (isAndroidTvDevice && webView != null
+                && (visualizerWebView == null || visualizerWebView.getVisibility() != View.VISIBLE)) {
+            int code = event.getKeyCode();
+            String tvAction = null;
+            switch (code) {
+                case KeyEvent.KEYCODE_DPAD_UP:
+                    tvAction = "up";
+                    break;
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    tvAction = "down";
+                    break;
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    tvAction = "left";
+                    break;
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    tvAction = "right";
+                    break;
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                case KeyEvent.KEYCODE_ENTER:
+                case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                    tvAction = "ok";
+                    break;
+                case KeyEvent.KEYCODE_MENU:
+                    tvAction = "menu";
+                    break;
+                case KeyEvent.KEYCODE_CHANNEL_UP:
+                case KeyEvent.KEYCODE_PAGE_UP:
+                case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                    tvAction = "prev_line";
+                    break;
+                case KeyEvent.KEYCODE_CHANNEL_DOWN:
+                case KeyEvent.KEYCODE_PAGE_DOWN:
+                case KeyEvent.KEYCODE_MEDIA_NEXT:
+                    tvAction = "next_line";
+                    break;
+                default:
+                    break;
+            }
+            if (tvAction != null) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    final String actionToSend = tvAction;
+                    webView.evaluateJavascript(
+                            "window.__onTvRemoteKey && window.__onTvRemoteKey('" + actionToSend + "')",
+                            null
+                    );
+                }
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
