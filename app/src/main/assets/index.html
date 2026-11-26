@@ -1262,6 +1262,46 @@
             }
         }
 
+        /* Скрытые инженерные настройки (открываются 6 тапами по версии приложения) */
+        .dev-hidden-setting {
+            display: none !important;
+        }
+        #settingsModal.dev-unlocked .dev-hidden-setting {
+            display: block !important;
+        }
+        #appVersionText {
+            cursor: pointer;
+        }
+
+        /* Окно «Предложения» (обратная связь) */
+        #feedbackModal {
+            z-index: 2600;
+        }
+        .feedback-textarea {
+            width: 100%;
+            min-height: 7.5rem;
+            padding: 0.65rem 0.75rem;
+            border: 0.125rem solid var(--border-input);
+            border-radius: 0.5rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+        .feedback-textarea:focus {
+            border-color: var(--color-info);
+            outline: none;
+        }
+        .feedback-status {
+            font-size: 0.82rem;
+            min-height: 1.2rem;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+        }
+        .feedback-status.is-success { color: var(--color-success); font-weight: bold; }
+        .feedback-status.is-error { color: var(--color-danger); font-weight: bold; }
+
         /* Всплывающая плашка при свайпе между линиями */
         .swipe-toast {
             position: fixed;
@@ -1613,7 +1653,7 @@
                     <div class="hint">Сервер находится автоматически; кнопкой «Сервер» можно запустить поиск в сети или ввести адрес вручную.</div>
                 </div>
 
-                <div class="settings-group">
+                <div class="settings-group dev-hidden-setting" id="yandexDevSettingsGroup">
                     <div class="checkbox-group" style="margin-bottom:0.5rem;">
                         <input type="checkbox" id="yandexDiskEnabledCheckbox" checked>
                         <label for="yandexDiskEnabledCheckbox" style="font-weight: bold; margin:0;">Подгрузка с Яндекс Диска (вне цехового Wi-Fi)</label>
@@ -1627,7 +1667,7 @@
                     <div class="hint">Когда локальный сервер недоступен, приложение автоматически подгружает смены и чертежи с Яндекс Диска.</div>
                 </div>
 
-                <div class="settings-group">
+                <div class="settings-group dev-hidden-setting" id="weatherDevSettingsGroup">
                     <label>Погода за окном (Open-Meteo • Саратов)</label>
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
                         <span id="openMeteoStatusText" style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
@@ -1636,6 +1676,15 @@
                         <button class="btn btn-sm" id="checkOpenMeteoBtn" type="button">Проверить связь</button>
                     </div>
                     <div class="hint">Используется для отображения реальной погоды в Саратове на логотипе.</div>
+                </div>
+
+                <div class="settings-group dev-hidden-setting" id="clientIdDevSettingsGroup">
+                    <label>Уникальный ID устройства (статистика на Яндекс Диске)</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <span id="clientIdDevText" style="font-size:0.8rem; font-family:monospace; color:var(--text-primary); word-break:break-all; flex:1; min-width:11rem;">—</span>
+                        <button class="btn btn-sm" id="syncClientIdNowBtn" type="button">Отправить метку</button>
+                    </div>
+                    <div class="hint">Сохраняется в <code>app:/users/&lt;ID&gt;.json</code> для подсчёта реальных пользователей на сервере.</div>
                 </div>
 
                 <div class="settings-group">
@@ -1837,7 +1886,14 @@
 
                 <div class="settings-section-title">О приложении</div>
                 <div class="settings-group">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.85rem;">
+                        <div>
+                            <div style="font-weight:bold; color:var(--text-primary);">Предложения и замечания</div>
+                            <div class="hint" style="margin-top:0.15rem;">Напишите идею по улучшению или сообщите об ошибке</div>
+                        </div>
+                        <button class="btn btn-success btn-sm" id="openFeedbackBtn" type="button">Предложения</button>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; padding-top:0.65rem; border-top:0.0625rem solid var(--border-soft);">
                         <div>
                             <div style="font-weight:bold; color:var(--text-primary);" id="appVersionText">Веб-версия</div>
                             <div class="hint" id="appVersionHint" style="margin-top:0.15rem;">Проверка новых сборок APK на GitHub Releases</div>
@@ -1957,6 +2013,38 @@
 
     <div class="visualizer-overlay" id="browserVisualizerOverlay">
         <iframe id="browserVisualizerFrame" title="Чертежи рам и створок"></iframe>
+    </div>
+
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Предложения</h3>
+                <button class="btn btn-sm" id="closeFeedbackModalBtn" type="button">Закрыть</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group" style="margin-bottom:0.85rem;">
+                    <label>Тема сообщения</label>
+                    <div class="bc-pill-group" id="feedbackTypeGroup">
+                        <button type="button" class="bc-pill-btn active" data-fb-type="idea">Предложение</button>
+                        <button type="button" class="bc-pill-btn" data-fb-type="bug">Ошибка</button>
+                        <button type="button" class="bc-pill-btn" data-fb-type="question">Вопрос</button>
+                    </div>
+                </div>
+                <div class="settings-group" style="margin-bottom:0.85rem;">
+                    <label for="feedbackAuthorInput">Имя или участок (необязательно)</label>
+                    <input type="text" id="feedbackAuthorInput" placeholder="Например: Алексей, основная линия" maxlength="80">
+                </div>
+                <div class="settings-group" style="margin-bottom:0.65rem;">
+                    <label for="feedbackMessageInput">Сообщение</label>
+                    <textarea id="feedbackMessageInput" class="feedback-textarea" placeholder="Опишите ваше предложение, замечание или найденную ошибку..." maxlength="2000"></textarea>
+                </div>
+                <div class="feedback-status" id="feedbackStatusText">Сообщение будет отправлено разработчику через Яндекс Диск</div>
+                <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.85rem;">
+                    <button class="btn btn-sm" id="cancelFeedbackBtn" type="button" style="background: var(--bg-muted); color: var(--text-primary); border: 1px solid var(--border-input);">Отмена</button>
+                    <button class="btn btn-success btn-sm" id="sendFeedbackBtn" type="button">Отправить</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="bc-zoom-modal" id="barcodeZoomModal">
@@ -3321,7 +3409,10 @@
             DAY_CACHE: 'monitoring_day_cache_v1',
             NOTIFY_NEW_DAYS: 'monitoring_notify_new_days',
             YANDEX_ENABLED: 'monitoring_yandex_enabled',
-            YANDEX_TOKEN: 'monitoring_yandex_token'
+            YANDEX_TOKEN: 'monitoring_yandex_token',
+            CLIENT_ID: 'monitoring_client_uid_v1',
+            CLIENT_META: 'monitoring_client_meta_v1',
+            FEEDBACK_AUTHOR: 'monitoring_feedback_author'
         };
 
         window.__onAndroidAsyncResult = function(callbackId, success) {
@@ -3387,9 +3478,25 @@
             return new TextDecoder('utf-8').decode(bytes);
         }
 
-        async function yandexUploadText(remotePath, content) {
+        async function yandexEnsureFolderBrowser(folderPath) {
             const token = getEffectiveYandexToken();
             if (!token) return;
+            const encPath = encodeURIComponent(folderPath).replace(/%3A/g, ':').replace(/%2F/g, '/');
+            try {
+                await fetchWithTimeout(
+                    'https://cloud-api.yandex.net/v1/disk/resources?path=' + encPath,
+                    {
+                        method: 'PUT',
+                        headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' }
+                    },
+                    10000
+                );
+            } catch (e) {}
+        }
+
+        async function yandexUploadText(remotePath, content) {
+            const token = getEffectiveYandexToken();
+            if (!token) throw new Error('Не указан OAuth-токен Яндекс Диска');
 
             if (window.AndroidApp && typeof window.AndroidApp.yandexUploadAsync === 'function') {
                 return new Promise((resolve, reject) => {
@@ -3414,14 +3521,250 @@
                 { headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' } },
                 15000
             );
-            if (!metaResp.ok) return;
+            if (!metaResp.ok) throw new Error('Яндекс Диск HTTP ' + metaResp.status);
             const meta = await metaResp.json();
-            if (!meta.href) return;
-            await fetchWithTimeout(meta.href, {
+            if (!meta.href) throw new Error('Не получена ссылка для загрузки');
+            const putResp = await fetchWithTimeout(meta.href, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json; charset=utf-8' },
                 body: content
             }, 25000);
+            if (!putResp.ok) throw new Error('Ошибка отправки на Яндекс Диск HTTP ' + putResp.status);
+            return true;
+        }
+
+        async function yandexUploadToSubfolder(folderName, fileName, content) {
+            const subFolder = 'app:/' + folderName;
+            const subPath = subFolder + '/' + fileName;
+            const flatFallbackPath = 'app:/' + folderName + '__' + fileName;
+            const hasAndroidUpload = !!(window.AndroidApp && typeof window.AndroidApp.yandexUploadAsync === 'function');
+
+            if (!hasAndroidUpload) {
+                await yandexEnsureFolderBrowser(subFolder);
+            }
+            try {
+                await yandexUploadText(subPath, content);
+                return subPath;
+            } catch (firstErr) {
+                // Если подпапка на Яндекс Диске ещё не создана (409 на Android-мосте), пробуем сохранить в корень app:/ с префиксом
+                await yandexUploadText(flatFallbackPath, content);
+                return flatFallbackPath;
+            }
+        }
+
+        // ==================== УНИКАЛЬНЫЙ ID ПОЛЬЗОВАТЕЛЯ И ОБРАТНАЯ СВЯЗЬ (ЯНДЕКС ДИСК) ====================
+        const USER_PING_MIN_INTERVAL_MS = 6 * 3600 * 1000; // не чаще раза в 6 часов
+        const recentAppErrors = [];
+        let feedbackTypeSelected = 'idea';
+        let isSendingFeedback = false;
+
+        function initErrorCaptureBuffer() {
+            window.addEventListener('error', function(ev) {
+                try {
+                    const msg = (ev && ev.message ? ev.message : 'JS error') +
+                        (ev && ev.lineno ? (' @' + ev.lineno) : '');
+                    recentAppErrors.push({ t: new Date().toISOString(), m: String(msg).slice(0, 240) });
+                    if (recentAppErrors.length > 10) recentAppErrors.shift();
+                } catch (e) {}
+            });
+            window.addEventListener('unhandledrejection', function(ev) {
+                try {
+                    const reason = ev && ev.reason ? (ev.reason.message || String(ev.reason)) : 'Promise rejection';
+                    recentAppErrors.push({ t: new Date().toISOString(), m: String(reason).slice(0, 240) });
+                    if (recentAppErrors.length > 10) recentAppErrors.shift();
+                } catch (e) {}
+            });
+        }
+
+        function getOrCreateClientId() {
+            let uid = '';
+            try { uid = localStorage.getItem(STORAGE_KEYS.CLIENT_ID) || ''; } catch (e) {}
+            uid = String(uid).trim();
+            if (uid && /^[a-zA-Z0-9_-]{8,64}$/.test(uid)) {
+                return uid;
+            }
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                uid = 'u_' + window.crypto.randomUUID().replace(/-/g, '').slice(0, 20);
+            } else {
+                const r1 = Math.random().toString(36).slice(2, 10);
+                const r2 = Math.random().toString(36).slice(2, 10);
+                uid = 'u_' + Date.now().toString(36) + '_' + r1 + r2;
+            }
+            try { localStorage.setItem(STORAGE_KEYS.CLIENT_ID, uid); } catch (e) {}
+            return uid;
+        }
+
+        function getClientMeta(incrementVisit = false) {
+            const nowIso = new Date().toISOString();
+            let meta = { first_seen: nowIso, visits: 0, last_ping_ms: 0 };
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.CLIENT_META);
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (p && typeof p === 'object') {
+                        if (p.first_seen) meta.first_seen = p.first_seen;
+                        if (typeof p.visits === 'number' && !isNaN(p.visits)) meta.visits = p.visits;
+                        if (typeof p.last_ping_ms === 'number' && !isNaN(p.last_ping_ms)) meta.last_ping_ms = p.last_ping_ms;
+                    }
+                }
+            } catch (e) {}
+            if (incrementVisit) {
+                meta.visits = (meta.visits || 0) + 1;
+                try { localStorage.setItem(STORAGE_KEYS.CLIENT_META, JSON.stringify(meta)); } catch (e) {}
+            }
+            return meta;
+        }
+
+        function getAppVersionString() {
+            if (window.AndroidApp && typeof window.AndroidApp.getAppVersion === 'function') {
+                try { return String(window.AndroidApp.getAppVersion() || 'Android APK'); } catch (e) {}
+            }
+            return 'web';
+        }
+
+        function getClientPlatformString() {
+            if (window.AndroidApp) return 'android_apk';
+            return isMobileVersion() ? 'mobile_web' : 'desktop_web';
+        }
+
+        function collectClientContext() {
+            return {
+                client_id: getOrCreateClientId(),
+                app_version: getAppVersionString(),
+                platform: getClientPlatformString(),
+                screen: (window.innerWidth || 0) + 'x' + (window.innerHeight || 0),
+                theme: document.documentElement.getAttribute('data-theme') || 'light',
+                active_line: getLineName(activeIndex) || ('Линия ' + (activeIndex + 1)),
+                data_source: lastDataSource || 'local',
+                user_agent: String(navigator.userAgent || '').slice(0, 240),
+                recent_errors: recentAppErrors.slice(-5)
+            };
+        }
+
+        async function registerUserPresenceOnYandex(force = false) {
+            if (!getEffectiveYandexToken()) return false;
+            const uid = getOrCreateClientId();
+            const meta = getClientMeta(false);
+            const nowMs = Date.now();
+            if (!force && meta.last_ping_ms && (nowMs - meta.last_ping_ms < USER_PING_MIN_INTERVAL_MS)) {
+                return false;
+            }
+            const payload = {
+                client_id: uid,
+                first_seen: meta.first_seen,
+                last_seen: new Date(nowMs).toISOString(),
+                visits: meta.visits || 1,
+                app_version: getAppVersionString(),
+                platform: getClientPlatformString(),
+                screen: (window.innerWidth || 0) + 'x' + (window.innerHeight || 0),
+                active_line: getLineName(activeIndex) || '',
+                user_agent: String(navigator.userAgent || '').slice(0, 240)
+            };
+            try {
+                await yandexUploadToSubfolder('users', uid + '.json', JSON.stringify(payload, null, 2));
+                meta.last_ping_ms = nowMs;
+                try { localStorage.setItem(STORAGE_KEYS.CLIENT_META, JSON.stringify(meta)); } catch (e) {}
+                return true;
+            } catch (e) {
+                console.warn('Не удалось отправить метку пользователя на Яндекс Диск:', e);
+                return false;
+            }
+        }
+
+        function setFeedbackStatus(text, mode = '') {
+            const el = document.getElementById('feedbackStatusText');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.remove('is-success', 'is-error');
+            if (mode === 'success') el.classList.add('is-success');
+            else if (mode === 'error') el.classList.add('is-error');
+        }
+
+        function showFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            updateBodyScrollLock();
+            const authorInp = document.getElementById('feedbackAuthorInput');
+            if (authorInp && !authorInp.value.trim()) {
+                try {
+                    const savedAuthor = localStorage.getItem(STORAGE_KEYS.FEEDBACK_AUTHOR) || '';
+                    if (savedAuthor) authorInp.value = savedAuthor;
+                } catch (e) {}
+            }
+            setFeedbackStatus('Сообщение будет отправлено разработчику через Яндекс Диск', '');
+            const msgInp = document.getElementById('feedbackMessageInput');
+            if (msgInp) setTimeout(() => msgInp.focus(), 60);
+        }
+
+        function hideFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            if (modal) modal.style.display = 'none';
+            updateBodyScrollLock();
+        }
+
+        async function sendFeedbackToYandex() {
+            if (isSendingFeedback) return;
+            const msgInp = document.getElementById('feedbackMessageInput');
+            const authorInp = document.getElementById('feedbackAuthorInput');
+            const sendBtn = document.getElementById('sendFeedbackBtn');
+            const text = String(msgInp ? msgInp.value : '').trim();
+            if (!text) {
+                setFeedbackStatus('Напишите текст сообщения перед отправкой', 'error');
+                if (msgInp) msgInp.focus();
+                return;
+            }
+            if (!getEffectiveYandexToken()) {
+                setFeedbackStatus('Отправка недоступна: не задан токен Яндекс Диска', 'error');
+                return;
+            }
+
+            const author = String(authorInp ? authorInp.value : '').trim();
+            try { localStorage.setItem(STORAGE_KEYS.FEEDBACK_AUTHOR, author); } catch (e) {}
+
+            isSendingFeedback = true;
+            if (sendBtn) {
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Отправка...';
+            }
+            setFeedbackStatus('Отправка сообщения на Яндекс Диск...', '');
+
+            const now = new Date();
+            const pad2 = (n) => String(n).padStart(2, '0');
+            const stamp = now.getFullYear() + pad2(now.getMonth() + 1) + pad2(now.getDate()) + '_' +
+                          pad2(now.getHours()) + pad2(now.getMinutes()) + pad2(now.getSeconds());
+            const uid = getOrCreateClientId();
+            const uidShort = uid.replace(/[^a-zA-Z0-9]/g, '').slice(-8) || 'user';
+            const rnd = Math.random().toString(36).slice(2, 6);
+            const fbId = 'fb_' + stamp + '_' + uidShort + '_' + rnd;
+
+            const payload = {
+                id: fbId,
+                created_at: now.toISOString(),
+                type: feedbackTypeSelected || 'idea',
+                author: author || 'Аноним',
+                message: text,
+                client_id: uid,
+                context: collectClientContext()
+            };
+
+            try {
+                await yandexUploadToSubfolder('feedback', fbId + '.json', JSON.stringify(payload, null, 2));
+                if (msgInp) msgInp.value = '';
+                setFeedbackStatus('Спасибо! Сообщение успешно отправлено.', 'success');
+                setTimeout(() => {
+                    hideFeedbackModal();
+                }, 1300);
+            } catch (e) {
+                const errText = (e && e.message) ? e.message : 'нет связи с Яндекс Диском';
+                setFeedbackStatus('Не удалось отправить: ' + errText, 'error');
+            } finally {
+                isSendingFeedback = false;
+                if (sendBtn) {
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Отправить';
+                }
+            }
         }
 
         function uploadConfigToYandexDisk() {
@@ -4123,6 +4466,8 @@
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.getElementById('darkThemeCheckbox').checked = isDark;
             updateOpenMeteoStatusInSettings();
+            const cidEl = document.getElementById('clientIdDevText');
+            if (cidEl) cidEl.textContent = getOrCreateClientId();
 
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
@@ -4137,8 +4482,17 @@
                 }
             }
         }
+        let devSettingsTapCount = 0;
+        let devSettingsTapTimer = null;
+
         function hideSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
+            const sm = document.getElementById('settingsModal');
+            if (sm) {
+                sm.style.display = 'none';
+                sm.classList.remove('dev-unlocked');
+            }
+            devSettingsTapCount = 0;
+            clearTimeout(devSettingsTapTimer);
             updateBodyScrollLock();
         }
 
@@ -6404,6 +6758,8 @@
         }
 
         window.closeTopModalIfOpen = function() {
+            const fbMod = document.getElementById('feedbackModal');
+            if (fbMod && fbMod.style.display === 'block') { hideFeedbackModal(); return true; }
             const bcZoom = document.getElementById('barcodeZoomModal');
             if (bcZoom && bcZoom.classList.contains('open')) { closeBarcodeZoomModal(); return true; }
             const bcGen = document.getElementById('barcodeGenModal');
@@ -6612,6 +6968,9 @@
         }
 
         function initializeApp() {
+            initErrorCaptureBuffer();
+            getOrCreateClientId();
+            getClientMeta(true);
             syncMobileModeState();
             initMobileSelectionGuard();
             initTheme();
@@ -6906,6 +7265,65 @@
             if (checkOpenMeteoBtnEl) {
                 checkOpenMeteoBtnEl.addEventListener('click', testOpenMeteoConnection);
             }
+            const syncCidBtnEl = document.getElementById('syncClientIdNowBtn');
+            if (syncCidBtnEl) {
+                syncCidBtnEl.addEventListener('click', async function() {
+                    this.disabled = true;
+                    const prev = this.textContent;
+                    this.textContent = 'Отправка...';
+                    try {
+                        const ok = await registerUserPresenceOnYandex(true);
+                        showSwipeToast(ok ? 'Метка ID отправлена на Яндекс Диск' : 'Не удалось отправить метку ID', 2000);
+                    } finally {
+                        this.disabled = false;
+                        this.textContent = prev;
+                    }
+                });
+            }
+
+            // 6 нажатий по версии приложения открывают скрытые инженерные настройки (токен Яндекса и проверка погоды)
+            const appVerEl = document.getElementById('appVersionText');
+            if (appVerEl) {
+                appVerEl.addEventListener('click', function() {
+                    const sm = document.getElementById('settingsModal');
+                    if (!sm || sm.classList.contains('dev-unlocked')) return;
+                    devSettingsTapCount++;
+                    clearTimeout(devSettingsTapTimer);
+                    devSettingsTapTimer = setTimeout(() => { devSettingsTapCount = 0; }, 2500);
+                    const remaining = 6 - devSettingsTapCount;
+                    if (remaining > 0 && remaining <= 3) {
+                        showSwipeToast('Инженерные настройки: ещё ' + remaining, 1100);
+                    } else if (remaining <= 0) {
+                        devSettingsTapCount = 0;
+                        sm.classList.add('dev-unlocked');
+                        showSwipeToast('Инженерные настройки открыты', 1800);
+                        const sb = sm.querySelector('.settings-body');
+                        if (sb) sb.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+
+            // Кнопка «Предложения» и обработчики окна обратной связи
+            const openFbBtn = document.getElementById('openFeedbackBtn');
+            if (openFbBtn) openFbBtn.addEventListener('click', showFeedbackModal);
+            const closeFbBtn = document.getElementById('closeFeedbackModalBtn');
+            if (closeFbBtn) closeFbBtn.addEventListener('click', hideFeedbackModal);
+            const cancelFbBtn = document.getElementById('cancelFeedbackBtn');
+            if (cancelFbBtn) cancelFbBtn.addEventListener('click', hideFeedbackModal);
+            const sendFbBtn = document.getElementById('sendFeedbackBtn');
+            if (sendFbBtn) sendFbBtn.addEventListener('click', sendFeedbackToYandex);
+            document.querySelectorAll('#feedbackTypeGroup .bc-pill-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#feedbackTypeGroup .bc-pill-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    feedbackTypeSelected = this.getAttribute('data-fb-type') || 'idea';
+                });
+            });
+
+            // Отложенная отправка уникального ID пользователя на Яндекс Диск (не тормозит старт)
+            setTimeout(() => {
+                registerUserPresenceOnYandex(false);
+            }, 2500);
             const resetCacheBtnEl = document.getElementById('resetDataCacheBtn');
             if (resetCacheBtnEl) {
                 resetCacheBtnEl.addEventListener('click', resetDataCacheOnly);
@@ -7080,6 +7498,7 @@
                 if (e.target.id === 'settingsModal') hideSettingsModal();
                 if (e.target.id === 'globalSearchModal') hideGlobalSearchModal();
                 if (e.target.id === 'barcodeGenModal') hideBarcodeGenModal();
+                if (e.target.id === 'feedbackModal') hideFeedbackModal();
             });
 
             window.addEventListener('resize', function() {
@@ -7091,7 +7510,7 @@
 
         // ==================== ЖЕСТЫ: PULL-TO-REFRESH И СВАЙП МЕЖДУ ЛИНИЯМИ ====================
         function isAnyModalOpen() {
-            const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal', 'barcodeGenModal'];
+            const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal', 'barcodeGenModal', 'feedbackModal'];
             return ids.some(id => {
                 const el = document.getElementById(id);
                 return el && el.style.display === 'block';
