@@ -1196,10 +1196,70 @@
 
         /* Пробегающий градиент в цветах лейбла по контуру нажимаемого элемента */
         .brand-outline-fx {
-            position: fixed;
+            position: absolute !important;
+            left: -3px;
+            top: -3px;
+            max-width: none !important;
+            margin: 0 !important;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 25;
             overflow: visible;
+        }
+        .brand-outline-fx.brand-outline-fx-fixed {
+            position: fixed !important;
+            z-index: 9999;
+        }
+        .brand-outline-host {
+            position: relative !important;
+        }
+
+        /* Десктоп: статичный логотип без анимаций и перетаскивания */
+        html:not(.mobile-mode) .brand-logo-wrap {
+            top: 0.65rem;
+            left: 0.95rem;
+            transform: none !important;
+            cursor: default !important;
+            pointer-events: none !important;
+            will-change: auto;
+        }
+        html:not(.mobile-mode) .brand-logo-wrap,
+        html:not(.mobile-mode) .brand-logo-wrap *,
+        html:not(.mobile-mode) .ny-bg-flake {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        /* Мобильная версия: запрет выделения текста при долгом нажатии (кроме полей ввода) */
+        html.mobile-mode,
+        html.mobile-mode *,
+        html.mobile-mode *::before,
+        html.mobile-mode *::after {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html.mobile-mode input,
+        html.mobile-mode textarea,
+        html.mobile-mode [contenteditable="true"] {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            -webkit-touch-callout: default !important;
+        }
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+            body, body * {
+                -webkit-user-select: none !important;
+                user-select: none !important;
+                -webkit-touch-callout: none !important;
+                -webkit-tap-highlight-color: transparent;
+            }
+            input, textarea, [contenteditable="true"] {
+                -webkit-user-select: text !important;
+                user-select: text !important;
+                -webkit-touch-callout: default !important;
+            }
         }
 
         /* Всплывающая плашка при свайпе между линиями */
@@ -1728,23 +1788,41 @@
                 </div>
 
                 <div class="settings-group">
-                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Веса для расчёта условных окон</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
-                        <div>
-                            <label for="weightIzd" style="font-size:0.75rem;">Изделия</label>
-                            <input type="number" id="weightIzd" step="0.01" value="0.54">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                        <h3 style="font-size: 0.875rem; margin:0;">Веса условных окон по линиям</h3>
+                        <button class="btn btn-xs" id="resetWeightsTo1CBtn" type="button">Сбросить к 1С</button>
+                    </div>
+                    <div class="hint" style="margin-bottom:0.65rem;">
+                        Откалибровано по сводной 1С: Рамы (изделия), Створки, Импосты, Заполнения.
+                    </div>
+
+                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0.6rem;">
+                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle0">Линия 1 — Основная линия</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
+                            <div><label for="weightIzd0" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd0" step="0.01" value="0.67"></div>
+                            <div><label for="weightStv0" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv0" step="0.01" value="0.92"></div>
+                            <div><label for="weightImp0" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp0" step="0.01" value="0.44"></div>
+                            <div><label for="weightZap0" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap0" step="0.01" value="0"></div>
                         </div>
-                        <div>
-                            <label for="weightStv" style="font-size:0.75rem;">Створки</label>
-                            <input type="number" id="weightStv" step="0.01" value="1.02">
+                    </div>
+
+                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0.6rem;">
+                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle1">Линия 2 — Не стандарт</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
+                            <div><label for="weightIzd1" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd1" step="0.01" value="0.40"></div>
+                            <div><label for="weightStv1" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv1" step="0.01" value="1.85"></div>
+                            <div><label for="weightImp1" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp1" step="0.01" value="0.50"></div>
+                            <div><label for="weightZap1" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap1" step="0.01" value="0"></div>
                         </div>
-                        <div>
-                            <label for="weightImp" style="font-size:0.75rem;">Импосты</label>
-                            <input type="number" id="weightImp" step="0.01" value="0.42">
-                        </div>
-                        <div>
-                            <label for="weightZap" style="font-size:0.75rem;">Заполнения</label>
-                            <input type="number" id="weightZap" step="0.01" value="0.035">
+                    </div>
+
+                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0;">
+                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle2">Линия 3 — Ламинация</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
+                            <div><label for="weightIzd2" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd2" step="0.01" value="0.95"></div>
+                            <div><label for="weightStv2" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv2" step="0.01" value="1.17"></div>
+                            <div><label for="weightImp2" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp2" step="0.01" value="0.52"></div>
+                            <div><label for="weightZap2" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap2" step="0.01" value="0"></div>
                         </div>
                     </div>
                 </div>
@@ -2385,6 +2463,37 @@
             setInterval(() => fetchSaratovWeather(true), WEATHER_REFRESH_MS);
         }
 
+        // ==================== МОБИЛЬНЫЙ РЕЖИМ И ЗАЩИТА ОТ ВЫДЕЛЕНИЯ ТЕКСТА ====================
+        function isMobileVersion() {
+            return !!(window.AndroidApp) ||
+                   window.innerWidth <= 768 ||
+                   (window.matchMedia && window.matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)').matches);
+        }
+
+        function syncMobileModeState() {
+            const mobile = isMobileVersion();
+            document.documentElement.classList.toggle('mobile-mode', mobile);
+            return mobile;
+        }
+
+        function initMobileSelectionGuard() {
+            const isEditable = (el) => {
+                if (!el || !el.tagName) return false;
+                const tag = el.tagName.toUpperCase();
+                return tag === 'INPUT' || tag === 'TEXTAREA' || !!el.isContentEditable;
+            };
+            document.addEventListener('selectstart', function(e) {
+                if (isMobileVersion() && !isEditable(e.target)) {
+                    e.preventDefault();
+                }
+            });
+            document.addEventListener('contextmenu', function(e) {
+                if (isMobileVersion() && !isEditable(e.target)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
         // ==================== ЖИВОЙ АНИМИРОВАННЫЙ ЛОГОТИП В ШАПКЕ ====================
         const livingBrand = {
             isLoading: false,
@@ -2648,6 +2757,7 @@
             }
 
             logo.addEventListener('pointerdown', function(e) {
+                if (!isMobileVersion()) return;
                 if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
                 e.stopPropagation();
                 try { logo.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2671,9 +2781,33 @@
                 }
             }, { passive: false });
 
+            livingBrand.rafId = null;
+
+            function resetLogoForDesktop() {
+                if (livingBrand.rafId) {
+                    cancelAnimationFrame(livingBrand.rafId);
+                    livingBrand.rafId = null;
+                }
+                livingBrand.isDragging = false;
+                livingBrand.mode = 'roam';
+                if (logo.parentNode !== headerLayer) {
+                    headerLayer.appendChild(logo);
+                }
+                logo.classList.remove('is-dragging', 'is-hiding');
+                logo.style.transform = '';
+                if (rays) rays.removeAttribute('transform');
+                if (leaf) leaf.removeAttribute('transform');
+                if (sashL) sashL.removeAttribute('transform');
+                if (sashR) sashR.removeAttribute('transform');
+            }
+
             let lastT = now0;
             function frame(now) {
-                requestAnimationFrame(frame);
+                if (!isMobileVersion()) {
+                    resetLogoForDesktop();
+                    return;
+                }
+                livingBrand.rafId = requestAnimationFrame(frame);
                 if (document.hidden) {
                     lastT = now;
                     return;
@@ -2883,7 +3017,20 @@
                     }
                 }
             }
-            requestAnimationFrame(frame);
+
+            function syncBrandAnimationLoop() {
+                if (syncMobileModeState()) {
+                    if (!livingBrand.rafId) {
+                        lastT = performance.now();
+                        livingBrand.rafId = requestAnimationFrame(frame);
+                    }
+                } else {
+                    resetLogoForDesktop();
+                }
+            }
+
+            window.addEventListener('resize', syncBrandAnimationLoop);
+            syncBrandAnimationLoop();
         }
 
         // ==================== ВИЗУАЛЬНЫЙ ОТКЛИК: ПРОБЕГАЮЩИЙ ГРАДИЕНТ ПО КОНТУРУ ====================
@@ -2895,23 +3042,28 @@
             const rect = targetEl.getBoundingClientRect();
             if (!rect || rect.width < 12 || rect.height < 12) return;
 
+            const tagName = (targetEl.tagName || '').toUpperCase();
+            const isVoidHost = (tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA');
+
             const cs = window.getComputedStyle(targetEl);
             const rawR = parseFloat(cs.borderTopLeftRadius) || 8;
             const radius = Math.min(rawR, rect.width / 2, rect.height / 2);
 
             const pad = 3;
-            const svgW = rect.width + pad * 2;
-            const svgH = rect.height + pad * 2;
+            const elemW = isVoidHost ? rect.width : (targetEl.offsetWidth || rect.width);
+            const elemH = isVoidHost ? rect.height : (targetEl.offsetHeight || rect.height);
+            const svgW = elemW + pad * 2;
+            const svgH = elemH + pad * 2;
             const ns = 'http://www.w3.org/2000/svg';
             const gradId = 'br_fx_g_' + (++brandFxCounter);
 
             const svg = document.createElementNS(ns, 'svg');
-            svg.setAttribute('class', 'brand-outline-fx');
+            svg.setAttribute('class', isVoidHost ? 'brand-outline-fx brand-outline-fx-fixed' : 'brand-outline-fx');
             svg.setAttribute('width', svgW.toFixed(1));
             svg.setAttribute('height', svgH.toFixed(1));
             svg.setAttribute('viewBox', '0 0 ' + svgW.toFixed(1) + ' ' + svgH.toFixed(1));
-            svg.style.left = (rect.left - pad).toFixed(1) + 'px';
-            svg.style.top = (rect.top - pad).toFixed(1) + 'px';
+            svg.style.width = svgW.toFixed(1) + 'px';
+            svg.style.height = svgH.toFixed(1) + 'px';
             svg.style.filter = newYearActive
                 ? 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))'
                 : 'drop-shadow(0 0 3px rgba(251, 150, 59, 0.7))';
@@ -2938,8 +3090,8 @@
             const glowRect = document.createElementNS(ns, 'rect');
             glowRect.setAttribute('x', pad);
             glowRect.setAttribute('y', pad);
-            glowRect.setAttribute('width', rect.width.toFixed(1));
-            glowRect.setAttribute('height', rect.height.toFixed(1));
+            glowRect.setAttribute('width', elemW.toFixed(1));
+            glowRect.setAttribute('height', elemH.toFixed(1));
             glowRect.setAttribute('rx', radius.toFixed(1));
             glowRect.setAttribute('ry', radius.toFixed(1));
             glowRect.setAttribute('fill', 'none');
@@ -2951,8 +3103,8 @@
             const runRect = document.createElementNS(ns, 'rect');
             runRect.setAttribute('x', pad);
             runRect.setAttribute('y', pad);
-            runRect.setAttribute('width', rect.width.toFixed(1));
-            runRect.setAttribute('height', rect.height.toFixed(1));
+            runRect.setAttribute('width', elemW.toFixed(1));
+            runRect.setAttribute('height', elemH.toFixed(1));
             runRect.setAttribute('rx', radius.toFixed(1));
             runRect.setAttribute('ry', radius.toFixed(1));
             runRect.setAttribute('fill', 'none');
@@ -2961,10 +3113,36 @@
             runRect.setAttribute('stroke-linecap', 'round');
             svg.appendChild(runRect);
 
-            document.body.appendChild(svg);
+            let addedHostClass = false;
+            let trackRafId = null;
+
+            if (isVoidHost) {
+                svg.style.left = (rect.left - pad).toFixed(1) + 'px';
+                svg.style.top = (rect.top - pad).toFixed(1) + 'px';
+                document.body.appendChild(svg);
+                const syncPos = () => {
+                    if (!svg.parentNode || !targetEl.isConnected) return;
+                    const r = targetEl.getBoundingClientRect();
+                    svg.style.left = (r.left - pad).toFixed(1) + 'px';
+                    svg.style.top = (r.top - pad).toFixed(1) + 'px';
+                    trackRafId = requestAnimationFrame(syncPos);
+                };
+                trackRafId = requestAnimationFrame(syncPos);
+            } else {
+                if (cs.position === 'static') {
+                    targetEl.classList.add('brand-outline-host');
+                    addedHostClass = true;
+                }
+                const borderLeft = parseFloat(cs.borderLeftWidth) || 0;
+                const borderTop = parseFloat(cs.borderTopWidth) || 0;
+                svg.style.left = (-pad - borderLeft).toFixed(1) + 'px';
+                svg.style.top = (-pad - borderTop).toFixed(1) + 'px';
+                targetEl.appendChild(svg);
+            }
+
             activeBrandFxCount++;
 
-            let perim = (rect.width + rect.height) * 2;
+            let perim = (elemW + elemH) * 2;
             try { perim = runRect.getTotalLength() || perim; } catch (e) {}
             const dashLen = Math.max(46, perim * 0.42);
             runRect.setAttribute('stroke-dasharray', dashLen.toFixed(1) + ' ' + perim.toFixed(1));
@@ -2994,7 +3172,11 @@
             }
 
             setTimeout(() => {
+                if (trackRafId) cancelAnimationFrame(trackRafId);
                 if (svg.parentNode) svg.parentNode.removeChild(svg);
+                if (addedHostClass && !targetEl.querySelector('.brand-outline-fx')) {
+                    targetEl.classList.remove('brand-outline-host');
+                }
                 activeBrandFxCount = Math.max(0, activeBrandFxCount - 1);
             }, dur + 40);
         }
@@ -3010,17 +3192,40 @@
         }
 
         // ==================== КОНСТАНТЫ ====================
-        let WINDOW_COEFFS = {
-            izd: 0.54,
-            stv: 1.02,
-            imp: 0.42,
-            zap: 0.035
-        };
+        const DEFAULT_LINE_WEIGHTS = [
+            { izd: 0.67, stv: 0.92, imp: 0.44, zap: 0 }, // Основная линия
+            { izd: 0.40, stv: 1.85, imp: 0.50, zap: 0 }, // Не стандарт
+            { izd: 0.95, stv: 1.17, imp: 0.52, zap: 0 }  // Ламинация
+        ];
+        let LINE_WINDOW_COEFFS = DEFAULT_LINE_WEIGHTS.map(w => Object.assign({}, w));
+        let WINDOW_COEFFS = LINE_WINDOW_COEFFS[0];
         const RECOVERY_COEFFS = {
             stv_to_izd: 0.81,
             zap_to_izd: 1.90,
             imp_to_izd: 0.93
         };
+
+        function parseWeightVal(val, fallback) {
+            const n = parseFloat(String(val === undefined || val === null ? '' : val).replace(',', '.'));
+            return isNaN(n) ? fallback : n;
+        }
+
+        function resolveLineIndexForBlock(block) {
+            if (block && block.lineName) {
+                const target = String(block.lineName).trim().toLowerCase();
+                for (let i = 0; i < FOLDER_COUNT; i++) {
+                    if (getLineName(i).toLowerCase() === target) return i;
+                }
+            }
+            return (activeIndex >= 0 && activeIndex < FOLDER_COUNT) ? activeIndex : 0;
+        }
+
+        function getWeightsForLine(lineIdx) {
+            if (typeof lineIdx === 'number' && lineIdx >= 0 && lineIdx < FOLDER_COUNT && LINE_WINDOW_COEFFS[lineIdx]) {
+                return LINE_WINDOW_COEFFS[lineIdx];
+            }
+            return LINE_WINDOW_COEFFS[activeIndex] || DEFAULT_LINE_WEIGHTS[0];
+        }
 
         // ==================== ПЕРЕМЕННЫЕ ПРИЛОЖЕНИЯ ====================
         const FOLDER_COUNT = 3;
@@ -3096,6 +3301,7 @@
             REFRESH_INTERVAL: 'monitoring_refresh_interval',
             BLOCK_LIMIT: 'monitoring_block_limit',
             WEIGHTS: 'monitoring_weights',
+            WEIGHTS_BY_LINE: 'monitoring_weights_by_line_v2',
             FONTS: 'monitoring_font_sizes',
             SHOW_CHART: 'monitoring_show_chart',
             SCALE: 'monitoring_scale_percent',
@@ -3770,13 +3976,16 @@
         }
 
         // ==================== РАСЧЁТ УСЛОВНЫХ ОКОН ====================
-        function calculateConditionalWindows(counts) {
-            const izd = counts.Ипостов || 0;
+        function calculateConditionalWindows(counts, lineIdx) {
+            const coeffs = getWeightsForLine(lineIdx);
+            const izd = counts.Рамы || 0;
             const stv = counts.Створки || 0;
-            const imp = counts.Рамы || 0;
+            const imp = (counts.Ипостов !== undefined && counts.Ипостов !== null) ? (counts.Ипостов || 0) : (counts.Импостов || 0);
             const zap = counts.Заполнения || 0;
             let finalZap = zap;
-            if (zap === 0 && izd > 0 && imp > 0) finalZap = izd + imp;
+            if (zap === 0 && izd > 0) {
+                finalZap = imp > 0 ? (izd + imp) : izd;
+            }
             let baseIzd = izd;
             let needsRecovery = false;
             if (baseIzd === 0) {
@@ -3788,10 +3997,10 @@
             const finalStv = stv > 0 ? stv : (baseIzd * RECOVERY_COEFFS.stv_to_izd);
             const finalImp = imp > 0 ? imp : (baseIzd * RECOVERY_COEFFS.imp_to_izd);
             const finalZapFinal = finalZap > 0 ? finalZap : (baseIzd * RECOVERY_COEFFS.zap_to_izd);
-            const windows = (WINDOW_COEFFS.izd * finalIzd) +
-                           (WINDOW_COEFFS.stv * finalStv) +
-                           (WINDOW_COEFFS.imp * finalImp) +
-                           (WINDOW_COEFFS.zap * finalZapFinal);
+            const windows = (coeffs.izd * finalIzd) +
+                           (coeffs.stv * finalStv) +
+                           (coeffs.imp * finalImp) +
+                           (coeffs.zap * finalZapFinal);
             return {
                 windows: Math.round(windows),
                 zap: Math.round(finalZapFinal),
@@ -3862,10 +4071,19 @@
             document.getElementById('lineName0').value = getLineName(0);
             document.getElementById('lineName1').value = getLineName(1);
             document.getElementById('lineName2').value = getLineName(2);
-            document.getElementById('weightIzd').value = WINDOW_COEFFS.izd;
-            document.getElementById('weightStv').value = WINDOW_COEFFS.stv;
-            document.getElementById('weightImp').value = WINDOW_COEFFS.imp;
-            document.getElementById('weightZap').value = WINDOW_COEFFS.zap;
+            for (let i = 0; i < FOLDER_COUNT; i++) {
+                const w = LINE_WINDOW_COEFFS[i] || DEFAULT_LINE_WEIGHTS[i];
+                const tEl = document.getElementById('weightsLineTitle' + i);
+                if (tEl) tEl.textContent = 'Линия ' + (i + 1) + ' — ' + (getLineName(i) || DEFAULT_LINES[i].name);
+                const iEl = document.getElementById('weightIzd' + i);
+                const sEl = document.getElementById('weightStv' + i);
+                const mEl = document.getElementById('weightImp' + i);
+                const zEl = document.getElementById('weightZap' + i);
+                if (iEl) iEl.value = w.izd;
+                if (sEl) sEl.value = w.stv;
+                if (mEl) mEl.value = w.imp;
+                if (zEl) zEl.value = w.zap;
+            }
             document.getElementById('fontDateTitle').value = fontSizes.dateTitle;
             document.getElementById('fontWeekday').value = fontSizes.weekday;
             document.getElementById('fontLineName').value = fontSizes.lineName;
@@ -4089,7 +4307,8 @@
             localStorage.setItem(STORAGE_KEYS.AUTO_SWITCH_ENABLED, String(autoSwitchEnabled));
             localStorage.setItem(STORAGE_KEYS.REFRESH_INTERVAL, String(refreshInterval));
             localStorage.setItem(STORAGE_KEYS.BLOCK_LIMIT, String(blockLimit));
-            localStorage.setItem(STORAGE_KEYS.WEIGHTS, JSON.stringify(WINDOW_COEFFS));
+            localStorage.setItem(STORAGE_KEYS.WEIGHTS_BY_LINE, JSON.stringify(LINE_WINDOW_COEFFS));
+            localStorage.setItem(STORAGE_KEYS.WEIGHTS, JSON.stringify(LINE_WINDOW_COEFFS[0]));
             localStorage.setItem(STORAGE_KEYS.FONTS, JSON.stringify(fontSizes));
             localStorage.setItem(STORAGE_KEYS.SHOW_CHART, String(showChart));
             localStorage.setItem(STORAGE_KEYS.SCALE, String(scalePercent));
@@ -4190,14 +4409,23 @@
                 const val = parseInt(bl);
                 if (!isNaN(val) && val >= 1 && val <= 200) blockLimit = val;
             }
-            const weights = localStorage.getItem(STORAGE_KEYS.WEIGHTS);
-            if (weights) {
+            const weightsByLine = localStorage.getItem(STORAGE_KEYS.WEIGHTS_BY_LINE);
+            if (weightsByLine) {
                 try {
-                    const w = JSON.parse(weights);
-                    if (w.izd) WINDOW_COEFFS.izd = w.izd;
-                    if (w.stv) WINDOW_COEFFS.stv = w.stv;
-                    if (w.imp) WINDOW_COEFFS.imp = w.imp;
-                    if (w.zap) WINDOW_COEFFS.zap = w.zap;
+                    const arr = JSON.parse(weightsByLine);
+                    if (Array.isArray(arr) && arr.length === FOLDER_COUNT) {
+                        for (let i = 0; i < FOLDER_COUNT; i++) {
+                            const w = arr[i] || {};
+                            const defW = DEFAULT_LINE_WEIGHTS[i];
+                            LINE_WINDOW_COEFFS[i] = {
+                                izd: parseWeightVal(w.izd, defW.izd),
+                                stv: parseWeightVal(w.stv, defW.stv),
+                                imp: parseWeightVal(w.imp, defW.imp),
+                                zap: parseWeightVal(w.zap, defW.zap)
+                            };
+                        }
+                        WINDOW_COEFFS = LINE_WINDOW_COEFFS[0];
+                    }
                 } catch(e) {}
             }
             const fonts = localStorage.getItem(STORAGE_KEYS.FONTS);
@@ -4418,6 +4646,7 @@
             localStorage.removeItem(STORAGE_KEYS.REFRESH_INTERVAL);
             localStorage.removeItem(STORAGE_KEYS.BLOCK_LIMIT);
             localStorage.removeItem(STORAGE_KEYS.WEIGHTS);
+            localStorage.removeItem(STORAGE_KEYS.WEIGHTS_BY_LINE);
             localStorage.removeItem(STORAGE_KEYS.FONTS);
             localStorage.removeItem(STORAGE_KEYS.SHOW_CHART);
             localStorage.removeItem(STORAGE_KEYS.SCALE);
@@ -4428,6 +4657,8 @@
             folderPaths = ['', '', ''];
             folderPatterns = ['', '', ''];
             folderNames = ['', '', ''];
+            LINE_WINDOW_COEFFS = DEFAULT_LINE_WEIGHTS.map(w => Object.assign({}, w));
+            WINDOW_COEFFS = LINE_WINDOW_COEFFS[0];
             switchInterval = 30;
             autoSwitchEnabled = false;
             refreshInterval = 600;
@@ -5078,7 +5309,7 @@
                     Рамы: block.total_counts?.Рамы || 0,
                     Заполнения: block.total_counts?.Заполнения || 0
                 };
-                const windowResult = calculateConditionalWindows(counts);
+                const windowResult = calculateConditionalWindows(counts, resolveLineIndexForBlock(block));
                 const total = getBlockImpostCount(block) +
                              (block.total_counts?.Створки || 0) +
                              (block.total_counts?.Рамы || 0);
@@ -5451,7 +5682,7 @@
                         Рамы: block.total_counts?.Рамы || 0,
                         Заполнения: block.total_counts?.Заполнения || 0
                     };
-                    const windowResult = calculateConditionalWindows(counts);
+                    const windowResult = calculateConditionalWindows(counts, resolveLineIndexForBlock(block));
                     const folderName = isMobile && block.folder_name.length > 30 ? block.folder_name.substring(0,30)+'...' : block.folder_name;
                     const fullWeekday = getFullWeekday(block.weekday || '');
                     const lineName = block.lineName || getLineName(activeIndex);
@@ -6318,6 +6549,8 @@
         }
 
         function initializeApp() {
+            syncMobileModeState();
+            initMobileSelectionGuard();
             initTheme();
             initNewYearTheme();
             initSaratovWeatherSync();
@@ -6614,6 +6847,22 @@
             if (resetCacheBtnEl) {
                 resetCacheBtnEl.addEventListener('click', resetDataCacheOnly);
             }
+            const resetWeightsBtnEl = document.getElementById('resetWeightsTo1CBtn');
+            if (resetWeightsBtnEl) {
+                resetWeightsBtnEl.addEventListener('click', function() {
+                    for (let i = 0; i < FOLDER_COUNT; i++) {
+                        const defW = DEFAULT_LINE_WEIGHTS[i];
+                        const iEl = document.getElementById('weightIzd' + i);
+                        const sEl = document.getElementById('weightStv' + i);
+                        const mEl = document.getElementById('weightImp' + i);
+                        const zEl = document.getElementById('weightZap' + i);
+                        if (iEl) iEl.value = defW.izd;
+                        if (sEl) sEl.value = defW.stv;
+                        if (mEl) mEl.value = defW.imp;
+                        if (zEl) zEl.value = defW.zap;
+                    }
+                });
+            }
             document.getElementById('closeSettingsBtn').addEventListener('click', hideSettingsModal);
             document.getElementById('saveSettingsBtn').addEventListener('click', function() {
                 const autoSwChecked = autoSwCheckboxEl ? autoSwCheckboxEl.checked : false;
@@ -6635,10 +6884,16 @@
                 folderNames[0] = document.getElementById('lineName0').value.trim();
                 folderNames[1] = document.getElementById('lineName1').value.trim();
                 folderNames[2] = document.getElementById('lineName2').value.trim();
-                WINDOW_COEFFS.izd = parseFloat(document.getElementById('weightIzd').value) || 0.54;
-                WINDOW_COEFFS.stv = parseFloat(document.getElementById('weightStv').value) || 1.02;
-                WINDOW_COEFFS.imp = parseFloat(document.getElementById('weightImp').value) || 0.42;
-                WINDOW_COEFFS.zap = parseFloat(document.getElementById('weightZap').value) || 0.035;
+                for (let i = 0; i < FOLDER_COUNT; i++) {
+                    const defW = DEFAULT_LINE_WEIGHTS[i];
+                    LINE_WINDOW_COEFFS[i] = {
+                        izd: parseWeightVal(document.getElementById('weightIzd' + i)?.value, defW.izd),
+                        stv: parseWeightVal(document.getElementById('weightStv' + i)?.value, defW.stv),
+                        imp: parseWeightVal(document.getElementById('weightImp' + i)?.value, defW.imp),
+                        zap: parseWeightVal(document.getElementById('weightZap' + i)?.value, defW.zap)
+                    };
+                }
+                WINDOW_COEFFS = LINE_WINDOW_COEFFS[0];
 
                 fontSizes.dateTitle = parseInt(document.getElementById('fontDateTitle').value) || 20;
                 fontSizes.weekday = parseInt(document.getElementById('fontWeekday').value) || 18;
