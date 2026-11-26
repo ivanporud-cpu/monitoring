@@ -1345,9 +1345,209 @@
         .line-swipe-stage.slide-out {
             transition: transform 0.17s cubic-bezier(0.4, 0, 1, 1), opacity 0.17s ease;
         }
+
+        /* ==================== ФИКСИРОВАННЫЙ МАСШТАБ ОКНА НАСТРОЕК (НЕ ЗАВИСИТ ОТ scalePercent) ==================== */
+        #settingsModal {
+            font-size: 16px !important;
+        }
+        #settingsModal .settings-content {
+            border-radius: 12px;
+            max-width: 700px;
+            font-size: 16px;
+        }
+        #settingsModal .settings-topbar {
+            gap: 8px;
+            padding: 14px 20px;
+            border-bottom-width: 2px;
+        }
+        #settingsModal .settings-topbar h2 {
+            font-size: 19px;
+        }
+        #settingsModal .settings-topbar-actions {
+            gap: 8px;
+        }
+        #settingsModal .settings-body {
+            padding: 18px 20px 24px;
+            font-size: 16px;
+        }
+        #settingsModal .settings-section-title {
+            font-size: 13px;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom-width: 1px;
+        }
+        #settingsModal .settings-section-title:first-child {
+            margin-top: 0;
+        }
+        #settingsModal .settings-group {
+            margin-bottom: 18px;
+        }
+        #settingsModal .settings-group label {
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+        #settingsModal .settings-group input[type="number"],
+        #settingsModal .settings-group input[type="text"],
+        #settingsModal .settings-group input[type="password"] {
+            padding: 10px;
+            border-width: 2px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        #settingsModal .settings-group .hint {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        #settingsModal .settings-group .hint code {
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        #settingsModal .settings-group .checkbox-group {
+            gap: 10px;
+        }
+        #settingsModal .settings-group .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        #settingsModal .scale-control {
+            gap: 8px;
+        }
+        #settingsModal .scale-control input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            font-size: 16px;
+        }
+        #settingsModal .scale-control .btn-sm {
+            padding: 6px 12px !important;
+            font-size: 18px !important;
+        }
+        #settingsModal .settings-line-card {
+            border-width: 2px;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        #settingsModal .settings-line-head {
+            gap: 8px;
+            margin-bottom: 7px;
+        }
+        #settingsModal .settings-line-folder-row {
+            gap: 8px;
+            margin-top: 7px;
+        }
+        #settingsModal .settings-line-folder-row .folder-path {
+            min-width: 160px;
+        }
+        #settingsModal .folder-path {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        #settingsModal .active-label {
+            font-size: 12px;
+        }
+        #settingsModal .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            margin: 4px;
+        }
+        #settingsModal .btn-sm {
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+            margin: 2px !important;
+        }
+        #settingsModal .btn-xs {
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+            margin: 2px !important;
+        }
+        @media (max-width: 768px) {
+            #settingsModal .settings-content {
+                width: 96%;
+                margin: 2% auto;
+                max-height: 94vh;
+            }
+            #settingsModal .settings-body {
+                padding: 16px;
+            }
+            #settingsModal .scale-control input[type="number"] {
+                width: 70px;
+            }
+        }
+
+        /* ==================== НАПРАВЛЕННЫЙ MOTION BLUR ПРИ СКРОЛЛЕ И СВАЙПЕ ==================== */
+        .blocks-grid.is-motion-active .date-block,
+        .blocks-grid.is-motion-active .month-divider {
+            transition: none !important;
+            will-change: filter, transform;
+        }
+
+        /* ==================== РЕЖИМ ANDROID TV (УПРАВЛЕНИЕ ПУЛЬТОМ) ==================== */
+        html.tv-mode .container {
+            max-width: 100%;
+        }
+        html.tv-mode .brand-logo-wrap {
+            top: 0.65rem;
+            left: 0.95rem;
+            transform: none !important;
+            cursor: default !important;
+            pointer-events: none !important;
+            will-change: auto;
+        }
+        html.tv-mode .tv-focus {
+            outline: 3px solid #FEC035 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 5px rgba(254, 192, 53, 0.34), 0 8px 22px rgba(0, 0, 0, 0.32) !important;
+            position: relative;
+            z-index: 30;
+        }
+        html.tv-mode .date-block.tv-focus {
+            transform: scale(1.025);
+        }
+        html.tv-mode .theme-toggle.tv-focus,
+        html.tv-mode .line-tab-btn.tv-focus,
+        html.tv-mode .btn.tv-focus,
+        html.tv-mode .chart-control-btn.tv-focus {
+            transform: scale(1.06);
+        }
+        html.tv-mode .checkbox-group.tv-focus {
+            background: rgba(254, 192, 53, 0.14);
+            border-radius: 8px;
+            padding: 4px 6px;
+        }
+        .tv-remote-hint {
+            display: none;
+            position: fixed;
+            right: 16px;
+            bottom: 12px;
+            z-index: 2800;
+            background: rgba(18, 24, 38, 0.86);
+            color: #eef3fb;
+            border: 1px solid rgba(254, 192, 53, 0.45);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.01em;
+            pointer-events: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+        html.tv-mode .tv-remote-hint {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <svg width="0" height="0" style="position:absolute;pointer-events:none;overflow:hidden;" aria-hidden="true">
+        <defs>
+            <filter id="motionBlurFx" x="-16%" y="-14%" width="132%" height="128%" color-interpolation-filters="sRGB">
+                <feGaussianBlur id="motionBlurNode" in="SourceGraphic" stdDeviation="0 0" />
+            </filter>
+        </defs>
+    </svg>
+    <div class="tv-remote-hint" id="tvRemoteHint" aria-hidden="true">▲▼◀▶ Навигация • OK Выбор • Назад</div>
     <div class="brand-under-layer" id="brandUnderLayer" aria-hidden="true"></div>
     <div class="ny-snow-layer" id="nySnowLayer" aria-hidden="true"></div>
     <div class="brand-drag-layer" id="brandDragLayer" aria-hidden="true"></div>
@@ -1645,8 +1845,8 @@
 
                 <div class="settings-group" id="apkServerSettingsGroup" style="display:none;">
                     <label for="apkServerUrlInput">Адрес сервера мониторинга</label>
-                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                        <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1; min-width:11rem;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <input type="text" id="apkServerUrlInput" placeholder="http://192.168.57.107:5000" style="flex:1; min-width:176px;">
                         <button class="btn btn-success btn-sm" id="apkApplyServerBtn" type="button">Подключить</button>
                         <button class="btn btn-sm btn-brand-alt" id="apkServerBtn" type="button">Сервер</button>
                     </div>
@@ -1654,13 +1854,13 @@
                 </div>
 
                 <div class="settings-group dev-hidden-setting" id="yandexDevSettingsGroup">
-                    <div class="checkbox-group" style="margin-bottom:0.5rem;">
+                    <div class="checkbox-group" style="margin-bottom:8px;">
                         <input type="checkbox" id="yandexDiskEnabledCheckbox" checked>
                         <label for="yandexDiskEnabledCheckbox" style="font-weight: bold; margin:0;">Подгрузка с Яндекс Диска (вне цехового Wi-Fi)</label>
                     </div>
                     <label for="yandexTokenInput">OAuth-токен Яндекс Диска</label>
-                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                        <input type="password" id="yandexTokenInput" placeholder="y0_..." style="flex:1; min-width:12rem; padding:0.625rem; border:0.125rem solid var(--border-input); border-radius:0.375rem; font-size:0.95rem; background:var(--bg-input); color:var(--text-primary);">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <input type="password" id="yandexTokenInput" placeholder="y0_..." style="flex:1; min-width:192px; padding:10px; border:2px solid var(--border-input); border-radius:6px; font-size:15.2px; background:var(--bg-input); color:var(--text-primary);">
                         <button class="btn btn-sm" id="toggleYandexTokenBtn" type="button" style="background:var(--bg-muted); color:var(--text-primary); border:1px solid var(--border-input);">Показать</button>
                         <button class="btn btn-success btn-sm" id="yandexLoadNowBtn" type="button">Загрузить сейчас</button>
                     </div>
@@ -1669,8 +1869,8 @@
 
                 <div class="settings-group dev-hidden-setting" id="weatherDevSettingsGroup">
                     <label>Погода за окном (Open-Meteo • Саратов)</label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
-                        <span id="openMeteoStatusText" style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                        <span id="openMeteoStatusText" style="font-size:13px; color:var(--text-muted); flex:1; min-width:192px;">
                             Проверка связи с сервисом погоды Open-Meteo
                         </span>
                         <button class="btn btn-sm" id="checkOpenMeteoBtn" type="button">Проверить связь</button>
@@ -1680,8 +1880,8 @@
 
                 <div class="settings-group dev-hidden-setting" id="clientIdDevSettingsGroup">
                     <label>Уникальный ID устройства (статистика на Яндекс Диске)</label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
-                        <span id="clientIdDevText" style="font-size:0.8rem; font-family:monospace; color:var(--text-primary); word-break:break-all; flex:1; min-width:11rem;">—</span>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                        <span id="clientIdDevText" style="font-size:12.8px; font-family:monospace; color:var(--text-primary); word-break:break-all; flex:1; min-width:176px;">—</span>
                         <button class="btn btn-sm" id="syncClientIdNowBtn" type="button">Отправить метку</button>
                     </div>
                     <div class="hint">Сохраняется в <code>app:/users/&lt;ID&gt;.json</code> для подсчёта реальных пользователей на сервере.</div>
@@ -1689,8 +1889,8 @@
 
                 <div class="settings-group">
                     <label>Кэш сменных данных</label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
-                        <span style="font-size:0.8125rem; color:var(--text-muted); flex:1; min-width:12rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                        <span style="font-size:13px; color:var(--text-muted); flex:1; min-width:192px;">
                             Даты старше 3 дней берутся из кэша; последние 3 дня и все будущие даты пересчитываются всегда.
                         </span>
                         <button class="btn btn-warning btn-sm" id="resetDataCacheBtn" type="button">Сбросить кэш</button>
@@ -1760,11 +1960,11 @@
                 </div>
 
                 <div class="settings-group">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-                        <h3 style="font-size: 0.9rem; margin:0;">Настройка линий и папок</h3>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                        <h3 style="font-size: 14.4px; margin:0;">Настройка линий и папок</h3>
                         <button class="btn btn-sm" id="autoFindFoldersBtn" type="button">Найти папки автоматически</button>
                     </div>
-                    <div class="hint" style="margin-bottom: 0.75rem;">
+                    <div class="hint" style="margin-bottom: 12px;">
                         По умолчанию папки находятся сами (<code>Мурат Стандарт</code>, <code>Мурат Нестандарт</code>, <code>Ламинация</code>). При необходимости измените название, выберите другую папку или задайте шаблон с <code>{YEAR}</code>, <code>{MONTH}</code>, <code>{MONTH_NUM}</code>.
                     </div>
 
@@ -1778,7 +1978,7 @@
                             <div class="folder-path" id="folderPath0">Не выбрана</div>
                             <button class="btn btn-sm" data-index="0" type="button">Выбрать папку 1</button>
                         </div>
-                        <input type="text" id="folderPattern0" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Стандарт" style="margin-top:0.45rem; font-size:0.85rem;">
+                        <input type="text" id="folderPattern0" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Стандарт" style="margin-top:7.2px; font-size:13.6px;">
                     </div>
 
                     <div class="settings-line-card" id="folderGroup1">
@@ -1791,7 +1991,7 @@
                             <div class="folder-path" id="folderPath1">Не выбрана</div>
                             <button class="btn btn-sm" data-index="1" type="button">Выбрать папку 2</button>
                         </div>
-                        <input type="text" id="folderPattern1" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Нестандарт" style="margin-top:0.45rem; font-size:0.85rem;">
+                        <input type="text" id="folderPattern1" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Мурат Нестандарт" style="margin-top:7.2px; font-size:13.6px;">
                     </div>
 
                     <div class="settings-line-card" id="folderGroup2">
@@ -1804,7 +2004,7 @@
                             <div class="folder-path" id="folderPath2">Не выбрана</div>
                             <button class="btn btn-sm" data-index="2" type="button">Выбрать папку 3</button>
                         </div>
-                        <input type="text" id="folderPattern2" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Ламинация" style="margin-top:0.45rem; font-size:0.85rem;">
+                        <input type="text" id="folderPattern2" placeholder="Шаблон пути (необязательно), напр. ...\{YEAR}\Ламинация" style="margin-top:7.2px; font-size:13.6px;">
                     </div>
                 </div>
 
@@ -1823,80 +2023,80 @@
                 </div>
 
                 <div class="settings-group">
-                    <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem;">Размеры шрифтов в карточках (px)</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;">
+                    <h3 style="font-size: 14px; margin-bottom: 8px;">Размеры шрифтов в карточках (px)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label for="fontDateTitle" style="font-size:0.75rem;">Дата (название папки)</label>
+                            <label for="fontDateTitle" style="font-size:12px;">Дата (название папки)</label>
                             <input type="number" id="fontDateTitle" min="8" max="40" value="20">
                         </div>
                         <div>
-                            <label for="fontWeekday" style="font-size:0.75rem;">День недели</label>
+                            <label for="fontWeekday" style="font-size:12px;">День недели</label>
                             <input type="number" id="fontWeekday" min="8" max="40" value="18">
                         </div>
                         <div>
-                            <label for="fontLineName" style="font-size:0.75rem;">Название линии</label>
+                            <label for="fontLineName" style="font-size:12px;">Название линии</label>
                             <input type="number" id="fontLineName" min="8" max="40" value="14">
                         </div>
                         <div>
-                            <label for="fontCountValue" style="font-size:0.75rem;">Значения (Импостов, Створки, Рамы, ...)</label>
+                            <label for="fontCountValue" style="font-size:12px;">Значения (Импостов, Створки, Рамы, ...)</label>
                             <input type="number" id="fontCountValue" min="8" max="40" value="18">
                         </div>
                     </div>
                 </div>
 
                 <div class="settings-group">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-                        <h3 style="font-size: 0.875rem; margin:0;">Веса условных окон по линиям</h3>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                        <h3 style="font-size: 14px; margin:0;">Веса условных окон по линиям</h3>
                         <button class="btn btn-xs" id="resetWeightsTo1CBtn" type="button">Сбросить к 1С</button>
                     </div>
-                    <div class="hint" style="margin-bottom:0.65rem;">
+                    <div class="hint" style="margin-bottom:10.4px;">
                         Откалибровано по сводной 1С: Рамы (изделия), Створки, Импосты, Заполнения.
                     </div>
 
-                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0.6rem;">
-                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle0">Линия 1 — Основная линия</div>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
-                            <div><label for="weightIzd0" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd0" step="0.01" value="0.67"></div>
-                            <div><label for="weightStv0" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv0" step="0.01" value="0.92"></div>
-                            <div><label for="weightImp0" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp0" step="0.01" value="0.44"></div>
-                            <div><label for="weightZap0" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap0" step="0.01" value="0"></div>
+                    <div class="settings-line-card" style="padding:9.6px; margin-bottom:9.6px;">
+                        <div style="font-size:12.8px; font-weight:bold; margin-bottom:6.4px;" id="weightsLineTitle0">Линия 1 — Основная линия</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6.4px;">
+                            <div><label for="weightIzd0" style="font-size:11.2px;">Рамы</label><input type="number" id="weightIzd0" step="0.01" value="0.67"></div>
+                            <div><label for="weightStv0" style="font-size:11.2px;">Створки</label><input type="number" id="weightStv0" step="0.01" value="0.92"></div>
+                            <div><label for="weightImp0" style="font-size:11.2px;">Импосты</label><input type="number" id="weightImp0" step="0.01" value="0.44"></div>
+                            <div><label for="weightZap0" style="font-size:11.2px;">Заполн.</label><input type="number" id="weightZap0" step="0.01" value="0"></div>
                         </div>
                     </div>
 
-                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0.6rem;">
-                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle1">Линия 2 — Не стандарт</div>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
-                            <div><label for="weightIzd1" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd1" step="0.01" value="0.40"></div>
-                            <div><label for="weightStv1" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv1" step="0.01" value="1.85"></div>
-                            <div><label for="weightImp1" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp1" step="0.01" value="0.50"></div>
-                            <div><label for="weightZap1" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap1" step="0.01" value="0"></div>
+                    <div class="settings-line-card" style="padding:9.6px; margin-bottom:9.6px;">
+                        <div style="font-size:12.8px; font-weight:bold; margin-bottom:6.4px;" id="weightsLineTitle1">Линия 2 — Не стандарт</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6.4px;">
+                            <div><label for="weightIzd1" style="font-size:11.2px;">Рамы</label><input type="number" id="weightIzd1" step="0.01" value="0.40"></div>
+                            <div><label for="weightStv1" style="font-size:11.2px;">Створки</label><input type="number" id="weightStv1" step="0.01" value="1.85"></div>
+                            <div><label for="weightImp1" style="font-size:11.2px;">Импосты</label><input type="number" id="weightImp1" step="0.01" value="0.50"></div>
+                            <div><label for="weightZap1" style="font-size:11.2px;">Заполн.</label><input type="number" id="weightZap1" step="0.01" value="0"></div>
                         </div>
                     </div>
 
-                    <div class="settings-line-card" style="padding:0.6rem; margin-bottom:0;">
-                        <div style="font-size:0.8rem; font-weight:bold; margin-bottom:0.4rem;" id="weightsLineTitle2">Линия 3 — Ламинация</div>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
-                            <div><label for="weightIzd2" style="font-size:0.7rem;">Рамы</label><input type="number" id="weightIzd2" step="0.01" value="0.95"></div>
-                            <div><label for="weightStv2" style="font-size:0.7rem;">Створки</label><input type="number" id="weightStv2" step="0.01" value="1.17"></div>
-                            <div><label for="weightImp2" style="font-size:0.7rem;">Импосты</label><input type="number" id="weightImp2" step="0.01" value="0.52"></div>
-                            <div><label for="weightZap2" style="font-size:0.7rem;">Заполн.</label><input type="number" id="weightZap2" step="0.01" value="0"></div>
+                    <div class="settings-line-card" style="padding:9.6px; margin-bottom:0;">
+                        <div style="font-size:12.8px; font-weight:bold; margin-bottom:6.4px;" id="weightsLineTitle2">Линия 3 — Ламинация</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6.4px;">
+                            <div><label for="weightIzd2" style="font-size:11.2px;">Рамы</label><input type="number" id="weightIzd2" step="0.01" value="0.95"></div>
+                            <div><label for="weightStv2" style="font-size:11.2px;">Створки</label><input type="number" id="weightStv2" step="0.01" value="1.17"></div>
+                            <div><label for="weightImp2" style="font-size:11.2px;">Импосты</label><input type="number" id="weightImp2" step="0.01" value="0.52"></div>
+                            <div><label for="weightZap2" style="font-size:11.2px;">Заполн.</label><input type="number" id="weightZap2" step="0.01" value="0"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="settings-section-title">О приложении</div>
                 <div class="settings-group">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.85rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:13.6px;">
                         <div>
                             <div style="font-weight:bold; color:var(--text-primary);">Предложения и замечания</div>
-                            <div class="hint" style="margin-top:0.15rem;">Напишите идею по улучшению или сообщите об ошибке</div>
+                            <div class="hint" style="margin-top:2.4px;">Напишите идею по улучшению или сообщите об ошибке</div>
                         </div>
                         <button class="btn btn-success btn-sm" id="openFeedbackBtn" type="button">Предложения</button>
                     </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; padding-top:0.65rem; border-top:0.0625rem solid var(--border-soft);">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-top:10.4px; border-top:1px solid var(--border-soft);">
                         <div>
                             <div style="font-weight:bold; color:var(--text-primary);" id="appVersionText">Веб-версия</div>
-                            <div class="hint" id="appVersionHint" style="margin-top:0.15rem;">Проверка новых сборок APK на GitHub Releases</div>
+                            <div class="hint" id="appVersionHint" style="margin-top:2.4px;">Проверка новых сборок APK на GitHub Releases</div>
                         </div>
                         <button class="btn btn-sm" id="checkAppUpdateBtn" type="button" style="display:none;">Проверить обновления</button>
                     </div>
@@ -2560,13 +2760,39 @@
         }
 
         // ==================== МОБИЛЬНЫЙ РЕЖИМ И ЗАЩИТА ОТ ВЫДЕЛЕНИЯ ТЕКСТА ====================
+        let cachedTvMode = null;
+
+        function isTvMode() {
+            if (cachedTvMode !== null) return cachedTvMode;
+            let tv = false;
+            if (window.AndroidApp && typeof window.AndroidApp.isAndroidTv === 'function') {
+                try {
+                    if (window.AndroidApp.isAndroidTv()) tv = true;
+                } catch (e) {}
+            }
+            if (!tv && /[?&]tv=1\b/i.test(window.location.search)) {
+                tv = true;
+            }
+            if (!tv) {
+                const ua = String(navigator.userAgent || '');
+                if (/\b(Android TV|AFT[A-Z0-9]+|BRAVIA|SMART-TV|SmartTV|GoogleTV|MiBOX|MIBOX|SHIELD)\b/i.test(ua)) {
+                    tv = true;
+                }
+            }
+            cachedTvMode = tv;
+            return tv;
+        }
+
         function isMobileVersion() {
+            if (isTvMode()) return false;
             return !!(window.AndroidApp) ||
                    window.innerWidth <= 768 ||
                    (window.matchMedia && window.matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)').matches);
         }
 
         function syncMobileModeState() {
+            const tv = isTvMode();
+            document.documentElement.classList.toggle('tv-mode', tv);
             const mobile = isMobileVersion();
             document.documentElement.classList.toggle('mobile-mode', mobile);
             return mobile;
@@ -4382,6 +4608,9 @@
         // ==================== ИНТЕРФЕЙС ====================
         function updateBodyScrollLock() {
             document.body.classList.toggle('modal-open', isAnyModalOpen());
+            if (typeof tvSyncFocusAfterUiChange === 'function') {
+                tvSyncFocusAfterUiChange();
+            }
         }
 
         function showFileManager(index) {
@@ -4562,6 +4791,7 @@
 
         function switchToSpecificFolder(targetIdx, animDir) {
             if (!isFolderConfigured(targetIdx)) return;
+            triggerHorizontalMotionBlur(animDir || 1, 20);
             activeIndex = targetIdx;
             currentDirectory = folderPaths[activeIndex];
             updateActiveDisplay();
@@ -5230,6 +5460,7 @@
             if (isSwipeAnimating) return;
             isSwipeAnimating = true;
             stage.style.pointerEvents = 'none';
+            triggerHorizontalMotionBlur(step, 26);
 
             // step > 0 (свайп влево -> следующая): уходит влево (-100%), новая выезжает справа (+100%)
             // step < 0 (свайп вправо -> предыдущая): уходит вправо (+100%), новая выезжает слева (-100%)
@@ -5253,6 +5484,7 @@
                 void stage.offsetWidth;
 
                 requestAnimationFrame(() => {
+                    triggerHorizontalMotionBlur(step, 24);
                     stage.style.transition = '';
                     stage.classList.add('animating');
                     stage.style.transform = 'translate3d(0, 0, 0)';
@@ -6758,6 +6990,16 @@
         }
 
         window.closeTopModalIfOpen = function() {
+            if (isTvMode() && document.activeElement) {
+                const tag = (document.activeElement.tagName || '').toUpperCase();
+                if (tag === 'INPUT' || tag === 'TEXTAREA') {
+                    const typ = (document.activeElement.type || '').toLowerCase();
+                    if (typ !== 'checkbox' && typ !== 'button' && typ !== 'submit') {
+                        document.activeElement.blur();
+                        return true;
+                    }
+                }
+            }
             const fbMod = document.getElementById('feedbackModal');
             if (fbMod && fbMod.style.display === 'block') { hideFeedbackModal(); return true; }
             const bcZoom = document.getElementById('barcodeZoomModal');
@@ -6898,7 +7140,8 @@
             if (!targetBlock) targetBlock = blocks[blocks.length - 1];
 
             const rect = targetBlock.getBoundingClientRect();
-            const scrollToY = rect.top + window.pageYOffset - window.innerHeight * 0.22;
+            const bottomMargin = 20;
+            const scrollToY = rect.bottom + window.pageYOffset - window.innerHeight + bottomMargin;
             window.scrollTo({ top: Math.max(0, scrollToY), behavior: 'smooth' });
         }
 
@@ -6978,6 +7221,8 @@
             initSaratovWeatherSync();
             initLivingBrandLogo();
             initBrandOutlineFeedback();
+            initMotionShaders();
+            initTvNavigation();
             initBarcodeScanButtons();
 
             document.getElementById('themeToggle').addEventListener('click', function() {
@@ -7523,6 +7768,7 @@
 
             let startX = 0;
             let startY = 0;
+            let lastSwipeX = 0;
             let startTime = 0;
             let startedAtTop = false;
             let startedInChart = false;
@@ -7562,6 +7808,7 @@
                 const t = e.touches[0];
                 startX = t.clientX;
                 startY = t.clientY;
+                lastSwipeX = t.clientX;
                 startTime = Date.now();
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
                 startedAtTop = scrollTop <= 2;
@@ -7613,6 +7860,9 @@
                         const fade = Math.max(0.45, 1 - Math.abs(dragX) / (window.innerWidth * 1.15));
                         swipeStage.style.transform = 'translate3d(' + dragX.toFixed(1) + 'px, 0, 0)';
                         swipeStage.style.opacity = fade.toFixed(2);
+                        const stepDx = t.clientX - lastSwipeX;
+                        lastSwipeX = t.clientX;
+                        feedHorizontalDragBlur(stepDx);
 
                         const step = dx < 0 ? 1 : -1;
                         const preview = getTargetFolderByOffset(step);
@@ -7687,6 +7937,504 @@
                 gestureMode = null;
                 currentPull = 0;
             }, { passive: true });
+        }
+
+
+        // ==================== НАПРАВЛЕННЫЙ MOTION BLUR ПРИ СКРОЛЛЕ И СВАЙПЕ ====================
+        const motionFx = {
+            blurNode: null,
+            rafId: null,
+            lastScrollY: 0,
+            lastScrollTs: 0,
+            lastFrameTs: 0,
+            velY: 0,
+            velX: 0,
+            activeEls: new Set()
+        };
+
+        function isReducedMotionPreferred() {
+            return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+
+        function getVisibleMotionTargets() {
+            const vh = window.innerHeight || 800;
+            const els = document.querySelectorAll('#blocksGrid .date-block, #blocksGrid .month-divider');
+            const visible = [];
+            for (let i = 0; i < els.length; i++) {
+                const r = els[i].getBoundingClientRect();
+                if (r.bottom >= -120 && r.top <= vh + 120) {
+                    visible.push(els[i]);
+                }
+            }
+            return visible;
+        }
+
+        function clearMotionFx() {
+            const grid = document.getElementById('blocksGrid');
+            if (grid) grid.classList.remove('is-motion-active');
+            motionFx.activeEls.forEach(el => {
+                el.style.filter = '';
+            });
+            motionFx.activeEls.clear();
+            if (motionFx.blurNode) {
+                motionFx.blurNode.setAttribute('stdDeviation', '0 0');
+            }
+        }
+
+        function stepMotionFx(now) {
+            const dt = motionFx.lastFrameTs ? Math.min(0.05, Math.max(0.004, (now - motionFx.lastFrameTs) / 1000)) : 0.016;
+            motionFx.lastFrameTs = now;
+
+            const decayY = Math.pow(0.84, dt * 60);
+            const decayX = Math.pow(0.85, dt * 60);
+            motionFx.velY *= decayY;
+            motionFx.velX *= decayX;
+
+            const absY = Math.abs(motionFx.velY);
+            const absX = Math.abs(motionFx.velX);
+
+            if (document.hidden || (absY < 0.25 && absX < 0.25)) {
+                motionFx.velY = 0;
+                motionFx.velX = 0;
+                motionFx.rafId = null;
+                motionFx.lastFrameTs = 0;
+                clearMotionFx();
+                return;
+            }
+
+            const blurX = Math.min(18, absX * 0.58);
+            const blurY = Math.min(12, absY * 0.22);
+
+            if (motionFx.blurNode) {
+                motionFx.blurNode.setAttribute('stdDeviation', blurX.toFixed(2) + ' ' + blurY.toFixed(2));
+            }
+
+            const grid = document.getElementById('blocksGrid');
+            if (grid) grid.classList.add('is-motion-active');
+
+            const visible = getVisibleMotionTargets();
+            const visibleSet = new Set(visible);
+
+            motionFx.activeEls.forEach(el => {
+                if (!visibleSet.has(el)) {
+                    el.style.filter = '';
+                    motionFx.activeEls.delete(el);
+                }
+            });
+
+            const useBlur = (blurX > 0.35 || blurY > 0.35);
+            for (let i = 0; i < visible.length; i++) {
+                const el = visible[i];
+                el.style.filter = useBlur ? 'url(#motionBlurFx)' : '';
+                motionFx.activeEls.add(el);
+            }
+
+            motionFx.rafId = requestAnimationFrame(stepMotionFx);
+        }
+
+        function wakeMotionFx() {
+            if (isReducedMotionPreferred()) return;
+            if (!motionFx.rafId) {
+                motionFx.lastFrameTs = 0;
+                motionFx.rafId = requestAnimationFrame(stepMotionFx);
+            }
+        }
+
+        function triggerHorizontalMotionBlur(step, strength = 26) {
+            if (isReducedMotionPreferred()) return;
+            motionFx.velX = (step >= 0 ? 1 : -1) * Math.max(8, strength);
+            wakeMotionFx();
+        }
+
+        function feedHorizontalDragBlur(stepDx) {
+            if (isReducedMotionPreferred()) return;
+            if (Math.abs(stepDx) > 2) {
+                motionFx.velX = Math.max(-42, Math.min(42, motionFx.velX * 0.45 + stepDx * 0.95));
+                wakeMotionFx();
+            }
+        }
+
+        function initMotionShaders() {
+            motionFx.blurNode = document.getElementById('motionBlurNode');
+            motionFx.lastScrollY = window.scrollY || window.pageYOffset || 0;
+            motionFx.lastScrollTs = performance.now();
+
+            window.addEventListener('scroll', function() {
+                if (isReducedMotionPreferred() || document.body.classList.contains('modal-open')) return;
+                const now = performance.now();
+                const curY = window.scrollY || window.pageYOffset || 0;
+                const dy = curY - motionFx.lastScrollY;
+                const dt = Math.max(8, now - motionFx.lastScrollTs);
+                motionFx.lastScrollY = curY;
+                motionFx.lastScrollTs = now;
+
+                const normDy = dy * (16.67 / dt);
+                if (Math.abs(normDy) > 3) {
+                    motionFx.velY = Math.max(-75, Math.min(75, motionFx.velY * 0.4 + normDy * 0.95));
+                    wakeMotionFx();
+                }
+            }, { passive: true });
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    motionFx.velX = 0;
+                    motionFx.velY = 0;
+                    if (motionFx.rafId) {
+                        cancelAnimationFrame(motionFx.rafId);
+                        motionFx.rafId = null;
+                    }
+                    clearMotionFx();
+                }
+            });
+        }
+
+        // ==================== ANDROID TV: НАВИГАЦИЯ ПУЛЬТОМ (D-PAD) ====================
+        const tvNav = {
+            currentEl: null,
+            lastScopeId: 'main',
+            savedFocusByScope: new Map(),
+            syncTimer: null
+        };
+
+        function tvGetActiveScope() {
+            const bcZoom = document.getElementById('barcodeZoomModal');
+            if (bcZoom && bcZoom.classList.contains('open')) return { id: 'barcodeZoomModal', root: bcZoom, scrollBox: null };
+
+            const orderedModals = [
+                { id: 'feedbackModal', scrollSel: '.modal-body' },
+                { id: 'fileManager', scrollSel: '.file-manager-body' },
+                { id: 'filesModal', scrollSel: '.modal-body' },
+                { id: 'globalSearchModal', scrollSel: '.modal-body' },
+                { id: 'barcodeGenModal', scrollSel: '.modal-body' },
+                { id: 'settingsModal', scrollSel: '.settings-body' }
+            ];
+            for (const m of orderedModals) {
+                const el = document.getElementById(m.id);
+                if (el && el.style.display === 'block') {
+                    return { id: m.id, root: el, scrollBox: el.querySelector(m.scrollSel) };
+                }
+            }
+            return { id: 'main', root: document.getElementById('mainContainer') || document.body, scrollBox: null };
+        }
+
+        function tvIsElementVisibleAndEnabled(el) {
+            if (!el || !el.isConnected || el.disabled) return false;
+            if (el.closest('.disabled-group')) return false;
+            const cs = window.getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+            const r = el.getBoundingClientRect();
+            return r.width > 2 && r.height > 2;
+        }
+
+        function tvGetFocusableElements(scope) {
+            if (!scope || !scope.root) return [];
+            let selector = '';
+            if (scope.id === 'main') {
+                selector = '#mainHeader .header-actions button, #lineTabs .line-tab-btn, #chartContainer:not(.hidden) .chart-control-btn, #blocksGrid .date-block[data-folder]';
+            } else if (scope.id === 'settingsModal') {
+                selector = '.settings-topbar button, .settings-body .checkbox-group, .settings-body button, .settings-body input[type="text"], .settings-body input[type="number"], .settings-body input[type="password"], #appVersionText';
+            } else if (scope.id === 'fileManager') {
+                selector = '#closeFileManagerBtn, #selectCurrentFolderBtn, #fileManagerContent .folder-item[data-path]';
+            } else if (scope.id === 'filesModal') {
+                selector = '#closeFilesModalBtn, #orderSearchInput, #openOrderInVisualizerBtn, #filesList .file-item[data-file-idx]';
+            } else if (scope.id === 'globalSearchModal') {
+                selector = '#closeGlobalSearchBtn, #globalOrderSearchInput, #openGlobalAllBtn, #globalOrderSearchResults .file-item[data-global-idx]';
+            } else if (scope.id === 'barcodeGenModal') {
+                selector = '#closeBarcodeGenBtn, #bcGenTypeGroup .bc-pill-btn, #bcGenSubGroup .bc-pill-btn, #bcGenOrderInput, #bcGenItemGroup .bc-pill-btn, #bcGenItemInput, #bcGenPreviewBox';
+            } else if (scope.id === 'feedbackModal') {
+                selector = '#closeFeedbackModalBtn, #feedbackTypeGroup .bc-pill-btn, #feedbackAuthorInput, #feedbackMessageInput, #cancelFeedbackBtn, #sendFeedbackBtn';
+            } else if (scope.id === 'barcodeZoomModal') {
+                selector = '#closeBcZoomBtn';
+            }
+            const raw = Array.from(scope.root.querySelectorAll(selector));
+            return raw.filter(el => tvIsElementVisibleAndEnabled(el));
+        }
+
+        function tvScrollElementIntoView(el, scope) {
+            if (!el) return;
+            if (scope && scope.scrollBox && scope.scrollBox.contains(el)) {
+                const box = scope.scrollBox;
+                const boxRect = box.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const pad = 28;
+                if (elRect.top < boxRect.top + pad) {
+                    box.scrollTop -= (boxRect.top + pad - elRect.top);
+                } else if (elRect.bottom > boxRect.bottom - pad) {
+                    box.scrollTop += (elRect.bottom - (boxRect.bottom - pad));
+                }
+                return;
+            }
+            const r = el.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            const pad = 36;
+            if (r.top < pad) {
+                window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - pad), behavior: 'smooth' });
+            } else if (r.bottom > vh - pad) {
+                window.scrollTo({ top: Math.max(0, window.pageYOffset + r.bottom - vh + pad), behavior: 'smooth' });
+            }
+        }
+
+        function tvSetFocus(el, shouldScroll = true) {
+            if (tvNav.currentEl && tvNav.currentEl !== el) {
+                tvNav.currentEl.classList.remove('tv-focus');
+            }
+            tvNav.currentEl = el || null;
+            if (el) {
+                el.classList.add('tv-focus');
+                const scope = tvGetActiveScope();
+                tvNav.savedFocusByScope.set(scope.id, el);
+                if (shouldScroll) {
+                    tvScrollElementIntoView(el, scope);
+                }
+            }
+        }
+
+        function tvPickDefaultElement(scope, items) {
+            if (!items || items.length === 0) return null;
+            if (scope.id === 'main') {
+                const blocks = items.filter(el => el.classList.contains('date-block'));
+                if (blocks.length > 0) {
+                    // Выбираем ближайшую видимую карточку (или последнюю актуальную)
+                    const vh = window.innerHeight || 800;
+                    const visible = blocks.filter(b => {
+                        const r = b.getBoundingClientRect();
+                        return r.bottom > 40 && r.top < vh - 20;
+                    });
+                    if (visible.length > 0) return visible[visible.length - 1];
+                    return blocks[blocks.length - 1];
+                }
+                const setBtn = document.getElementById('settingsBtn');
+                if (setBtn && items.includes(setBtn)) return setBtn;
+            } else if (scope.id === 'settingsModal') {
+                const saveBtn = document.getElementById('saveSettingsBtn');
+                if (saveBtn && items.includes(saveBtn)) return saveBtn;
+            }
+            return items[0];
+        }
+
+        function tvEnsureValidFocus(shouldScroll = false) {
+            if (!isTvMode()) return;
+            const scope = tvGetActiveScope();
+            const items = tvGetFocusableElements(scope);
+            if (items.length === 0) {
+                tvSetFocus(null, false);
+                return;
+            }
+            if (scope.id !== tvNav.lastScopeId) {
+                tvNav.lastScopeId = scope.id;
+                const saved = tvNav.savedFocusByScope.get(scope.id);
+                if (saved && items.includes(saved)) {
+                    tvSetFocus(saved, shouldScroll);
+                    return;
+                }
+                tvSetFocus(tvPickDefaultElement(scope, items), shouldScroll);
+                return;
+            }
+            if (!tvNav.currentEl || !items.includes(tvNav.currentEl)) {
+                tvSetFocus(tvPickDefaultElement(scope, items), shouldScroll);
+            }
+        }
+
+        function tvSyncFocusAfterUiChange() {
+            if (!isTvMode()) return;
+            clearTimeout(tvNav.syncTimer);
+            tvNav.syncTimer = setTimeout(() => {
+                tvEnsureValidFocus(false);
+            }, 90);
+        }
+
+        function tvFindNextSpatial(current, items, dir) {
+            if (!current || items.length <= 1) return items[0] || null;
+            const cur = current.getBoundingClientRect();
+            const cx = cur.left + cur.width / 2;
+            const cy = cur.top + cur.height / 2;
+
+            let best = null;
+            let bestScore = Infinity;
+
+            for (let i = 0; i < items.length; i++) {
+                const cand = items[i];
+                if (cand === current) continue;
+                const r = cand.getBoundingClientRect();
+                const tx = r.left + r.width / 2;
+                const ty = r.top + r.height / 2;
+                const dx = tx - cx;
+                const dy = ty - cy;
+
+                let primary = 0;
+                let secondary = 0;
+                let overlap = false;
+
+                if (dir === 'up') {
+                    if (dy >= -4) continue;
+                    primary = -dy;
+                    secondary = Math.abs(dx);
+                    overlap = (r.right > cur.left + 4 && r.left < cur.right - 4);
+                } else if (dir === 'down') {
+                    if (dy <= 4) continue;
+                    primary = dy;
+                    secondary = Math.abs(dx);
+                    overlap = (r.right > cur.left + 4 && r.left < cur.right - 4);
+                } else if (dir === 'left') {
+                    if (dx >= -4) continue;
+                    primary = -dx;
+                    secondary = Math.abs(dy);
+                    overlap = (r.bottom > cur.top + 4 && r.top < cur.bottom - 4);
+                } else if (dir === 'right') {
+                    if (dx <= 4) continue;
+                    primary = dx;
+                    secondary = Math.abs(dy);
+                    overlap = (r.bottom > cur.top + 4 && r.top < cur.bottom - 4);
+                }
+
+                // Для горизонтального перемещения строго предпочитаем элементы на той же строке
+                if ((dir === 'left' || dir === 'right') && !overlap && secondary > Math.max(cur.height, r.height) * 0.9) {
+                    continue;
+                }
+
+                const weightSec = overlap ? 0.35 : 2.6;
+                const score = primary + secondary * weightSec;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = cand;
+                }
+            }
+
+            // Запасной последовательный шаг для списков (настройки, файлы, папки) при Up/Down
+            if (!best && (dir === 'up' || dir === 'down')) {
+                const idx = items.indexOf(current);
+                if (idx >= 0) {
+                    const nextIdx = dir === 'down' ? Math.min(items.length - 1, idx + 1) : Math.max(0, idx - 1);
+                    if (nextIdx !== idx) best = items[nextIdx];
+                }
+            }
+            return best;
+        }
+
+        function tvActivateElement(el) {
+            if (!el) return;
+            if (el.classList.contains('checkbox-group')) {
+                const cb = el.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
+                    triggerBrandOutlinePulse(el);
+                }
+                return;
+            }
+            const tag = (el.tagName || '').toUpperCase();
+            if (tag === 'INPUT' || tag === 'TEXTAREA') {
+                el.focus();
+                if (typeof el.select === 'function') {
+                    try { el.select(); } catch (e) {}
+                }
+                triggerBrandOutlinePulse(el);
+                return;
+            }
+            triggerBrandOutlinePulse(el);
+            el.click();
+            tvSyncFocusAfterUiChange();
+        }
+
+        function handleTvRemoteAction(action) {
+            if (!isTvMode()) return;
+
+            if (action === 'menu') {
+                const sm = document.getElementById('settingsModal');
+                if (sm && sm.style.display === 'block') {
+                    hideSettingsModal();
+                } else if (!isAnyModalOpen()) {
+                    showSettingsModal();
+                }
+                tvSyncFocusAfterUiChange();
+                return;
+            }
+
+            if (action === 'prev_line' && !isAnyModalOpen()) {
+                switchToPrevFolder();
+                tvSyncFocusAfterUiChange();
+                return;
+            }
+            if (action === 'next_line' && !isAnyModalOpen()) {
+                switchToNextFolder();
+                tvSyncFocusAfterUiChange();
+                return;
+            }
+
+            tvEnsureValidFocus(false);
+            const scope = tvGetActiveScope();
+            const items = tvGetFocusableElements(scope);
+            if (items.length === 0) return;
+
+            if (action === 'ok') {
+                tvActivateElement(tvNav.currentEl || items[0]);
+                return;
+            }
+
+            if (action === 'up' || action === 'down' || action === 'left' || action === 'right') {
+                // Если фокус был в текстовом поле ввода — снимаем курсор при навигации стрелками Up/Down
+                if ((action === 'up' || action === 'down') && document.activeElement) {
+                    const activeTag = (document.activeElement.tagName || '').toUpperCase();
+                    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+                        document.activeElement.blur();
+                    }
+                }
+                const nextEl = tvFindNextSpatial(tvNav.currentEl || items[0], items, action);
+                if (nextEl) {
+                    tvSetFocus(nextEl, true);
+                } else if (scope.id === 'main' && action === 'down') {
+                    window.scrollBy({ top: Math.round(window.innerHeight * 0.45), behavior: 'smooth' });
+                } else if (scope.id === 'main' && action === 'up') {
+                    window.scrollBy({ top: -Math.round(window.innerHeight * 0.45), behavior: 'smooth' });
+                }
+            }
+        }
+
+        window.__onTvRemoteKey = handleTvRemoteAction;
+
+        function initTvNavigation() {
+            if (!isTvMode()) return;
+            document.documentElement.classList.add('tv-mode');
+
+            // Поддержка клавиатурных стрелок / Enter / Escape в режиме TV (для пультов с HID и отладки в браузере)
+            document.addEventListener('keydown', function(e) {
+                if (!isTvMode()) return;
+                const activeTag = document.activeElement ? (document.activeElement.tagName || '').toUpperCase() : '';
+                const inTextInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA') &&
+                    ((document.activeElement.type || '').toLowerCase() !== 'checkbox');
+
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    handleTvRemoteAction('up');
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    handleTvRemoteAction('down');
+                } else if (e.key === 'ArrowLeft' && !inTextInput) {
+                    e.preventDefault();
+                    handleTvRemoteAction('left');
+                } else if (e.key === 'ArrowRight' && !inTextInput) {
+                    e.preventDefault();
+                    handleTvRemoteAction('right');
+                } else if (e.key === 'Enter' && !inTextInput) {
+                    e.preventDefault();
+                    handleTvRemoteAction('ok');
+                } else if (e.key === 'Escape' || e.key === 'Backspace') {
+                    if (!inTextInput && typeof window.closeTopModalIfOpen === 'function') {
+                        if (window.closeTopModalIfOpen()) {
+                            e.preventDefault();
+                            tvSyncFocusAfterUiChange();
+                        }
+                    }
+                }
+            });
+
+            // Следим за перерисовкой карточек, чтобы на TV всегда был активный фокус
+            const grid = document.getElementById('blocksGrid');
+            if (grid && typeof MutationObserver !== 'undefined') {
+                const mo = new MutationObserver(() => tvSyncFocusAfterUiChange());
+                mo.observe(grid, { childList: true });
+            }
+            tvSyncFocusAfterUiChange();
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
