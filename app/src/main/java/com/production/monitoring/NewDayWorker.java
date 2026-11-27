@@ -278,7 +278,7 @@ public class NewDayWorker extends Worker {
 
     public static String downloadYandexStringOrThrow(String remotePath, String token) throws IOException {
         if (token == null || token.trim().isEmpty()) {
-            throw new IOException("Не указан OAuth-токен Яндекс Диска");
+            throw new IOException("Не настроено подключение к удалённому серверу");
         }
         String encodedPath = URLEncoder.encode(remotePath, "UTF-8").replace("%3A", ":").replace("%2F", "/");
         String metaUrl = YANDEX_API_BASE + "/download?path=" + encodedPath;
@@ -288,7 +288,7 @@ public class NewDayWorker extends Worker {
             JSONObject meta = new JSONObject(metaResp);
             String href = meta.optString("href", "");
             if (href.isEmpty()) {
-                throw new IOException("Яндекс Диск не вернул ссылку для скачивания");
+                throw new IOException("Удалённый сервер не вернул ссылку для скачивания");
             }
             byte[] rawBytes = httpGetBytes(href, null, 15000, 30000);
             if (rawBytes.length >= 2 && (rawBytes[0] & 0xFF) == 0x1F && (rawBytes[1] & 0xFF) == 0x8B) {
@@ -298,13 +298,13 @@ public class NewDayWorker extends Worker {
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
-            throw new IOException("Ошибка разбора ответа Яндекс Диска: " + e.getMessage(), e);
+            throw new IOException("Ошибка разбора ответа удалённого сервера: " + e.getMessage(), e);
         }
     }
 
     public static void uploadYandexStringOrThrow(String remotePath, String content, String token) throws IOException {
         if (token == null || token.trim().isEmpty()) {
-            throw new IOException("Не указан OAuth-токен Яндекс Диска");
+            throw new IOException("Не настроено подключение к удалённому серверу");
         }
         String encodedPath = URLEncoder.encode(remotePath, "UTF-8").replace("%3A", ":").replace("%2F", "/");
         String metaUrl = YANDEX_API_BASE + "/upload?path=" + encodedPath + "&overwrite=true";
@@ -315,10 +315,10 @@ public class NewDayWorker extends Worker {
             JSONObject meta = new JSONObject(metaResp);
             href = meta.optString("href", "");
         } catch (Exception e) {
-            throw new IOException("Ошибка ответа Яндекс Диска: " + e.getMessage(), e);
+            throw new IOException("Ошибка ответа удалённого сервера: " + e.getMessage(), e);
         }
         if (href.isEmpty()) {
-            throw new IOException("Яндекс Диск не вернул ссылку для загрузки");
+            throw new IOException("Удалённый сервер не вернул ссылку для загрузки");
         }
 
         byte[] body = (content != null ? content : "").getBytes(StandardCharsets.UTF_8);
@@ -338,7 +338,7 @@ public class NewDayWorker extends Worker {
             }
             int code = conn.getResponseCode();
             if (code != 200 && code != 201 && code != 202) {
-                throw new IOException("Ошибка выгрузки на Яндекс Диск: HTTP " + code);
+                throw new IOException("Ошибка отправки данных: HTTP " + code);
             }
         } finally {
             if (conn != null) conn.disconnect();
@@ -985,7 +985,7 @@ public class NewDayWorker extends Worker {
                         "Новые смены на производстве",
                         NotificationManager.IMPORTANCE_HIGH
                 );
-                channel.setDescription("Уведомления о появлении новых смен на сервере и Яндекс Диске");
+                channel.setDescription("Уведомления о появлении новых смен на производстве");
                 nm.createNotificationChannel(channel);
             }
         }
