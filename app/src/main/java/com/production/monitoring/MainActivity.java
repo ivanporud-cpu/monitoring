@@ -991,6 +991,19 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {
             }
         }
+
+        @JavascriptInterface
+        public void syncClientId(final String clientId) {
+            if (clientId == null) return;
+            String clean = clientId.trim();
+            if (clean.isEmpty()) return;
+            prefs.edit().putString(NewDayWorker.KEY_CLIENT_ID, clean).apply();
+        }
+
+        @JavascriptInterface
+        public String getClientId() {
+            return prefs.getString(NewDayWorker.KEY_CLIENT_ID, "");
+        }
     }
 
     private boolean detectAndroidTv() {
