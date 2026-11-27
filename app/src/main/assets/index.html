@@ -1533,6 +1533,195 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ==================== ЭКРАН АВТОРИЗАЦИИ СОТРУДНИКА ==================== */
+        .emp-auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: radial-gradient(circle at 20% 20%, rgba(52, 152, 219, 0.22), transparent 55%),
+                        radial-gradient(circle at 85% 80%, rgba(46, 204, 113, 0.14), transparent 50%),
+                        var(--bg-body, #0f172a);
+            overflow-y: auto;
+        }
+        .emp-auth-overlay.active {
+            display: flex;
+        }
+        body.emp-auth-locked #mainContainer {
+            visibility: hidden;
+            pointer-events: none;
+            user-select: none;
+        }
+        .emp-auth-card {
+            width: 100%;
+            max-width: 430px;
+            background: var(--bg-card, #1e293b);
+            color: var(--text-primary, #f8fafc);
+            border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+            border-radius: 18px;
+            padding: 24px 22px 20px;
+            box-shadow: 0 22px 55px rgba(0, 0, 0, 0.45);
+        }
+        html.tv-mode .emp-auth-card {
+            box-shadow: none;
+            border-width: 2px;
+        }
+        .emp-auth-header {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .emp-auth-icon {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 10px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+        }
+        .emp-auth-title {
+            margin: 0 0 6px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary, #f8fafc);
+        }
+        .emp-auth-sub {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text-muted, #94a3b8);
+        }
+        .emp-auth-field {
+            margin-bottom: 12px;
+        }
+        .emp-auth-field label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-secondary, #cbd5e1);
+        }
+        .emp-auth-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 13px;
+            border-radius: 10px;
+            border: 1px solid var(--border-input, rgba(148, 163, 184, 0.35));
+            background: var(--bg-input, rgba(15, 23, 42, 0.55));
+            color: var(--text-primary, #f8fafc);
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .emp-auth-field input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22);
+        }
+        .emp-auth-hint {
+            font-size: 11.5px;
+            color: var(--text-muted, #94a3b8);
+            margin-top: 4px;
+        }
+        .emp-auth-btn-main {
+            width: 100%;
+            padding: 12px 16px;
+            margin-top: 6px;
+            border: none;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #2563eb, #0284c7);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.12s ease;
+        }
+        .emp-auth-btn-main:active {
+            transform: scale(0.99);
+        }
+        .emp-auth-btn-main:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        .emp-auth-status {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.45;
+            border: 1px solid transparent;
+        }
+        .emp-auth-status.visible {
+            display: block;
+        }
+        .emp-auth-status.info {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: var(--text-primary, #e2e8f0);
+        }
+        .emp-auth-status.pending {
+            background: rgba(245, 158, 11, 0.14);
+            border-color: rgba(245, 158, 11, 0.45);
+            color: #fbbf24;
+        }
+        .emp-auth-status.error {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.45);
+            color: #f87171;
+        }
+        [data-theme="light"] .emp-auth-status.pending { color: #b45309; }
+        [data-theme="light"] .emp-auth-status.error { color: #b91c1c; }
+        .emp-auth-actions {
+            display: none;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .emp-auth-actions.visible {
+            display: flex;
+        }
+        .emp-auth-actions button {
+            flex: 1;
+            min-width: 130px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-input, rgba(148, 163, 184, 0.35));
+            background: var(--bg-muted, rgba(148, 163, 184, 0.12));
+            color: var(--text-primary, #f8fafc);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .emp-auth-actions button.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .emp-auth-footer {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color, rgba(148, 163, 184, 0.2));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            color: var(--text-muted, #94a3b8);
+            flex-wrap: wrap;
+        }
+        .emp-auth-footer code {
+            font-family: monospace;
+            font-size: 11px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -1851,6 +2040,15 @@
                         <button class="btn btn-sm" id="checkOpenMeteoBtn" type="button">Проверить связь</button>
                     </div>
                     <div class="hint">Используется для отображения реальной погоды в Саратове на логотипе.</div>
+                </div>
+
+                <div class="settings-group" id="employeeAuthSettingsGroup">
+                    <label>Доступ сотрудника</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                        <span id="employeeAuthSettingsText" style="font-size:13px; color:var(--text-primary); flex:1; min-width:176px;">—</span>
+                        <button class="btn btn-sm" id="recheckEmployeeAuthBtn" type="button">Проверить доступ</button>
+                    </div>
+                    <div class="hint">Устройство привязано к сотруднику компании. Для ПК в локальной сети вход свободный.</div>
                 </div>
 
                 <div class="settings-group dev-hidden-setting" id="clientIdDevSettingsGroup">
@@ -2218,6 +2416,45 @@
                     <button class="btn btn-sm" id="cancelFeedbackBtn" type="button" style="background: var(--bg-muted); color: var(--text-primary); border: 1px solid var(--border-input);">Отмена</button>
                     <button class="btn btn-success btn-sm" id="sendFeedbackBtn" type="button">Отправить</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="emp-auth-overlay" id="employeeAuthOverlay" role="dialog" aria-modal="true" aria-labelledby="empAuthTitle">
+        <div class="emp-auth-card">
+            <div class="emp-auth-header">
+                <div class="emp-auth-icon" id="empAuthIcon">🔐</div>
+                <h2 class="emp-auth-title" id="empAuthTitle">Вход для сотрудников</h2>
+                <p class="emp-auth-sub" id="empAuthSub">Введите ваши фамилию и имя из списка компании. Отчество вводить не нужно.</p>
+            </div>
+
+            <form id="empAuthForm" autocomplete="off">
+                <div class="emp-auth-field">
+                    <label for="empAuthLastName">Фамилия *</label>
+                    <input type="text" id="empAuthLastName" placeholder="Например: Иванов" maxlength="60" required>
+                </div>
+                <div class="emp-auth-field">
+                    <label for="empAuthFirstName">Имя *</label>
+                    <input type="text" id="empAuthFirstName" placeholder="Например: Иван" maxlength="60" required>
+                </div>
+                <div class="emp-auth-field">
+                    <label for="empAuthDepartment">Отдел / участок (необязательно)</label>
+                    <input type="text" id="empAuthDepartment" placeholder="Например: Основная линия, склад, алюминий..." maxlength="80">
+                    <div class="emp-auth-hint">Отдел используется только для статистики и не влияет на проверку.</div>
+                </div>
+                <button type="submit" class="emp-auth-btn-main" id="empAuthSubmitBtn">Подтвердить и войти</button>
+            </form>
+
+            <div class="emp-auth-status" id="empAuthStatusBox"></div>
+
+            <div class="emp-auth-actions" id="empAuthActions">
+                <button type="button" class="primary" id="empAuthCheckBtn">🔄 Проверить статус</button>
+                <button type="button" id="empAuthEditBtn">✏ Изменить имя</button>
+            </div>
+
+            <div class="emp-auth-footer">
+                <span id="empAuthDeviceBadge">📱 Телефон</span>
+                <span>ID: <code id="empAuthClientIdCode">—</code></span>
             </div>
         </div>
     </div>
@@ -3274,7 +3511,8 @@
             YANDEX_TOKEN: 'monitoring_yandex_token',
             CLIENT_ID: 'monitoring_client_uid_v1',
             CLIENT_META: 'monitoring_client_meta_v1',
-            FEEDBACK_AUTHOR: 'monitoring_feedback_author'
+            FEEDBACK_AUTHOR: 'monitoring_feedback_author',
+            AUTH_STATE: 'monitoring_emp_auth_v1'
         };
 
         window.__onAndroidAsyncResult = function(callbackId, success) {
@@ -3917,6 +4155,7 @@
         // Загрузка данных смен из app:/cache.json на Яндекс Диске
         async function loadFromYandexDisk(showErrors) {
             if (!yandexDiskEnabled || !getEffectiveYandexToken()) return false;
+            if (!isEmployeeAccessAllowed()) return false;
             try {
                 setHeaderBrandLoading(true);
                 if (!currentBlocks || currentBlocks.length === 0) updateStatus('Загрузка данных с Яндекс Диска...', true);
@@ -4333,6 +4572,7 @@
             updateOpenMeteoStatusInSettings();
             const cidEl = document.getElementById('clientIdDevText');
             if (cidEl) cidEl.textContent = getOrCreateClientId();
+            updateEmployeeAuthSettingsLabel();
 
             if (window.AndroidApp) {
                 const srvInp = document.getElementById('apkServerUrlInput');
@@ -5186,6 +5426,11 @@
         // Сканирует все настроенные папки по очереди, обновляет blocksByFolder.
         async function refreshAllFolders(forceFullRecalc = false) {
             if (isScanning) return false;
+            if (!isEmployeeAccessAllowed()) return false;
+            if (!employeeAuthState.bypass) {
+                const stillOk = await verifyEmployeeAccess(true);
+                if (!stillOk) return false;
+            }
             const configured = getConfiguredIndexes();
             if (configured.length === 0) return false;
 
@@ -6821,6 +7066,497 @@
             return ok;
         }
 
+        // ==================== КОНТРОЛЬ ДОСТУПА СОТРУДНИКОВ ====================
+        let employeeAuthState = {
+            bypass: false,
+            status: 'unregistered', // 'approved' | 'pending' | 'blocked' | 'rejected' | 'not_found' | 'unregistered'
+            first_name: '',
+            last_name: '',
+            department: '',
+            employee_name: '',
+            reason: '',
+            verified_at: 0
+        };
+        let employeeAuthStartedData = false;
+        let employeeAuthPollTimer = null;
+        let employeeAuthCheckInFlight = null;
+
+        function isPrivateLanHostname(hostname) {
+            const h = String(hostname || '').trim().toLowerCase();
+            if (!h) return false;
+            if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.local')) return true;
+            if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+            if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+            if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+            if (!h.includes('.') && /^[a-z0-9-]+$/.test(h)) return true;
+            return false;
+        }
+
+        function getAuthDeviceType() {
+            if (isTvMode()) return 'tv';
+            if (window.AndroidApp || isMobileVersion()) return 'phone';
+            return 'pc';
+        }
+
+        function getAuthDeviceLabel(dt) {
+            if (dt === 'tv') return '📺 Телевизор';
+            if (dt === 'pc') return '💻 Компьютер';
+            return '📱 Телефон';
+        }
+
+        // Компьютеры из локальной сети проходят без авторизации
+        function isLocalNetworkPcBypassSync() {
+            if (window.AndroidApp) return false;
+            if (isTvMode()) return false;
+            if (isMobileVersion()) return false;
+            return isPrivateLanHostname(window.location.hostname);
+        }
+
+        function syncClientIdToAndroidNative() {
+            const uid = getOrCreateClientId();
+            if (window.AndroidApp && typeof window.AndroidApp.syncClientId === 'function') {
+                try { window.AndroidApp.syncClientId(uid); } catch (e) {}
+            }
+            return uid;
+        }
+
+        function loadSavedEmployeeAuth() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.AUTH_STATE);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        employeeAuthState = Object.assign(employeeAuthState, parsed, { bypass: false });
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function saveEmployeeAuthState() {
+            try {
+                const toSave = {
+                    status: employeeAuthState.status,
+                    first_name: employeeAuthState.first_name || '',
+                    last_name: employeeAuthState.last_name || '',
+                    department: employeeAuthState.department || '',
+                    employee_name: employeeAuthState.employee_name || '',
+                    reason: employeeAuthState.reason || '',
+                    verified_at: employeeAuthState.verified_at || 0
+                };
+                localStorage.setItem(STORAGE_KEYS.AUTH_STATE, JSON.stringify(toSave));
+            } catch (e) {}
+            updateEmployeeAuthSettingsLabel();
+        }
+
+        function isEmployeeAccessAllowed() {
+            return !!(employeeAuthState.bypass || employeeAuthState.status === 'approved');
+        }
+
+        function updateEmployeeAuthSettingsLabel() {
+            const el = document.getElementById('employeeAuthSettingsText');
+            if (!el) return;
+            if (employeeAuthState.bypass) {
+                el.textContent = '💻 Локальный ПК (свободный доступ)';
+                return;
+            }
+            const nm = employeeAuthState.employee_name ||
+                ((employeeAuthState.last_name + ' ' + employeeAuthState.first_name).trim()) || 'Не авторизован';
+            const dept = employeeAuthState.department ? (' • ' + employeeAuthState.department) : '';
+            const st = employeeAuthState.status === 'approved' ? '🟢 ' : '🔒 ';
+            el.textContent = st + nm + dept;
+        }
+
+        function purgeLocalDataCacheForRevokedAccess() {
+            try {
+                dayCache = {};
+                monthCache.clear();
+                csvContentCache.clear();
+                yandexPackCache.clear();
+                blocksByFolder = [null, null, null];
+                lastScanTime = [null, null, null];
+                currentBlocks = [];
+                chartData = [];
+                localStorage.removeItem(STORAGE_KEYS.DAY_CACHE);
+                localStorage.removeItem(STORAGE_KEYS.CACHED_BLOCKS);
+                localStorage.removeItem(STORAGE_KEYS.CACHED_SCAN_TIME);
+                if (productionChart) {
+                    try { productionChart.destroy(); } catch (e) {}
+                    productionChart = null;
+                }
+                const grid = document.getElementById('blocksGrid');
+                if (grid) grid.innerHTML = '';
+            } catch (e) {}
+        }
+
+        function stopEmployeeAuthPolling() {
+            if (employeeAuthPollTimer) {
+                clearInterval(employeeAuthPollTimer);
+                employeeAuthPollTimer = null;
+            }
+        }
+
+        function startEmployeeAuthPolling(intervalMs = 6000) {
+            stopEmployeeAuthPolling();
+            employeeAuthPollTimer = setInterval(async () => {
+                if (isEmployeeAccessAllowed()) {
+                    stopEmployeeAuthPolling();
+                    return;
+                }
+                await verifyEmployeeAccess(true);
+            }, intervalMs);
+        }
+
+        function showEmployeeAuthOverlay(mode, messageText) {
+            const ov = document.getElementById('employeeAuthOverlay');
+            if (!ov) return;
+            const form = document.getElementById('empAuthForm');
+            const statusBox = document.getElementById('empAuthStatusBox');
+            const actions = document.getElementById('empAuthActions');
+            const iconEl = document.getElementById('empAuthIcon');
+            const titleEl = document.getElementById('empAuthTitle');
+            const subEl = document.getElementById('empAuthSub');
+            const devBadge = document.getElementById('empAuthDeviceBadge');
+            const cidCode = document.getElementById('empAuthClientIdCode');
+            const lnInp = document.getElementById('empAuthLastName');
+            const fnInp = document.getElementById('empAuthFirstName');
+            const deptInp = document.getElementById('empAuthDepartment');
+
+            const uid = getOrCreateClientId();
+            if (devBadge) devBadge.textContent = getAuthDeviceLabel(getAuthDeviceType());
+            if (cidCode) cidCode.textContent = uid;
+
+            if (lnInp && !lnInp.value && employeeAuthState.last_name) lnInp.value = employeeAuthState.last_name;
+            if (fnInp && !fnInp.value && employeeAuthState.first_name) fnInp.value = employeeAuthState.first_name;
+            if (deptInp && !deptInp.value && employeeAuthState.department) deptInp.value = employeeAuthState.department;
+
+            document.body.classList.add('emp-auth-locked');
+            ov.classList.add('active');
+
+            if (mode === 'pending') {
+                if (iconEl) iconEl.textContent = '⏳';
+                if (titleEl) titleEl.textContent = 'Ожидает подтверждения';
+                if (subEl) subEl.textContent = 'Запрос на подключение этого устройства отправлен администратору.';
+                if (form) form.style.display = 'none';
+                if (statusBox) {
+                    statusBox.className = 'emp-auth-status visible pending';
+                    statusBox.textContent = messageText || 'Ожидает подтверждения администратора. Статус проверяется автоматически.';
+                }
+                if (actions) actions.classList.add('visible');
+                startEmployeeAuthPolling(6000);
+            } else if (mode === 'blocked' || mode === 'rejected') {
+                if (iconEl) iconEl.textContent = '🚫';
+                if (titleEl) titleEl.textContent = (mode === 'rejected') ? 'Запрос отклонён' : 'Доступ закрыт';
+                if (subEl) subEl.textContent = 'Обратитесь к администратору, если считаете это ошибкой.';
+                if (form) form.style.display = 'none';
+                if (statusBox) {
+                    statusBox.className = 'emp-auth-status visible error';
+                    statusBox.textContent = messageText || 'Доступ к данным компании для этого устройства отключён.';
+                }
+                if (actions) actions.classList.add('visible');
+                stopEmployeeAuthPolling();
+            } else if (mode === 'not_found') {
+                if (iconEl) iconEl.textContent = '⚠';
+                if (titleEl) titleEl.textContent = 'Сотрудник не найден';
+                if (subEl) subEl.textContent = 'Проверьте правильность написания фамилии и имени (отчество вводить не нужно).';
+                if (form) form.style.display = 'block';
+                if (statusBox) {
+                    statusBox.className = 'emp-auth-status visible error';
+                    statusBox.textContent = messageText || 'Имя и фамилия не найдены в списке сотрудников компании.';
+                }
+                if (actions) actions.classList.remove('visible');
+                stopEmployeeAuthPolling();
+            } else if (mode === 'checking') {
+                if (iconEl) iconEl.textContent = '⏳';
+                if (titleEl) titleEl.textContent = 'Проверка доступа...';
+                if (subEl) subEl.textContent = 'Сверяем устройство с базой сотрудников компании.';
+                if (form) form.style.display = 'none';
+                if (statusBox) {
+                    statusBox.className = 'emp-auth-status visible info';
+                    statusBox.textContent = messageText || 'Ожидаем ответ сервера (обычно до 15 секунд)...';
+                }
+                if (actions) actions.classList.add('visible');
+                startEmployeeAuthPolling(4000);
+            } else {
+                // 'form' / 'unregistered'
+                if (iconEl) iconEl.textContent = '🔐';
+                if (titleEl) titleEl.textContent = 'Вход для сотрудников';
+                if (subEl) subEl.textContent = 'Введите ваши фамилию и имя из списка компании. Отчество вводить не нужно.';
+                if (form) form.style.display = 'block';
+                if (statusBox) {
+                    if (messageText) {
+                        statusBox.className = 'emp-auth-status visible info';
+                        statusBox.textContent = messageText;
+                    } else {
+                        statusBox.className = 'emp-auth-status';
+                        statusBox.textContent = '';
+                    }
+                }
+                if (actions) actions.classList.remove('visible');
+                stopEmployeeAuthPolling();
+            }
+        }
+
+        function hideEmployeeAuthOverlay() {
+            stopEmployeeAuthPolling();
+            document.body.classList.remove('emp-auth-locked');
+            const ov = document.getElementById('employeeAuthOverlay');
+            if (ov) ov.classList.remove('active');
+        }
+
+        function applyEmployeeAuthResult(res, fromServer = true) {
+            if (!res || !res.status) return false;
+            const prevStatus = employeeAuthState.status;
+            employeeAuthState.status = res.status;
+            if (res.employee_name) employeeAuthState.employee_name = res.employee_name;
+            if (res.department) employeeAuthState.department = res.department;
+            employeeAuthState.reason = res.reason || '';
+            if (fromServer) employeeAuthState.verified_at = Date.now();
+            saveEmployeeAuthState();
+
+            if (res.status === 'approved') {
+                hideEmployeeAuthOverlay();
+                if (!employeeAuthStartedData) {
+                    startAuthorizedDataFlow();
+                } else if (prevStatus !== 'approved') {
+                    refreshAllFolders();
+                }
+                return true;
+            }
+
+            if (res.status === 'blocked' || res.status === 'rejected') {
+                purgeLocalDataCacheForRevokedAccess();
+                showEmployeeAuthOverlay(res.status, res.reason);
+                return false;
+            }
+
+            if (res.status === 'pending') {
+                showEmployeeAuthOverlay('pending', res.reason);
+                return false;
+            }
+
+            if (res.status === 'not_found') {
+                purgeLocalDataCacheForRevokedAccess();
+                showEmployeeAuthOverlay('not_found', res.reason);
+                return false;
+            }
+
+            // unregistered
+            purgeLocalDataCacheForRevokedAccess();
+            showEmployeeAuthOverlay('form', '');
+            return false;
+        }
+
+        async function fetchAuthStatusFromServerOrYandex() {
+            const uid = getOrCreateClientId();
+            // 1. Пробуем локальный сервер (мгновенно)
+            if (isLocalNetworkAvailable() && await quickProbeLocalServer(1800)) {
+                try {
+                    const r = await fetchWithTimeout('/api/auth/status?client_id=' + encodeURIComponent(uid), {}, 3500);
+                    if (r && r.ok) {
+                        const d = await r.json();
+                        if (d && d.status) {
+                            return { ok: true, source: 'local', data: d };
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Пробуем app:/access.json на Яндекс Диске
+            if (yandexDiskEnabled && getEffectiveYandexToken()) {
+                try {
+                    const raw = await yandexDownloadText('app:/access.json');
+                    if (raw) {
+                        const obj = JSON.parse(raw);
+                        const devs = (obj && obj.devices && typeof obj.devices === 'object') ? obj.devices : {};
+                        if (devs[uid]) {
+                            return { ok: true, source: 'yandex', data: devs[uid] };
+                        }
+                        return { ok: true, source: 'yandex', data: { status: 'unregistered', reason: '' } };
+                    }
+                } catch (e) {
+                    // Файл access.json ещё не создан или нет сети
+                }
+            }
+
+            return { ok: false, source: 'none', data: null };
+        }
+
+        async function verifyEmployeeAccess(silent = false) {
+            if (employeeAuthState.bypass) return true;
+            if (employeeAuthCheckInFlight) return employeeAuthCheckInFlight;
+
+            employeeAuthCheckInFlight = (async () => {
+                // Дополнительная проверка для десктопа (например, открытого по нестандартному локальному адресу):
+                // если не Android/не мобилка/не ТВ и локальный сервер доступен — считаем локальным ПК
+                if (!window.AndroidApp && !isTvMode() && !isMobileVersion()) {
+                    if (isLocalNetworkPcBypassSync() || await quickProbeLocalServer(1800)) {
+                        employeeAuthState.bypass = true;
+                        hideEmployeeAuthOverlay();
+                        updateEmployeeAuthSettingsLabel();
+                        if (!employeeAuthStartedData) startAuthorizedDataFlow();
+                        return true;
+                    }
+                }
+
+                const res = await fetchAuthStatusFromServerOrYandex();
+                if (!res.ok || !res.data) {
+                    // Нет связи ни с сервером, ни с Яндекс Диском
+                    if (employeeAuthState.status === 'approved') {
+                        return true; // Разрешаем офлайн-просмотр уже подтверждённому сотруднику
+                    }
+                    if (!silent) {
+                        showEmployeeAuthOverlay(
+                            employeeAuthState.status === 'pending' ? 'pending' : 'form',
+                            'Нет связи с сервером и Яндекс Диском. Проверьте интернет и нажмите «Проверить статус».'
+                        );
+                    }
+                    return false;
+                }
+
+                const st = res.data.status;
+                // Если заявка была отправлена через Яндекс Диск недавно и сервер ещё не успел забрать её (цикл 12 сек)
+                if (st === 'unregistered' && employeeAuthState.status === 'pending' && res.source === 'yandex') {
+                    const ageMs = Date.now() - (employeeAuthState.verified_at || 0);
+                    if (ageMs < 90000) {
+                        return false;
+                    }
+                }
+
+                return applyEmployeeAuthResult(res.data, true);
+            })();
+
+            try {
+                return await employeeAuthCheckInFlight;
+            } finally {
+                employeeAuthCheckInFlight = null;
+            }
+        }
+
+        async function submitEmployeeAuthForm(ev) {
+            if (ev) ev.preventDefault();
+            const lnInp = document.getElementById('empAuthLastName');
+            const fnInp = document.getElementById('empAuthFirstName');
+            const deptInp = document.getElementById('empAuthDepartment');
+            const submitBtn = document.getElementById('empAuthSubmitBtn');
+
+            const lastName = String(lnInp ? lnInp.value : '').trim();
+            const firstName = String(fnInp ? fnInp.value : '').trim();
+            const department = String(deptInp ? deptInp.value : '').trim();
+
+            if (lastName.length < 2 || firstName.length < 2) {
+                showEmployeeAuthOverlay('form', 'Пожалуйста, введите корректные Фамилию и Имя.');
+                return;
+            }
+
+            const uid = getOrCreateClientId();
+            employeeAuthState.last_name = lastName;
+            employeeAuthState.first_name = firstName;
+            employeeAuthState.department = department;
+            saveEmployeeAuthState();
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Проверка...';
+            }
+
+            const payload = {
+                client_id: uid,
+                first_name: firstName,
+                last_name: lastName,
+                department: department,
+                device_type: getAuthDeviceType(),
+                platform: getClientPlatformString(),
+                app_version: getAppVersionString(),
+                user_agent: String(navigator.userAgent || '').slice(0, 240),
+                requested_at: new Date().toISOString()
+            };
+
+            try {
+                // 1. Если локальный сервер доступен — регистрируемся мгновенно
+                if (isLocalNetworkAvailable() && await quickProbeLocalServer(2000)) {
+                    const r = await fetchWithTimeout('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }, 6000);
+                    if (r && r.ok) {
+                        const d = await r.json();
+                        applyEmployeeAuthResult(d, true);
+                        return;
+                    }
+                }
+
+                // 2. Иначе отправляем заявку на Яндекс Диск (сервер подхватит её за ~12 сек)
+                if (yandexDiskEnabled && getEffectiveYandexToken()) {
+                    await yandexUploadToSubfolder('auth_requests', uid + '.json', JSON.stringify(payload, null, 2));
+                    employeeAuthState.status = 'pending';
+                    employeeAuthState.verified_at = Date.now();
+                    saveEmployeeAuthState();
+                    showEmployeeAuthOverlay(
+                        'checking',
+                        'Заявка отправлена на сервер через Яндекс Диск. Проверка займёт 10–20 секунд...'
+                    );
+                    return;
+                }
+
+                showEmployeeAuthOverlay('form', 'Нет связи с сервером и Яндекс Диском. Проверьте подключение к сети.');
+            } catch (e) {
+                const msg = (e && e.message) ? e.message : 'ошибка сети';
+                showEmployeeAuthOverlay('form', 'Не удалось отправить запрос: ' + msg);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Подтвердить и войти';
+                }
+            }
+        }
+
+        function initEmployeeAuthControls() {
+            const form = document.getElementById('empAuthForm');
+            if (form && !form.dataset.bound) {
+                form.dataset.bound = '1';
+                form.addEventListener('submit', submitEmployeeAuthForm);
+            }
+            const chkBtn = document.getElementById('empAuthCheckBtn');
+            if (chkBtn && !chkBtn.dataset.bound) {
+                chkBtn.dataset.bound = '1';
+                chkBtn.addEventListener('click', async function() {
+                    this.disabled = true;
+                    const old = this.textContent;
+                    this.textContent = 'Проверка...';
+                    try {
+                        await verifyEmployeeAccess(false);
+                    } finally {
+                        this.disabled = false;
+                        this.textContent = old;
+                    }
+                });
+            }
+            const editBtn = document.getElementById('empAuthEditBtn');
+            if (editBtn && !editBtn.dataset.bound) {
+                editBtn.dataset.bound = '1';
+                editBtn.addEventListener('click', function() {
+                    showEmployeeAuthOverlay('form', '');
+                });
+            }
+            const recheckSettingsBtn = document.getElementById('recheckEmployeeAuthBtn');
+            if (recheckSettingsBtn && !recheckSettingsBtn.dataset.bound) {
+                recheckSettingsBtn.dataset.bound = '1';
+                recheckSettingsBtn.addEventListener('click', async function() {
+                    this.disabled = true;
+                    const old = this.textContent;
+                    this.textContent = 'Проверка...';
+                    try {
+                        const ok = await verifyEmployeeAccess(false);
+                        if (ok) showSwipeToast('Доступ подтверждён', 1800);
+                    } finally {
+                        this.disabled = false;
+                        this.textContent = old;
+                    }
+                });
+            }
+        }
+
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         function initBarcodeScanButtons() {
             const scanGlobalBtn = document.getElementById('scanGlobalBarcodeBtn');
@@ -6900,49 +7636,78 @@
             }
             updateActiveDisplay();
 
-            // Сразу отображаем последние сохранённые данные из кэша (даже если нет связи с сервером)
-            if (configured.length > 0 && blocksByFolder[activeIndex]) {
-                currentBlocks = blocksByFolder[activeIndex];
-                displayBlocks(currentBlocks);
-                prepareChartDataFromBlocks(currentBlocks);
-                updateStatus('Показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + '). Проверка сервера...');
-            }
+            window.startAuthorizedDataFlow = function() {
+                if (employeeAuthStartedData) return;
+                employeeAuthStartedData = true;
+                const cfgNow = getConfiguredIndexes();
 
-            const hasMissingDefaultFolders = [0, 1, 2].some(i => getLineName(i) && !folderPaths[i]);
+                // Сразу отображаем последние сохранённые данные из кэша (даже если нет связи с сервером)
+                if (cfgNow.length > 0 && blocksByFolder[activeIndex]) {
+                    currentBlocks = blocksByFolder[activeIndex];
+                    displayBlocks(currentBlocks);
+                    prepareChartDataFromBlocks(currentBlocks);
+                    updateStatus('Показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + '). Проверка сервера...');
+                }
 
-            if (currentDirectory && !hasMissingDefaultFolders) {
-                if (!blocksByFolder[activeIndex]) {
-                    updateStatus(isLocalNetworkAvailable() ? 'Загрузка данных...' : 'Загрузка данных с Яндекс Диска...');
-                }
-                setTimeout(async () => {
-                    await refreshAllFolders();
-                    restartSwitchTimer();
-                    startRefreshTimer();
-                }, 120);
-            } else {
-                if (!blocksByFolder[activeIndex]) {
-                    updateStatus(isLocalNetworkAvailable() ? 'Поиск папок линий...' : 'Загрузка с Яндекс Диска...');
-                }
-                setTimeout(async () => {
-                    if (isLocalNetworkAvailable()) {
-                        await autoDiscoverFoldersFromLocalServer(false);
-                        ensureActiveIndexValid();
-                        updateActiveDisplay();
+                const hasMissingDefaultFolders = [0, 1, 2].some(i => getLineName(i) && !folderPaths[i]);
+
+                if (currentDirectory && !hasMissingDefaultFolders) {
+                    if (!blocksByFolder[activeIndex]) {
+                        updateStatus(isLocalNetworkAvailable() ? 'Загрузка данных...' : 'Загрузка данных с Яндекс Диска...');
                     }
-
-                    if (getConfiguredIndexes().length > 0) {
+                    setTimeout(async () => {
                         await refreshAllFolders();
-                    } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
-                        const ydOk = await loadFromYandexDisk(false);
-                        if (!ydOk) {
+                        restartSwitchTimer();
+                        startRefreshTimer();
+                    }, 120);
+                } else {
+                    if (!blocksByFolder[activeIndex]) {
+                        updateStatus(isLocalNetworkAvailable() ? 'Поиск папок линий...' : 'Загрузка с Яндекс Диска...');
+                    }
+                    setTimeout(async () => {
+                        if (isLocalNetworkAvailable()) {
+                            await autoDiscoverFoldersFromLocalServer(false);
+                            ensureActiveIndexValid();
+                            updateActiveDisplay();
+                        }
+
+                        if (getConfiguredIndexes().length > 0) {
+                            await refreshAllFolders();
+                        } else if (yandexDiskEnabled && getEffectiveYandexToken()) {
+                            const ydOk = await loadFromYandexDisk(false);
+                            if (!ydOk) {
+                                updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).', true);
+                            }
+                        } else {
                             updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).', true);
                         }
-                    } else {
-                        updateStatus('Папки линий не найдены. Выберите их вручную в настройках (☰).', true);
-                    }
-                    restartSwitchTimer();
-                    startRefreshTimer();
-                }, 120);
+                        restartSwitchTimer();
+                        startRefreshTimer();
+                    }, 120);
+                }
+            };
+
+            syncClientIdToAndroidNative();
+            loadSavedEmployeeAuth();
+            initEmployeeAuthControls();
+
+            if (isLocalNetworkPcBypassSync()) {
+                employeeAuthState.bypass = true;
+                hideEmployeeAuthOverlay();
+                updateEmployeeAuthSettingsLabel();
+                startAuthorizedDataFlow();
+            } else if (employeeAuthState.status === 'approved') {
+                updateEmployeeAuthSettingsLabel();
+                startAuthorizedDataFlow();
+                // В фоне перепроверяем актуальность доступа (если сотрудника отключили — сразу заблокируем)
+                setTimeout(() => { verifyEmployeeAccess(true); }, 350);
+            } else {
+                updateEmployeeAuthSettingsLabel();
+                const initialMode = (employeeAuthState.status === 'pending' || employeeAuthState.status === 'blocked' || employeeAuthState.status === 'rejected')
+                    ? employeeAuthState.status
+                    : 'form';
+                showEmployeeAuthOverlay(initialMode, employeeAuthState.reason || '');
+                setTimeout(() => { verifyEmployeeAccess(true); }, 250);
             }
 
             document.querySelectorAll('#settingsModal .btn[data-index]').forEach(btn => {
@@ -7205,7 +7970,7 @@
 
             // Отложенная отправка уникального ID пользователя на Яндекс Диск (не тормозит старт)
             setTimeout(() => {
-                registerUserPresenceOnYandex(false);
+                if (isEmployeeAccessAllowed()) registerUserPresenceOnYandex(false);
             }, 2500);
             const resetCacheBtnEl = document.getElementById('resetDataCacheBtn');
             if (resetCacheBtnEl) {
