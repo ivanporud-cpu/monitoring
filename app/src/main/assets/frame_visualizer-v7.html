@@ -728,9 +728,15 @@
             align-items: center;
             justify-content: center;
             margin: 10px 0;
-            background: rgba(127, 127, 127, 0.04);
+            background: radial-gradient(circle at 50% 44%, #252f3d 0%, #171d26 100%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 8px;
             overflow: hidden;
+        }
+
+        body.light-theme .svg-stage {
+            background: radial-gradient(circle at 50% 44%, #f1f4f8 0%, #e2e7ee 100%);
+            border-color: rgba(38, 36, 34, 0.09);
         }
 
         .svg-stage svg {
@@ -834,16 +840,29 @@
             font-weight: 700;
         }
 
-        /* Модальное окно деталей */
+        .tag.laminated-tag {
+            background: rgba(139, 90, 60, 0.22);
+            color: #d9a074;
+            border: 1px solid rgba(181, 128, 91, 0.50);
+            font-weight: 700;
+        }
+
+        body.light-theme .tag.laminated-tag {
+            background: rgba(139, 90, 60, 0.14);
+            color: #6b3d20;
+            border-color: rgba(139, 90, 60, 0.42);
+        }
+
+        /* Модальное окно деталей с увеличенной картинкой */
         .modal-backdrop {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.72);
+            background: rgba(0, 0, 0, 0.78);
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 14px;
         }
 
         .modal-backdrop.open {
@@ -853,10 +872,10 @@
         .modal-box {
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             width: 100%;
-            max-width: 760px;
-            max-height: 88vh;
+            max-width: 920px;
+            max-height: 92vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -864,17 +883,160 @@
         }
 
         .modal-head {
-            padding: 14px 18px;
+            padding: 12px 18px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         .modal-body {
-            padding: 16px 18px;
+            padding: 16px 18px 22px;
             overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .modal-preview-stage {
+            width: 100%;
+            height: min(62vh, 520px);
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 44%, #283343 0%, #161c25 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        body.light-theme .modal-preview-stage {
+            background: radial-gradient(circle at 50% 44%, #f4f7fa 0%, #e1e7ef 100%);
+            border-color: rgba(38, 36, 34, 0.12);
+        }
+
+        .modal-preview-stage svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .modal-scroll-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .modal-scroll-hint:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .modal-details-section {
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Поддержка пульта Android TV (D-pad навигация) */
+        .frame-card,
+        .server-item,
+        .barcode-card,
+        .btn,
+        .seg-btn,
+        .search-input,
+        .select-input,
+        .server-url-input,
+        .dropzone,
+        .server-status-pill,
+        .modal-scroll-hint,
+        .modal-preview-stage {
+            scroll-margin-top: 92px;
+            scroll-margin-bottom: 48px;
+        }
+
+        body.tv-mode *,
+        body.tv-mode *::before,
+        body.tv-mode *::after {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        body.tv-mode .frame-card:hover {
+            transform: none;
+        }
+
+        body.tv-mode .tv-focused,
+        body.tv-mode :focus {
+            outline: 3px solid #38bdf8 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.24) !important;
+        }
+
+        body.light-theme.tv-mode .tv-focused,
+        body.light-theme.tv-mode :focus {
+            outline: 3px solid #E07A22 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 5px rgba(224, 122, 34, 0.24) !important;
+        }
+
+        body.tv-mode .frame-card.tv-focused,
+        body.tv-mode .frame-card:focus {
+            border-color: #38bdf8 !important;
+            background: var(--bg-card-hover);
+        }
+
+        body.light-theme.tv-mode .frame-card.tv-focused,
+        body.light-theme.tv-mode .frame-card:focus {
+            border-color: #E07A22 !important;
+        }
+
+        .tv-hint-bar {
+            display: none;
+            position: fixed;
+            right: 16px;
+            bottom: 14px;
+            z-index: 2000;
+            background: rgba(13, 17, 23, 0.90);
+            color: #e6edf3;
+            border: 1px solid rgba(56, 189, 248, 0.55);
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            pointer-events: none;
+            letter-spacing: 0.01em;
+        }
+
+        body.light-theme .tv-hint-bar {
+            background: rgba(38, 36, 34, 0.92);
+            color: #ffffff;
+            border-color: rgba(224, 122, 34, 0.75);
+        }
+
+        body.tv-mode .tv-hint-bar {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .modal-preview-stage {
+                height: min(48vh, 360px);
+                min-height: 230px;
+            }
         }
 
         .section-box {
@@ -1084,7 +1246,8 @@
             .server-panel,
             .dropzone,
             .controls-row,
-            .modal-backdrop {
+            .modal-backdrop,
+            .tv-hint-bar {
                 display: none !important;
             }
             .topbar,
@@ -1160,7 +1323,7 @@
             </div>
         </div>
 
-        <div class="dropzone" id="dropzone">
+        <div class="dropzone" id="dropzone" tabindex="0">
             <div class="dropzone-title" id="dropzoneTitle">Нажмите «Файлы с сервера», чтобы открыть раскрой</div>
             <div class="dropzone-sub" id="dropzoneSub">Поддерживается загрузка одного или сразу нескольких файлов смены с сервера</div>
         </div>
@@ -1219,6 +1382,8 @@
             <button class="btn" id="closeVisBcZoomBtn" type="button" style="background:#eee; color:#111; border-color:#ccc;">Закрыть</button>
         </div>
     </div>
+
+    <div class="tv-hint-bar" id="tvHintBar" aria-hidden="true">Пульт ТВ: ◄ ▲ ▼ ► навигация • OK открыть • Назад закрыть</div>
 
     <script>
         let allItems = [];
@@ -1374,7 +1539,7 @@
                     const icon = it.is_directory ? '📁' : '📄';
                     const sizeStr = it.is_directory ? 'Папка' : formatFileSize(it.size);
                     return `
-                        <div class="server-item ${it.is_directory ? 'is-dir' : 'is-file'}" data-idx="${idx}">
+                        <div class="server-item ${it.is_directory ? 'is-dir' : 'is-file'}" data-idx="${idx}" tabindex="0">
                             <div class="server-item-left">
                                 <span>${icon}</span>
                                 <span class="server-item-name">${escapeHtml(it.name)}</span>
@@ -1413,7 +1578,8 @@
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
 
-                const items = parseCsvContent(data.content || '', data.file_name || displayName);
+                const sourcePath = [currentServerPath, filePath, data.file_name, displayName].filter(Boolean).join('/');
+                const items = parseCsvContent(data.content || '', data.file_name || displayName, sourcePath);
                 applyLoadedItems(items, [data.file_name || displayName], 'с сервера');
                 document.getElementById('serverPanel').classList.remove('open');
             } catch (err) {
@@ -1457,7 +1623,8 @@
                         if (!r.ok) continue;
                         const fileData = await r.json();
                         if (fileData.content) {
-                            const items = parseCsvContent(fileData.content, fileData.file_name || f.name);
+                            const sourcePath = [currentServerPath, f.path, fileData.file_name, f.name].filter(Boolean).join('/');
+                            const items = parseCsvContent(fileData.content, fileData.file_name || f.name, sourcePath);
                             parsedAll.push(...items);
                             loadedNames.push(fileData.file_name || f.name);
                         }
@@ -2231,7 +2398,12 @@
             };
         }
 
-        function parseCsvContent(text, fileName) {
+        function isLaminationPath(pathStr) {
+            return /(ламинац|ламинир|laminat|laminac)/i.test(String(pathStr || ''));
+        }
+
+        function parseCsvContent(text, fileName, sourcePath) {
+            const fileIsLaminated = isLaminationPath(sourcePath) || isLaminationPath(fileName);
             const lines = text.split(/\r?\n/);
             const frameRows = [];
             const sashRows = [];
@@ -2376,6 +2548,7 @@
                     isFixedSash: isFixedSash,
                     isManualCut: afterManualSeparator,
                     fileName: fileName,
+                    isLaminated: fileIsLaminated,
                     orderNo: orderNo,
                     itemNo: itemNo,
                     wRaw: isFinite(wRaw) ? wRaw : widthMm * 10,
@@ -2488,6 +2661,7 @@
                 builtCombined.push({
                     entityType: 'combined',
                     fileName: fr.fileName,
+                    isLaminated: !!fr.isLaminated || matchedSashes.some(s => s.isLaminated),
                     orderNo: fr.orderNo,
                     itemNo: fr.itemNo,
                     duplicateIndex: fr.duplicateIndex,
@@ -2611,6 +2785,7 @@
                         subCode: first.subCode,
                         barcodeCode: fallbackBarcode,
                         fileName: first.fileName,
+                        isLaminated: !!first.isLaminated,
                         orderNo: first.orderNo,
                         itemNo: first.itemNo,
                         duplicateIndex: subTotal > 1 ? (subIdx + 1) : 0,
@@ -2843,56 +3018,543 @@
             return mullions;
         }
 
-        function renderSashHandleOverlay(x, y, w, h, profThick, handleSide, strokeColor) {
-            if (!handleSide || w <= 10 || h <= 10) return '';
-            const midProf = profThick / 2;
-            const handleLen = Math.max(12, Math.min(20, Math.round(Math.min(w, h) * 0.22)));
-            const iX = x + profThick;
-            const iY = y + profThick;
-            const iW = Math.max(6, w - profThick * 2);
-            const iH = Math.max(6, h - profThick * 2);
+        let realisticSvgUidCounter = 0;
 
-            if (handleSide === 'П') {
-                const hx = x + w - midProf;
-                const hy = y + h / 2;
+        // Реальные видимые ширины ПВХ-профилей (мм) для точного соблюдения пропорций
+        function getFrameFaceMm(article) {
+            const a = String(article || '').toUpperCase();
+            if (a.includes('DD ') || a.includes('GD ') || a.includes('/74') || a.includes('R360') || a.includes('R670') || a.includes('ДВЕР')) {
+                return 70;
+            }
+            return 64;
+        }
+
+        function getSashFaceMm(article) {
+            const a = String(article || '').toUpperCase();
+            if (a.includes('DD ') || a.includes('GD ') || a.includes('/118')) return 118;
+            if (a.includes('S360.10')) return 105;
+            if (a.includes('007 06 1006')) return 104;
+            if (a.includes('S670.10')) return 100;
+            return 78;
+        }
+
+        function getImpostFaceMm(article) {
+            const a = String(article || '').toUpperCase();
+            if (a.includes('DD ') || a.includes('GD ') || a.includes('/118')) return 92;
+            return 80;
+        }
+
+        function buildRealisticDefs(uid, isLaminated) {
+            const woodPatterns = isLaminated ? `
+                    <pattern id="${uid}_woodH" width="72" height="18" patternUnits="userSpaceOnUse">
+                        <path d="M0 3.2 Q 18 1.6 36 3.5 T 72 3.2" fill="none" stroke="#281207" stroke-width="0.95" opacity="0.34"/>
+                        <path d="M0 7.4 Q 20 8.9 42 7.1 T 72 7.6" fill="none" stroke="#b9835c" stroke-width="0.65" opacity="0.22"/>
+                        <path d="M0 11.2 Q 16 9.8 34 11.6 T 72 11.0" fill="none" stroke="#230f05" stroke-width="1.05" opacity="0.30"/>
+                        <path d="M0 15.2 Q 22 16.4 46 14.8 T 72 15.3" fill="none" stroke="#a66f48" stroke-width="0.55" opacity="0.20"/>
+                    </pattern>
+                    <pattern id="${uid}_woodV" width="18" height="72" patternUnits="userSpaceOnUse">
+                        <path d="M3.2 0 Q 1.6 18 3.5 36 T 3.2 72" fill="none" stroke="#281207" stroke-width="0.95" opacity="0.34"/>
+                        <path d="M7.4 0 Q 8.9 20 7.1 42 T 7.6 72" fill="none" stroke="#b9835c" stroke-width="0.65" opacity="0.22"/>
+                        <path d="M11.2 0 Q 9.8 16 11.6 34 T 11.0 72" fill="none" stroke="#230f05" stroke-width="1.05" opacity="0.30"/>
+                        <path d="M15.2 0 Q 16.4 22 14.8 46 T 15.3 72" fill="none" stroke="#a66f48" stroke-width="0.55" opacity="0.20"/>
+                    </pattern>
+                    <pattern id="${uid}_woodD" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)">
+                        <path d="M0 6 Q 14 4 28 6.5 T 44 6" fill="none" stroke="#281207" stroke-width="0.9" opacity="0.28"/>
+                        <path d="M0 16 Q 16 18 32 15.5 T 44 16" fill="none" stroke="#b9835c" stroke-width="0.6" opacity="0.18"/>
+                        <path d="M0 28 Q 12 26 26 28.5 T 44 28" fill="none" stroke="#230f05" stroke-width="0.95" opacity="0.26"/>
+                        <path d="M0 38 Q 15 40 30 37.5 T 44 38" fill="none" stroke="#a66f48" stroke-width="0.55" opacity="0.17"/>
+                    </pattern>
+            ` : '';
+
+            const pvcGradients = isLaminated ? `
+                    <linearGradient id="${uid}_pvcTop" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#8b593a"/>
+                        <stop offset="24%" stop-color="#734529"/>
+                        <stop offset="72%" stop-color="#59321b"/>
+                        <stop offset="100%" stop-color="#3e2111"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcBot" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#7c4e32"/>
+                        <stop offset="28%" stop-color="#663d24"/>
+                        <stop offset="78%" stop-color="#4e2c18"/>
+                        <stop offset="100%" stop-color="#371d0f"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#885738"/>
+                        <stop offset="26%" stop-color="#6f4327"/>
+                        <stop offset="74%" stop-color="#56301a"/>
+                        <stop offset="100%" stop-color="#3b1f10"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcRight" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#7a4c30"/>
+                        <stop offset="28%" stop-color="#643b22"/>
+                        <stop offset="76%" stop-color="#4d2b17"/>
+                        <stop offset="100%" stop-color="#361c0e"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcPoly" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#865537"/>
+                        <stop offset="38%" stop-color="#6b4026"/>
+                        <stop offset="75%" stop-color="#522e19"/>
+                        <stop offset="100%" stop-color="#391e0f"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_impostV" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#432413"/>
+                        <stop offset="18%" stop-color="#875638"/>
+                        <stop offset="52%" stop-color="#6c4126"/>
+                        <stop offset="84%" stop-color="#532f19"/>
+                        <stop offset="100%" stop-color="#381d0f"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_impostH" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#89583a"/>
+                        <stop offset="22%" stop-color="#704327"/>
+                        <stop offset="72%" stop-color="#56311a"/>
+                        <stop offset="100%" stop-color="#391e0f"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_stulpV" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#3e2111"/>
+                        <stop offset="22%" stop-color="#835335"/>
+                        <stop offset="56%" stop-color="#673e24"/>
+                        <stop offset="85%" stop-color="#4f2d18"/>
+                        <stop offset="100%" stop-color="#351b0d"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_sandwich" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#72462b"/>
+                        <stop offset="55%" stop-color="#5f3820"/>
+                        <stop offset="100%" stop-color="#4a2a16"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_hwMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#8c6246"/>
+                        <stop offset="45%" stop-color="#633f28"/>
+                        <stop offset="100%" stop-color="#3d2415"/>
+                    </linearGradient>
+            ` : `
+                    <linearGradient id="${uid}_pvcTop" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="22%" stop-color="#f7f9fc"/>
+                        <stop offset="72%" stop-color="#e8eef4"/>
+                        <stop offset="100%" stop-color="#cdd6e0"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcBot" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#fcfdff"/>
+                        <stop offset="28%" stop-color="#edf2f7"/>
+                        <stop offset="78%" stop-color="#dce3ec"/>
+                        <stop offset="100%" stop-color="#c0cad5"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="24%" stop-color="#f4f7fb"/>
+                        <stop offset="74%" stop-color="#e4ebf2"/>
+                        <stop offset="100%" stop-color="#cbd4df"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcRight" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#fbfdff"/>
+                        <stop offset="26%" stop-color="#eef3f8"/>
+                        <stop offset="76%" stop-color="#dde5ee"/>
+                        <stop offset="100%" stop-color="#c2ccd8"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_pvcPoly" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="38%" stop-color="#f3f6fa"/>
+                        <stop offset="75%" stop-color="#e4ebf2"/>
+                        <stop offset="100%" stop-color="#cbd5e0"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_impostV" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#c6d0db"/>
+                        <stop offset="18%" stop-color="#ffffff"/>
+                        <stop offset="52%" stop-color="#f3f7fb"/>
+                        <stop offset="84%" stop-color="#e3eaf2"/>
+                        <stop offset="100%" stop-color="#bcc6d2"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_impostH" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="22%" stop-color="#f6f9fc"/>
+                        <stop offset="72%" stop-color="#e6edf4"/>
+                        <stop offset="100%" stop-color="#bcc6d2"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_stulpV" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#bcc6d2"/>
+                        <stop offset="22%" stop-color="#ffffff"/>
+                        <stop offset="56%" stop-color="#f2f6fa"/>
+                        <stop offset="85%" stop-color="#dfe7f0"/>
+                        <stop offset="100%" stop-color="#b5c0cd"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_sandwich" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f7f9fb"/>
+                        <stop offset="55%" stop-color="#edf1f5"/>
+                        <stop offset="100%" stop-color="#e0e6ed"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_hwMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="45%" stop-color="#e8edf3"/>
+                        <stop offset="100%" stop-color="#c3cdd8"/>
+                    </linearGradient>
+            `;
+
+            return `
+                <defs>
+                    <filter id="${uid}_winShadow" x="-15%" y="-15%" width="135%" height="135%">
+                        <feDropShadow dx="1.8" dy="3.2" stdDeviation="3.0" flood-color="#0b1220" flood-opacity="0.30"/>
+                    </filter>
+                    <filter id="${uid}_sashShadow" x="-20%" y="-20%" width="145%" height="145%">
+                        <feDropShadow dx="1.3" dy="1.7" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.40"/>
+                    </filter>
+                    <filter id="${uid}_hwShadow" x="-40%" y="-40%" width="190%" height="190%">
+                        <feDropShadow dx="0.9" dy="1.2" stdDeviation="0.9" flood-color="#0f172a" flood-opacity="0.38"/>
+                    </filter>
+
+                    ${woodPatterns}
+                    ${pvcGradients}
+
+                    <linearGradient id="${uid}_glass" x1="8%" y1="4%" x2="92%" y2="96%">
+                        <stop offset="0%" stop-color="#cce5f5"/>
+                        <stop offset="32%" stop-color="#b1d6ec"/>
+                        <stop offset="65%" stop-color="#c9e3f4"/>
+                        <stop offset="100%" stop-color="#96c2de"/>
+                    </linearGradient>
+                    <linearGradient id="${uid}_glassGlare" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.46"/>
+                        <stop offset="45%" stop-color="#ffffff" stop-opacity="0.16"/>
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02"/>
+                    </linearGradient>
+
+                    <linearGradient id="${uid}_aluThresh" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#e5e9ee"/>
+                        <stop offset="28%" stop-color="#b3bcc6"/>
+                        <stop offset="62%" stop-color="#d4dbe2"/>
+                        <stop offset="100%" stop-color="#838d98"/>
+                    </linearGradient>
+                </defs>
+            `;
+        }
+
+        function renderGlassPaneSvg(x, y, w, h, scale, uid, paneKey, isSandwich, isLaminated) {
+            if (w <= 1.5 || h <= 1.5) return '';
+            const clipId = `${uid}_gp_${paneKey}`;
+            const gasketW = Math.max(0.85, Math.min(2.0, 3.2 * scale));
+            const spacerInset = gasketW + Math.max(0.9, Math.min(1.8, 2.5 * scale));
+            const innerSh = Math.max(1.5, Math.min(3.5, 6 * scale));
+
+            if (isSandwich) {
                 return `
-                    <line x1="${iX.toFixed(1)}" y1="${iY.toFixed(1)}" x2="${(iX + iW).toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <line x1="${iX.toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${(iX + iW).toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <rect x="${(hx - 2.8).toFixed(1)}" y="${(hy - 6).toFixed(1)}" width="5.6" height="12" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
-                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="4" height="${handleLen}" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <g>
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_sandwich)"/>
+                        ${isLaminated ? `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_woodV)" opacity="0.72"/>` : ''}
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${innerSh.toFixed(1)}" fill="#0f172a" opacity="0.16"/>
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${innerSh.toFixed(1)}" height="${h.toFixed(1)}" fill="#0f172a" opacity="0.12"/>
+                        <rect x="${(x + gasketW * 0.5).toFixed(1)}" y="${(y + gasketW * 0.5).toFixed(1)}" width="${Math.max(0.5, w - gasketW).toFixed(1)}" height="${Math.max(0.5, h - gasketW).toFixed(1)}" fill="none" stroke="#181c22" stroke-width="${gasketW.toFixed(2)}"/>
+                    </g>
                 `;
             }
-            if (handleSide === 'Л') {
-                const hx = x + midProf;
-                const hy = y + h / 2;
+
+            // Диагональные световые блики на стеклопакете (обрезаны строго по границам стекла)
+            const s1x1 = x - h * 0.15;
+            const s1w = Math.max(8, w * 0.28);
+            const s2x1 = x + w * 0.44;
+            const s2w = Math.max(4, w * 0.12);
+            const slant = h * 0.52;
+
+            const streak1 = `${s1x1.toFixed(1)},${(y + h).toFixed(1)} ${(s1x1 + s1w).toFixed(1)},${(y + h).toFixed(1)} ${(s1x1 + s1w + slant).toFixed(1)},${y.toFixed(1)} ${(s1x1 + slant).toFixed(1)},${y.toFixed(1)}`;
+            const streak2 = `${s2x1.toFixed(1)},${(y + h).toFixed(1)} ${(s2x1 + s2w).toFixed(1)},${(y + h).toFixed(1)} ${(s2x1 + s2w + slant).toFixed(1)},${y.toFixed(1)} ${(s2x1 + slant).toFixed(1)},${y.toFixed(1)}`;
+
+            const showSpacer = (w > spacerInset * 2 + 5) && (h > spacerInset * 2 + 5);
+
+            return `
+                <g>
+                    <clipPath id="${clipId}">
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>
+                    </clipPath>
+                    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_glass)"/>
+                    <g clip-path="url(#${clipId})">
+                        <polygon points="${streak1}" fill="url(#${uid}_glassGlare)"/>
+                        <polygon points="${streak2}" fill="#ffffff" opacity="0.22"/>
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(innerSh * 1.15).toFixed(1)}" fill="#0e2238" opacity="0.20"/>
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${innerSh.toFixed(1)}" height="${h.toFixed(1)}" fill="#0e2238" opacity="0.15"/>
+                        ${showSpacer ? `
+                            <rect x="${(x + spacerInset).toFixed(1)}" y="${(y + spacerInset).toFixed(1)}" width="${(w - spacerInset * 2).toFixed(1)}" height="${(h - spacerInset * 2).toFixed(1)}" fill="none" stroke="#8a97a6" stroke-width="0.85" opacity="0.62"/>
+                            <rect x="${(x + spacerInset + 0.8).toFixed(1)}" y="${(y + spacerInset + 0.8).toFixed(1)}" width="${Math.max(0.5, w - (spacerInset + 0.8) * 2).toFixed(1)}" height="${Math.max(0.5, h - (spacerInset + 0.8) * 2).toFixed(1)}" fill="none" stroke="#eaf1f7" stroke-width="0.6" opacity="0.55"/>
+                        ` : ''}
+                    </g>
+                    <rect x="${(x + gasketW * 0.5).toFixed(1)}" y="${(y + gasketW * 0.5).toFixed(1)}" width="${Math.max(0.5, w - gasketW).toFixed(1)}" height="${Math.max(0.5, h - gasketW).toFixed(1)}" fill="none" stroke="#1a1f26" stroke-width="${gasketW.toFixed(2)}"/>
+                </g>
+            `;
+        }
+
+        function renderAluThresholdSvg(x, y, w, h, uid) {
+            if (w <= 2 || h <= 0.5) return '';
+            const mid1 = y + h * 0.34;
+            const mid2 = y + h * 0.66;
+            return `
+                <g>
+                    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_aluThresh)" stroke="#5c6672" stroke-width="0.9"/>
+                    <line x1="${(x + 0.8).toFixed(1)}" y1="${(y + 0.7).toFixed(1)}" x2="${(x + w - 0.8).toFixed(1)}" y2="${(y + 0.7).toFixed(1)}" stroke="#2b323b" stroke-width="0.85" opacity="0.75"/>
+                    ${h >= 3.2 ? `
+                        <line x1="${(x + 1).toFixed(1)}" y1="${mid1.toFixed(1)}" x2="${(x + w - 1).toFixed(1)}" y2="${mid1.toFixed(1)}" stroke="#66707c" stroke-width="0.55" opacity="0.65"/>
+                        <line x1="${(x + 1).toFixed(1)}" y1="${mid2.toFixed(1)}" x2="${(x + w - 1).toFixed(1)}" y2="${mid2.toFixed(1)}" stroke="#f3f6fa" stroke-width="0.55" opacity="0.7"/>
+                    ` : ''}
+                </g>
+            `;
+        }
+
+        function renderMiteredProfileFrameSvg(x, y, w, h, tSide, tTop, tBot, beadPx, hasAluBottom, uid, isSash, isLaminated) {
+            const ix = x + tSide;
+            const iy = y + tTop;
+            const iw = Math.max(1, w - tSide * 2);
+            const ih = Math.max(1, h - tTop - tBot);
+
+            const x2 = x + w;
+            const y2 = y + h;
+            const ix2 = ix + iw;
+            const iy2 = iy + ih;
+
+            const threshY = y2 - tBot;
+
+            const topPts = `${x.toFixed(1)},${y.toFixed(1)} ${x2.toFixed(1)},${y.toFixed(1)} ${ix2.toFixed(1)},${iy.toFixed(1)} ${ix.toFixed(1)},${iy.toFixed(1)}`;
+            const leftPts = hasAluBottom
+                ? `${x.toFixed(1)},${y.toFixed(1)} ${ix.toFixed(1)},${iy.toFixed(1)} ${ix.toFixed(1)},${threshY.toFixed(1)} ${x.toFixed(1)},${threshY.toFixed(1)}`
+                : `${x.toFixed(1)},${y.toFixed(1)} ${ix.toFixed(1)},${iy.toFixed(1)} ${ix.toFixed(1)},${iy2.toFixed(1)} ${x.toFixed(1)},${y2.toFixed(1)}`;
+            const rightPts = hasAluBottom
+                ? `${x2.toFixed(1)},${y.toFixed(1)} ${x2.toFixed(1)},${threshY.toFixed(1)} ${ix2.toFixed(1)},${threshY.toFixed(1)} ${ix2.toFixed(1)},${iy.toFixed(1)}`
+                : `${x2.toFixed(1)},${y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${ix2.toFixed(1)},${iy2.toFixed(1)} ${ix2.toFixed(1)},${iy.toFixed(1)}`;
+            const botPts = `${x.toFixed(1)},${y2.toFixed(1)} ${ix.toFixed(1)},${iy2.toFixed(1)} ${ix2.toFixed(1)},${iy2.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+
+            // Линия штапика (отступ от края стекла внутрь профиля)
+            const bSide = Math.min(beadPx, tSide * 0.42);
+            const bTop = Math.min(beadPx, tTop * 0.42);
+            const bBot = hasAluBottom ? 0 : Math.min(beadPx, tBot * 0.42);
+            const showBead = bSide >= 1.1 && iw > 4 && ih > 4;
+
+            const outerStroke = isLaminated ? (isSash ? '#2a160b' : '#311a0d') : (isSash ? '#6d7a89' : '#7b8795');
+            const outerSw = isSash ? '1.15' : '1.05';
+            const miterStroke = isLaminated ? '#2f190c' : '#adb8c4';
+            const beadDark = isLaminated ? '#3b2011' : '#c0cad5';
+            const beadLight = isLaminated ? '#ad7753' : '#ffffff';
+            const beadLightOp = isLaminated ? '0.38' : '0.72';
+            const edgeHighlight = isLaminated ? '#ba855f' : '#ffffff';
+            const edgeHiOpTop = isLaminated ? '0.42' : '0.82';
+            const edgeHiOpLeft = isLaminated ? '0.35' : '0.72';
+            const innerStroke = isLaminated ? '#3b2011' : '#9aa6b4';
+
+            return `
+                <g>
+                    <polygon points="${topPts}" fill="url(#${uid}_pvcTop)"/>
+                    <polygon points="${leftPts}" fill="url(#${uid}_pvcLeft)"/>
+                    <polygon points="${rightPts}" fill="url(#${uid}_pvcRight)"/>
+                    ${hasAluBottom
+                        ? renderAluThresholdSvg(x, threshY, w, tBot, uid)
+                        : `<polygon points="${botPts}" fill="url(#${uid}_pvcBot)"/>`
+                    }
+
+                    ${isLaminated ? `
+                        <polygon points="${topPts}" fill="url(#${uid}_woodH)"/>
+                        <polygon points="${leftPts}" fill="url(#${uid}_woodV)"/>
+                        <polygon points="${rightPts}" fill="url(#${uid}_woodV)"/>
+                        ${hasAluBottom ? '' : `<polygon points="${botPts}" fill="url(#${uid}_woodH)"/>`}
+                    ` : ''}
+
+                    <!-- Сварные швы углов под 45° -->
+                    <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ix.toFixed(1)}" y2="${iy.toFixed(1)}" stroke="${miterStroke}" stroke-width="0.7" opacity="0.82"/>
+                    <line x1="${x2.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ix2.toFixed(1)}" y2="${iy.toFixed(1)}" stroke="${miterStroke}" stroke-width="0.7" opacity="0.82"/>
+                    ${hasAluBottom ? '' : `
+                        <line x1="${x.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${ix.toFixed(1)}" y2="${iy2.toFixed(1)}" stroke="${miterStroke}" stroke-width="0.7" opacity="0.82"/>
+                        <line x1="${x2.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${ix2.toFixed(1)}" y2="${iy2.toFixed(1)}" stroke="${miterStroke}" stroke-width="0.7" opacity="0.82"/>
+                    `}
+
+                    <!-- Контур штапика (фаска профиля) -->
+                    ${showBead ? `
+                        <rect x="${(ix - bSide).toFixed(1)}" y="${(iy - bTop).toFixed(1)}" width="${(iw + bSide * 2).toFixed(1)}" height="${(ih + bTop + bBot).toFixed(1)}" fill="none" stroke="${beadDark}" stroke-width="0.65" opacity="0.85"/>
+                        <rect x="${(ix - bSide + 0.6).toFixed(1)}" y="${(iy - bTop + 0.6).toFixed(1)}" width="${Math.max(1, iw + bSide * 2 - 1.2).toFixed(1)}" height="${Math.max(1, ih + bTop + bBot - 1.2).toFixed(1)}" fill="none" stroke="${beadLight}" stroke-width="0.55" opacity="${beadLightOp}"/>
+                    ` : ''}
+
+                    <!-- Внешний и внутренний контур профиля -->
+                    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(hasAluBottom ? (h - tBot) : h).toFixed(1)}" fill="none" stroke="${outerStroke}" stroke-width="${outerSw}"/>
+                    <line x1="${(x + 0.9).toFixed(1)}" y1="${(y + 0.9).toFixed(1)}" x2="${(x2 - 0.9).toFixed(1)}" y2="${(y + 0.9).toFixed(1)}" stroke="${edgeHighlight}" stroke-width="0.8" opacity="${edgeHiOpTop}"/>
+                    <line x1="${(x + 0.9).toFixed(1)}" y1="${(y + 0.9).toFixed(1)}" x2="${(x + 0.9).toFixed(1)}" y2="${((hasAluBottom ? threshY : y2) - 0.9).toFixed(1)}" stroke="${edgeHighlight}" stroke-width="0.8" opacity="${edgeHiOpLeft}"/>
+                    <rect x="${ix.toFixed(1)}" y="${iy.toFixed(1)}" width="${iw.toFixed(1)}" height="${ih.toFixed(1)}" fill="none" stroke="${innerStroke}" stroke-width="0.7" opacity="0.75"/>
+                </g>
+            `;
+        }
+
+        function renderRealisticImpostSvg(x, y, w, h, orient, beadPx, uid, isLaminated) {
+            if (w <= 0.5 || h <= 0.5) return '';
+            const gradId = orient === 'V' ? `${uid}_impostV` : `${uid}_impostH`;
+            const woodPat = orient === 'V' ? `${uid}_woodV` : `${uid}_woodH`;
+            const b = Math.min(beadPx, (orient === 'V' ? w : h) * 0.26);
+            const strokeCol = isLaminated ? '#331b0e' : '#83909e';
+            const beadCol = isLaminated ? '#3e2212' : '#c2ccd7';
+            const hiCol = isLaminated ? '#b9835c' : '#ffffff';
+            const hiOp = isLaminated ? '0.35' : '0.68';
+
+            if (orient === 'V') {
                 return `
-                    <line x1="${(iX + iW).toFixed(1)}" y1="${iY.toFixed(1)}" x2="${iX.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <line x1="${(iX + iW).toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${iX.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <rect x="${(hx - 2.8).toFixed(1)}" y="${(hy - 6).toFixed(1)}" width="5.6" height="12" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
-                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="4" height="${handleLen}" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <g>
+                        <rect x="${(x + w).toFixed(1)}" y="${y.toFixed(1)}" width="1.9" height="${h.toFixed(1)}" fill="#0e2238" opacity="0.18"/>
+                        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${gradId})" stroke="${strokeCol}" stroke-width="0.85"/>
+                        ${isLaminated ? `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${woodPat})"/>` : ''}
+                        ${b >= 1.0 ? `
+                            <line x1="${(x + b).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + b).toFixed(1)}" y2="${(y + h).toFixed(1)}" stroke="${beadCol}" stroke-width="0.6" opacity="0.85"/>
+                            <line x1="${(x + w - b).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + w - b).toFixed(1)}" y2="${(y + h).toFixed(1)}" stroke="${beadCol}" stroke-width="0.6" opacity="0.85"/>
+                        ` : ''}
+                        <line x1="${(x + 0.8).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + 0.8).toFixed(1)}" y2="${(y + h).toFixed(1)}" stroke="${hiCol}" stroke-width="0.65" opacity="${hiOp}"/>
+                    </g>
                 `;
             }
-            if (handleSide === 'В') {
-                const hx = x + w / 2;
-                const hy = y + midProf;
+            return `
+                <g>
+                    <rect x="${x.toFixed(1)}" y="${(y + h).toFixed(1)}" width="${w.toFixed(1)}" height="2.0" fill="#0e2238" opacity="0.20"/>
+                    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${gradId})" stroke="${strokeCol}" stroke-width="0.85"/>
+                    ${isLaminated ? `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${woodPat})"/>` : ''}
+                    ${b >= 1.0 ? `
+                        <line x1="${x.toFixed(1)}" y1="${(y + b).toFixed(1)}" x2="${(x + w).toFixed(1)}" y2="${(y + b).toFixed(1)}" stroke="${beadCol}" stroke-width="0.6" opacity="0.85"/>
+                        <line x1="${x.toFixed(1)}" y1="${(y + h - b).toFixed(1)}" x2="${(x + w).toFixed(1)}" y2="${(y + h - b).toFixed(1)}" stroke="${beadCol}" stroke-width="0.6" opacity="0.85"/>
+                    ` : ''}
+                    <line x1="${x.toFixed(1)}" y1="${(y + 0.8).toFixed(1)}" x2="${(x + w).toFixed(1)}" y2="${(y + 0.8).toFixed(1)}" stroke="${hiCol}" stroke-width="0.65" opacity="${hiOp}"/>
+                </g>
+            `;
+        }
+
+        function renderRealisticStulpSvg(cx, y1, y2, stulpW, uid, isLaminated) {
+            const h = Math.max(4, y2 - y1);
+            const x = cx - stulpW / 2;
+            const strokeCol = isLaminated ? '#2e180c' : '#758291';
+            const centerCol = isLaminated ? '#3b2010' : '#8d99a7';
+            return `
+                <g>
+                    <rect x="${(x + stulpW).toFixed(1)}" y="${y1.toFixed(1)}" width="1.6" height="${h.toFixed(1)}" fill="#0f172a" opacity="0.22"/>
+                    <rect x="${(x - 1.2).toFixed(1)}" y="${y1.toFixed(1)}" width="1.2" height="${h.toFixed(1)}" fill="#0f172a" opacity="0.14"/>
+                    <rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${stulpW.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_stulpV)" stroke="${strokeCol}" stroke-width="0.85"/>
+                    ${isLaminated ? `<rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${stulpW.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#${uid}_woodV)"/>` : ''}
+                    <line x1="${cx.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${centerCol}" stroke-width="0.6" opacity="0.75"/>
+                </g>
+            `;
+        }
+
+        function renderRealisticHingesSvg(x, y, w, h, handleSide, scale, sashHeightMm, uid, isLaminated) {
+            if (!handleSide || w < 14 || h < 16) return '';
+            const hingeW = Math.max(2.4, Math.min(4.8, 17 * scale));
+            const hingeH = Math.max(7.5, Math.min(16, 82 * scale));
+            const isTallDoor = sashHeightMm >= 1750;
+            const hStroke = isLaminated ? '#27140a' : '#6c7886';
+            const hLine = isLaminated ? '#3b2112' : '#808d9b';
+
+            function drawVertHinge(hx, hy) {
                 return `
-                    <line x1="${iX.toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${hx.toFixed(1)}" y2="${iY.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <line x1="${(iX + iW).toFixed(1)}" y1="${(iY + iH).toFixed(1)}" x2="${hx.toFixed(1)}" y2="${iY.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <rect x="${(hx - 6).toFixed(1)}" y="${(hy - 2.8).toFixed(1)}" width="12" height="5.6" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
-                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="${handleLen}" height="4" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <g filter="url(#${uid}_hwShadow)">
+                        <rect x="${hx.toFixed(1)}" y="${hy.toFixed(1)}" width="${hingeW.toFixed(1)}" height="${hingeH.toFixed(1)}" rx="${(hingeW * 0.42).toFixed(1)}" fill="url(#${uid}_hwMetal)" stroke="${hStroke}" stroke-width="0.7"/>
+                        <line x1="${hx.toFixed(1)}" y1="${(hy + hingeH * 0.48).toFixed(1)}" x2="${(hx + hingeW).toFixed(1)}" y2="${(hy + hingeH * 0.48).toFixed(1)}" stroke="${hLine}" stroke-width="0.6"/>
+                    </g>
                 `;
             }
-            if (handleSide === 'Н') {
-                const hx = x + w / 2;
-                const hy = y + h - midProf;
+
+            function drawHorizHinge(hx, hy) {
                 return `
-                    <line x1="${iX.toFixed(1)}" y1="${iY.toFixed(1)}" x2="${hx.toFixed(1)}" y2="${(iY + iH).toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <line x1="${(iX + iW).toFixed(1)}" y1="${iY.toFixed(1)}" x2="${hx.toFixed(1)}" y2="${(iY + iH).toFixed(1)}" stroke="${strokeColor}" stroke-width="0.9" stroke-dasharray="3,2.5" opacity="0.6"/>
-                    <rect x="${(hx - 6).toFixed(1)}" y="${(hy - 2.8).toFixed(1)}" width="12" height="5.6" rx="2" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
-                    <rect x="${(hx - 2).toFixed(1)}" y="${(hy - 2).toFixed(1)}" width="${handleLen}" height="4" rx="1.8" fill="var(--handle-fill)" stroke="var(--handle-stroke)" stroke-width="1.1"/>
+                    <g filter="url(#${uid}_hwShadow)">
+                        <rect x="${hx.toFixed(1)}" y="${hy.toFixed(1)}" width="${hingeH.toFixed(1)}" height="${hingeW.toFixed(1)}" rx="${(hingeW * 0.42).toFixed(1)}" fill="url(#${uid}_hwMetal)" stroke="${hStroke}" stroke-width="0.7"/>
+                        <line x1="${(hx + hingeH * 0.48).toFixed(1)}" y1="${hy.toFixed(1)}" x2="${(hx + hingeH * 0.48).toFixed(1)}" y2="${(hy + hingeW).toFixed(1)}" stroke="${hLine}" stroke-width="0.6"/>
+                    </g>
+                `;
+            }
+
+            if (handleSide === 'П' || handleSide === 'Л') {
+                const hx = handleSide === 'П' ? (x - hingeW * 0.42) : (x + w - hingeW * 0.58);
+                const margin = Math.max(3, Math.min(h * 0.14, 95 * scale));
+                const yTop = y + margin;
+                const yBot = y + h - margin - hingeH;
+                let out = drawVertHinge(hx, yTop);
+                if (yBot > yTop + hingeH + 4) {
+                    out += drawVertHinge(hx, yBot);
+                }
+                if (isTallDoor && h > hingeH * 4.5) {
+                    out += drawVertHinge(hx, y + h * 0.30);
+                }
+                return out;
+            }
+            if (handleSide === 'В' || handleSide === 'Н') {
+                const hy = handleSide === 'В' ? (y + h - hingeW * 0.58) : (y - hingeW * 0.42);
+                const margin = Math.max(3, Math.min(w * 0.16, 95 * scale));
+                const xLeft = x + margin;
+                const xRight = x + w - margin - hingeH;
+                let out = drawHorizHinge(xLeft, hy);
+                if (xRight > xLeft + hingeH + 4) {
+                    out += drawHorizHinge(xRight, hy);
+                }
+                return out;
+            }
+            return '';
+        }
+
+        function renderSashHandleOverlay(x, y, w, h, profThick, handleSide, scale, sashHeightMm, uid, isLaminated) {
+            if (!handleSide || w <= 10 || h <= 10) return '';
+            const sc = (typeof scale === 'number' && scale > 0) ? scale : 0.15;
+            const uidSafe = uid || 'hw';
+            const midProf = profThick * 0.5;
+            const plateW = Math.max(4.0, Math.min(7.8, 28 * sc));
+            const plateH = Math.max(9.5, Math.min(18.5, 66 * sc));
+            const leverW = Math.max(2.8, Math.min(5.2, 18 * sc));
+            const leverL = Math.max(12.5, Math.min(26, 132 * sc));
+            const isTallDoor = (sashHeightMm || 0) >= 1800;
+
+            const plateStroke = isLaminated ? '#27140a' : '#5b6775';
+            const pivotFill = isLaminated ? '#523320' : '#e3e8ee';
+            const pivotStroke = isLaminated ? '#27140a' : '#63707f';
+            const leverStroke = isLaminated ? '#211008' : '#4f5b68';
+            const leverHi = isLaminated ? '#c5926c' : '#ffffff';
+            const leverHiOp = isLaminated ? '0.45' : '0.85';
+
+            if (handleSide === 'П' || handleSide === 'Л') {
+                const hx = handleSide === 'П' ? (x + w - midProf) : (x + midProf);
+                const hy = isTallDoor ? (y + h * 0.52) : (y + h * 0.50);
+                const px = hx - plateW / 2;
+                const py = hy - plateH / 2;
+                const ly = hy - leverW * 0.35;
+                const leverPath = `M ${(hx - leverW * 0.52).toFixed(1)} ${ly.toFixed(1)}
+                    L ${(hx + leverW * 0.52).toFixed(1)} ${ly.toFixed(1)}
+                    L ${(hx + leverW * 0.42).toFixed(1)} ${(ly + leverL - 1.5).toFixed(1)}
+                    Q ${hx.toFixed(1)} ${(ly + leverL + 1.2).toFixed(1)} ${(hx - leverW * 0.42).toFixed(1)} ${(ly + leverL - 1.5).toFixed(1)} Z`;
+
+                return `
+                    <g filter="url(#${uidSafe}_hwShadow)">
+                        <rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="${plateW.toFixed(1)}" height="${plateH.toFixed(1)}" rx="${(plateW * 0.46).toFixed(1)}" fill="url(#${uidSafe}_hwMetal)" stroke="${plateStroke}" stroke-width="0.8"/>
+                        <circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${(leverW * 0.62).toFixed(1)}" fill="${pivotFill}" stroke="${pivotStroke}" stroke-width="0.65"/>
+                        <path d="${leverPath}" fill="url(#${uidSafe}_hwMetal)" stroke="${leverStroke}" stroke-width="0.8" stroke-linejoin="round"/>
+                        <line x1="${(hx - leverW * 0.14).toFixed(1)}" y1="${(ly + 1.5).toFixed(1)}" x2="${(hx - leverW * 0.14).toFixed(1)}" y2="${(ly + leverL - 2.2).toFixed(1)}" stroke="${leverHi}" stroke-width="0.7" opacity="${leverHiOp}"/>
+                    </g>
+                `;
+            }
+
+            if (handleSide === 'В' || handleSide === 'Н') {
+                const hx = x + w * 0.50;
+                const hy = handleSide === 'В' ? (y + midProf) : (y + h - midProf);
+                const px = hx - plateH / 2;
+                const py = hy - plateW / 2;
+                const lx = hx - leverW * 0.35;
+                const leverPath = `M ${lx.toFixed(1)} ${(hy - leverW * 0.52).toFixed(1)}
+                    L ${(lx + leverL - 1.5).toFixed(1)} ${(hy - leverW * 0.42).toFixed(1)}
+                    Q ${(lx + leverL + 1.2).toFixed(1)} ${hy.toFixed(1)} ${(lx + leverL - 1.5).toFixed(1)} ${(hy + leverW * 0.42).toFixed(1)}
+                    L ${lx.toFixed(1)} ${(hy + leverW * 0.52).toFixed(1)} Z`;
+
+                return `
+                    <g filter="url(#${uidSafe}_hwShadow)">
+                        <rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="${plateH.toFixed(1)}" height="${plateW.toFixed(1)}" rx="${(plateW * 0.46).toFixed(1)}" fill="url(#${uidSafe}_hwMetal)" stroke="${plateStroke}" stroke-width="0.8"/>
+                        <circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${(leverW * 0.62).toFixed(1)}" fill="${pivotFill}" stroke="${pivotStroke}" stroke-width="0.65"/>
+                        <path d="${leverPath}" fill="url(#${uidSafe}_hwMetal)" stroke="${leverStroke}" stroke-width="0.8" stroke-linejoin="round"/>
+                        <line x1="${(lx + 1.5).toFixed(1)}" y1="${(hy - leverW * 0.14).toFixed(1)}" x2="${(lx + leverL - 2.2).toFixed(1)}" y2="${(hy - leverW * 0.14).toFixed(1)}" stroke="${leverHi}" stroke-width="0.7" opacity="${leverHiOp}"/>
+                    </g>
                 `;
             }
             return '';
+        }
+
+        function renderLabelPillSvg(cx, cy, text, textColor, fontSize) {
+            const fs = fontSize || 9.2;
+            const charW = fs * 0.58;
+            const pw = Math.max(24, text.length * charW + 8);
+            const ph = fs + 4.5;
+            return `
+                <g>
+                    <rect x="${(cx - pw / 2).toFixed(1)}" y="${(cy - ph + 2.6).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" rx="3.2" fill="#0d1520" fill-opacity="0.68" stroke="#ffffff" stroke-opacity="0.22" stroke-width="0.6"/>
+                    <text x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" text-anchor="middle" fill="${textColor || '#ffffff'}" font-size="${fs}" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${text}</text>
+                </g>
+            `;
         }
 
         function isArchEntity(item) {
@@ -3104,6 +3766,7 @@
         }
 
         function createEntitySvg(item) {
+            const uid = 'w' + (++realisticSvgUidCounter);
             const svgW = 360;
             const svgH = 270;
 
@@ -3111,6 +3774,7 @@
             const h = item.heightMm > 0 ? item.heightMm : 1000;
             const isSash = item.entityType === 'sash' || !!item.isStandaloneSash;
             const isCombined = item.entityType === 'combined' && !item.isStandaloneSash;
+            const isLaminated = !!item.isLaminated;
 
             const mullions = item.mullions || [];
             const vertMullions = mullions.filter(m => m.orient === 'V');
@@ -3125,25 +3789,33 @@
             const availH = svgH - padTop - padBottom;
 
             const scale = Math.min(availW / w, availH / h);
-            const drawW = Math.max(40, Math.round(w * scale));
-            const drawH = Math.max(40, Math.round(h * scale));
+            const drawW = Math.max(24, Math.round(w * scale));
+            const drawH = Math.max(24, Math.round(h * scale));
 
             const rectX = padLeft + Math.round((availW - drawW) / 2);
             const rectY = padTop + Math.round((availH - drawH) / 2);
 
-            const profileThick = Math.max(5.5, Math.min(11, Math.round(Math.min(drawW, drawH) * 0.085)));
+            // Пропорциональные реальные толщины профилей (мм -> px в масштабе изделия)
+            const pxPerMm = Math.min(drawW / w, drawH / h);
+            const outerFaceMm = isSash ? getSashFaceMm(item.article) : getFrameFaceMm(item.article);
+            const impostFaceMm = getImpostFaceMm(item.article);
+            const aluThreshMm = 20;
+            const beadMm = 18;
+
+            const profileThick = Math.max(3.0, Math.min(outerFaceMm * pxPerMm, drawW * 0.36, drawH * 0.36));
             const hasAluThreshold = !isSash && !!item.hasAluThreshold;
-            const botProfileThick = hasAluThreshold ? Math.max(3, Math.round(profileThick * 0.42)) : profileThick;
-            const mullionThick = Math.max(4, Math.min(9, Math.round(profileThick * 0.82)));
+            const botProfileThick = hasAluThreshold
+                ? Math.max(2.2, Math.min(aluThreshMm * pxPerMm, drawH * 0.14))
+                : profileThick;
+            const mullionThick = Math.max(3.2, Math.min(impostFaceMm * pxPerMm, drawW * 0.25, drawH * 0.25));
             const halfMul = mullionThick / 2;
+            const beadPx = Math.max(1.0, Math.min(beadMm * pxPerMm, profileThick * 0.38));
+            const gasketPx = Math.max(0.85, Math.min(2.0, 3.2 * pxPerMm));
 
             const innerX = rectX + profileThick;
             const innerY = rectY + profileThick;
-            const innerW = Math.max(10, drawW - profileThick * 2);
-            const innerH = Math.max(10, drawH - profileThick - botProfileThick);
-
-            const fillVar = isSash ? 'var(--sash-fill)' : 'var(--pvc-fill)';
-            const strokeVar = isSash ? 'var(--sash-stroke)' : 'var(--pvc-stroke)';
+            const innerW = Math.max(4, drawW - profileThick * 2);
+            const innerH = Math.max(4, drawH - profileThick - botProfileThick);
 
             const wText = formatMm(item.widthMm) + ' мм';
             const hText = formatMm(item.heightMm) + ' мм';
@@ -3158,31 +3830,127 @@
             ];
 
             const contour = buildEntityContour(item);
+            let outerSvgPts = null;
+            let innerSvgPts = null;
+            let beadSvgPts = null;
+            let spacerSvgPts = null;
             let outerPolyPath = '';
             let innerPolyPath = '';
+            let beadPolyPath = '';
+            let spacerPolyPath = '';
             let polyMiterLinesSvg = '';
+
             if (contour.isPolygon && contour.mmPts) {
-                const outerSvgPts = contour.mmPts.map(p => ({
+                outerSvgPts = contour.mmPts.map(p => ({
                     x: rectX + (p.x / w) * drawW,
                     y: rectY + (p.y / h) * drawH
                 }));
                 outerPolyPath = pointsToSvgPath(outerSvgPts);
                 const botY = rectY + drawH;
+
                 const edgeInsets = outerSvgPts.map((p, i) => {
                     const q = outerSvgPts[(i + 1) % outerSvgPts.length];
                     const isBottomEdge = Math.abs(p.y - botY) < 1.0 && Math.abs(q.y - botY) < 1.0;
                     return (hasAluThreshold && isBottomEdge) ? botProfileThick : profileThick;
                 });
-                const innerSvgPts = offsetPolygonPoints(outerSvgPts, edgeInsets);
+                const beadEdgeInsets = outerSvgPts.map((p, i) => {
+                    const q = outerSvgPts[(i + 1) % outerSvgPts.length];
+                    const isBottomEdge = Math.abs(p.y - botY) < 1.0 && Math.abs(q.y - botY) < 1.0;
+                    if (hasAluThreshold && isBottomEdge) return botProfileThick;
+                    return Math.max(1.2, profileThick - Math.min(beadPx, profileThick * 0.40));
+                });
+
+                innerSvgPts = offsetPolygonPoints(outerSvgPts, edgeInsets);
+                beadSvgPts = offsetPolygonPoints(outerSvgPts, beadEdgeInsets);
+                spacerSvgPts = offsetPolygonPoints(innerSvgPts, gasketPx + 1.2);
                 innerPolyPath = pointsToSvgPath(innerSvgPts);
+                beadPolyPath = pointsToSvgPath(beadSvgPts);
+                spacerPolyPath = pointsToSvgPath(spacerSvgPts);
+
                 if (!contour.isArch && outerSvgPts.length === innerSvgPts.length) {
                     for (let i = 0; i < outerSvgPts.length; i++) {
                         if (hasAluThreshold && Math.abs(outerSvgPts[i].y - botY) < 1.0) continue;
-                        polyMiterLinesSvg += `<line x1="${outerSvgPts[i].x.toFixed(1)}" y1="${outerSvgPts[i].y.toFixed(1)}" x2="${innerSvgPts[i].x.toFixed(1)}" y2="${innerSvgPts[i].y.toFixed(1)}" stroke="${strokeVar}" stroke-width="1.1"/>`;
+                        polyMiterLinesSvg += `<line x1="${outerSvgPts[i].x.toFixed(1)}" y1="${outerSvgPts[i].y.toFixed(1)}" x2="${innerSvgPts[i].x.toFixed(1)}" y2="${innerSvgPts[i].y.toFixed(1)}" stroke="${isLaminated ? '#2f190c' : '#adb8c4'}" stroke-width="0.7" opacity="0.82"/>`;
                     }
                 }
             }
 
+            // 1. Заполнение проёмов стеклопакетами (или сэндвич-панелью в нижней части дверной створки)
+            const spansForGlass = computeFrameSpans(w, h, mullions);
+            const lowestSashHorizY = (isSash && h >= 1600 && horizMullions.length > 0)
+                ? Math.max(...horizMullions.map(m => m.posMm))
+                : null;
+
+            let glassPanesSvg = '';
+            const glassSpans = spansForGlass.length > 0
+                ? spansForGlass
+                : [{ x1: 0, y1: 0, x2: w, y2: h }];
+
+            glassSpans.forEach((sp, spIdx) => {
+                const gx1 = rectX + (sp.x1 / w) * drawW + (sp.x1 <= 0.5 ? profileThick : halfMul);
+                const gx2 = rectX + (sp.x2 / w) * drawW - (sp.x2 >= w - 0.5 ? profileThick : halfMul);
+                const gy1 = rectY + (sp.y1 / h) * drawH + (sp.y1 <= 0.5 ? profileThick : halfMul);
+                const gy2 = rectY + (sp.y2 / h) * drawH - (sp.y2 >= h - 0.5 ? botProfileThick : halfMul);
+
+                const isLowerDoorSandwich = isSash
+                    && lowestSashHorizY !== null
+                    && sp.y1 >= lowestSashHorizY - 1.5
+                    && (h - lowestSashHorizY) <= 1050;
+
+                glassPanesSvg += renderGlassPaneSvg(
+                    gx1, gy1,
+                    Math.max(1, gx2 - gx1),
+                    Math.max(1, gy2 - gy1),
+                    pxPerMm,
+                    uid,
+                    'b' + spIdx,
+                    isLowerDoorSandwich,
+                    isLaminated
+                );
+            });
+
+            // 2. Реалистичный профиль рамы (или отдельной створки) + контурный уплотнитель для арок/трапеций
+            const threshY = rectY + drawH - botProfileThick;
+            let baseWindowSvg = '';
+            if (contour.isPolygon) {
+                const polyClipId = `${uid}_polyInnerClip`;
+                const aluPolyStrip = hasAluThreshold
+                    ? renderAluThresholdSvg(rectX, threshY, drawW, botProfileThick, uid)
+                    : '';
+                baseWindowSvg = `
+                    <clipPath id="${polyClipId}">
+                        <path d="${innerPolyPath}"/>
+                    </clipPath>
+                    <path d="${outerPolyPath}" fill="url(#${uid}_pvcPoly)" stroke="${isLaminated ? '#311a0d' : '#7b8795'}" stroke-width="1.15" stroke-linejoin="round"/>
+                    ${isLaminated ? `<path d="${outerPolyPath}" fill="url(#${uid}_woodD)" stroke="none"/>` : ''}
+                    <path d="${beadPolyPath}" fill="none" stroke="${isLaminated ? '#3b2011' : '#c0cad5'}" stroke-width="0.7" stroke-linejoin="round" opacity="0.88"/>
+                    ${polyMiterLinesSvg}
+                    <g clip-path="url(#${polyClipId})">
+                        ${glassPanesSvg}
+                        <path d="${spacerPolyPath}" fill="none" stroke="#8a97a6" stroke-width="0.75" opacity="0.58"/>
+                    </g>
+                    <path d="${innerPolyPath}" fill="none" stroke="#1f252d" stroke-width="${gasketPx.toFixed(2)}" stroke-linejoin="round"/>
+                    ${aluPolyStrip}
+                `;
+            } else {
+                const rectClipId = `${uid}_rectInnerClip`;
+                baseWindowSvg = `
+                    <clipPath id="${rectClipId}">
+                        <rect x="${innerX.toFixed(1)}" y="${innerY.toFixed(1)}" width="${innerW.toFixed(1)}" height="${innerH.toFixed(1)}"/>
+                    </clipPath>
+                    <g clip-path="url(#${rectClipId})">
+                        ${glassPanesSvg}
+                    </g>
+                    ${renderMiteredProfileFrameSvg(
+                        rectX, rectY, drawW, drawH,
+                        profileThick, profileThick, botProfileThick,
+                        beadPx, hasAluThreshold, uid, isSash, isLaminated
+                    )}
+                `;
+            }
+
+            // 3. Реалистичные импосты рамы (или отдельной створки) — аккуратно обрезаны по внутреннему контуру
+            const innerClipRef = contour.isPolygon ? `${uid}_polyInnerClip` : `${uid}_rectInnerClip`;
             let mullionsSvg = '';
             for (const m of orderedMullions) {
                 if (m.orient === 'V') {
@@ -3191,101 +3959,238 @@
                     const effY1Mm = Math.max(m.y1, topEdgeMm);
                     const rawY1 = rectY + (effY1Mm / h) * drawH;
                     const rawY2 = rectY + (m.y2 / h) * drawH;
-                    const yTop = effY1Mm <= topEdgeMm + 1 ? (rectY + (topEdgeMm / h) * drawH + profileThick) : (rawY1 + halfMul);
-                    const yBot = m.y2 >= h - 1 ? (innerY + innerH) : (rawY2 - halfMul);
+                    const yTop = effY1Mm <= topEdgeMm + 1 ? (rectY + (topEdgeMm / h) * drawH + profileThick - 1.0) : (rawY1 + halfMul - 0.5);
+                    const yBot = m.y2 >= h - 1 ? (innerY + innerH + 1.0) : (rawY2 - halfMul + 0.5);
                     const barH = Math.max(2, yBot - yTop);
                     const xLeft = mx - halfMul;
 
-                    mullionsSvg += `<rect x="${xLeft.toFixed(1)}" y="${yTop.toFixed(1)}" width="${mullionThick}" height="${barH.toFixed(1)}" fill="var(--pvc-mullion)" stroke="${strokeVar}" stroke-width="1.3"/>`;
+                    mullionsSvg += renderRealisticImpostSvg(xLeft, yTop, mullionThick, barH, 'V', beadPx, uid, isLaminated);
                 } else {
                     const my = rectY + (m.y1 / h) * drawH;
                     const rawX1 = rectX + (m.x1 / w) * drawW;
                     const rawX2 = rectX + (m.x2 / w) * drawW;
-                    const xLeft = m.x1 <= 1 ? innerX : (rawX1 + halfMul);
-                    const xRight = m.x2 >= w - 1 ? (innerX + innerW) : (rawX2 - halfMul);
+                    const xLeft = m.x1 <= 1 ? (innerX - 1.0) : (rawX1 + halfMul - 0.5);
+                    const xRight = m.x2 >= w - 1 ? (innerX + innerW + 1.0) : (rawX2 - halfMul + 0.5);
                     const barW = Math.max(2, xRight - xLeft);
                     const yTop = my - halfMul;
 
-                    mullionsSvg += `<rect x="${xLeft.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${mullionThick}" fill="var(--pvc-mullion)" stroke="${strokeVar}" stroke-width="1.3"/>`;
+                    mullionsSvg += renderRealisticImpostSvg(xLeft, yTop, barW, mullionThick, 'H', beadPx, uid, isLaminated);
                 }
             }
+            const clippedMullionsSvg = mullionsSvg
+                ? `<g clip-path="url(#${innerClipRef})">${mullionsSvg}</g>`
+                : '';
 
-            // Створки внутри пролётов рамы в режиме «Рама + створка»
+            // 4. Реалистичные створки в режиме «Рама + створка» с точными реальными пропорциями
             let combinedSashesSvg = '';
+            let combinedLabelsSvg = '';
             if (isCombined && item.spanComparison && item.spanComparison.matches) {
-                const sashProf = Math.max(4, Math.min(8, Math.round(profileThick * 0.72)));
-                for (const mInfo of item.spanComparison.matches) {
-                    if (!mInfo.span) continue;
+                item.spanComparison.matches.forEach((mInfo, mIdx) => {
+                    if (!mInfo.span) return;
                     const sp = mInfo.span;
                     const s = mInfo.sash;
 
-                    const leftInset = sp.isStulpSide === 'left' ? 2 : (sp.x1 <= 0.5 ? profileThick : halfMul);
-                    const rightInset = sp.isStulpSide === 'right' ? 2 : (sp.x2 >= w - 0.5 ? profileThick : halfMul);
-                    const sx1 = rectX + (sp.x1 / w) * drawW + leftInset + 1.2;
-                    const sx2 = rectX + (sp.x2 / w) * drawW - rightInset - 1.2;
-                    let sy1 = rectY + (sp.y1 / h) * drawH + (sp.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
-                    const botGap = sp.y2 >= h - 0.5 ? botProfileThick : halfMul;
-                    const sy2 = rectY + (sp.y2 / h) * drawH - botGap - 1.5;
+                    // Расчёт точного положения створки в пролёте по миллиметрам (нахлёст на раму ~33 мм, на импост ~11.5 мм)
+                    const leftExp = sp.isStulpSide === 'left' ? 1.5 : (sp.x1 <= 0.5 ? 33 : 11.5);
+                    const rightExp = sp.isStulpSide === 'right' ? 1.5 : (sp.x2 >= w - 0.5 ? 33 : 11.5);
+                    const topExp = sp.y1 <= 0.5 ? 33 : 11.5;
+                    const botExp = sp.y2 >= h - 0.5 ? (hasAluThreshold ? 20 : 33) : 11.5;
 
-                    // Защита: если прямоугольная створка значительно ниже пролёта (например, нет импоста под аркой), не растягиваем её поверх арки
-                    if (s.heightMm > 0 && sp.spanH - s.heightMm > 140) {
-                        const realSashDrawH = Math.max(14, (s.heightMm / h) * drawH);
-                        const clampedTop = sy2 - realSashDrawH;
-                        if (clampedTop > sy1) sy1 = clampedTop;
+                    let sx1Mm = sp.x1 + leftExp;
+                    let sx2Mm = sp.x2 - rightExp;
+                    if (s.widthMm > 0 && s.widthMm < sp.spanW - 2) {
+                        const remW = sp.spanW - s.widthMm;
+                        const totExpX = leftExp + rightExp;
+                        const lOff = totExpX > 0 ? remW * (leftExp / totExpX) : remW / 2;
+                        sx1Mm = sp.x1 + lOff;
+                        sx2Mm = sx1Mm + s.widthMm;
                     }
+
+                    let sy1Mm = sp.y1 + topExp;
+                    let sy2Mm = sp.y2 - botExp;
+                    if (s.heightMm > 0 && sp.spanH - s.heightMm > 140) {
+                        sy2Mm = sp.y2 - botExp;
+                        sy1Mm = Math.max(sp.y1 + topExp, sy2Mm - s.heightMm);
+                    } else if (s.heightMm > 0 && s.heightMm < sp.spanH - 2) {
+                        const remH = sp.spanH - s.heightMm;
+                        const totExpY = topExp + botExp;
+                        const tOff = totExpY > 0 ? remH * (topExp / totExpY) : remH / 2;
+                        sy1Mm = sp.y1 + tOff;
+                        sy2Mm = sy1Mm + s.heightMm;
+                    }
+
+                    const sx1 = rectX + (sx1Mm / w) * drawW;
+                    const sx2 = rectX + (sx2Mm / w) * drawW;
+                    const sy1 = rectY + (sy1Mm / h) * drawH;
+                    const sy2 = rectY + (sy2Mm / h) * drawH;
 
                     const sw = Math.max(12, sx2 - sx1);
                     const sh = Math.max(12, sy2 - sy1);
 
-                    let sashInnerMullionsSvg = '';
-                    if (s.mullions && s.mullions.length > 0 && s.widthMm > 0 && s.heightMm > 0) {
-                        const sMulThick = Math.max(3.5, Math.min(7, Math.round(sashProf * 0.85)));
-                        const sHalfMul = sMulThick / 2;
-                        for (const sm of s.mullions) {
-                            if (sm.orient === 'H') {
-                                const my = sy1 + (sm.posMm / s.heightMm) * sh;
-                                const bx = sx1 + sashProf;
-                                const bw = Math.max(4, sw - sashProf * 2);
-                                sashInnerMullionsSvg += `
-                                    <rect x="${bx.toFixed(1)}" y="${(my - sHalfMul).toFixed(1)}" width="${bw.toFixed(1)}" height="${sMulThick}" fill="var(--pvc-mullion)" stroke="var(--sash-stroke)" stroke-width="1.2"/>
-                                    ${bw >= 34 && sm.bottomMm ? `<text x="${(bx + bw / 2).toFixed(1)}" y="${(my - sHalfMul - 3).toFixed(1)}" text-anchor="middle" fill="var(--subdim-text)" font-size="8.5" font-weight="700" font-family="system-ui, sans-serif">~${formatMm(sm.bottomMm)}</text>` : ''}
-                                `;
-                            } else if (sm.orient === 'V') {
-                                const mx = sx1 + (sm.posMm / s.widthMm) * sw;
-                                const by = sy1 + sashProf;
-                                const bh = Math.max(4, sh - sashProf * 2);
-                                sashInnerMullionsSvg += `
-                                    <rect x="${(mx - sHalfMul).toFixed(1)}" y="${by.toFixed(1)}" width="${sMulThick}" height="${bh.toFixed(1)}" fill="var(--pvc-mullion)" stroke="var(--sash-stroke)" stroke-width="1.2"/>
-                                `;
+                    // Реальная пропорциональная толщина профиля створки (78 мм оконная / 100–118 мм дверная)
+                    const sashFaceMm = getSashFaceMm(s.article);
+                    const sashProf = Math.max(3.2, Math.min(sashFaceMm * pxPerMm, sw * 0.38, sh * 0.38));
+                    const sashBeadPx = Math.max(1.0, Math.min(beadMm * pxPerMm, sashProf * 0.38));
+
+                    const sInnerX = sx1 + sashProf;
+                    const sInnerY = sy1 + sashProf;
+                    const sInnerW = Math.max(3, sw - sashProf * 2);
+                    const sInnerH = Math.max(3, sh - sashProf * 2);
+
+                    const sContour = buildEntityContour(s);
+                    const sMullions = s.mullions || [];
+                    const sImpostThick = Math.max(3.0, Math.min(getImpostFaceMm(s.article) * pxPerMm, sw * 0.28, sh * 0.22));
+                    const sHalfMul = sImpostThick / 2;
+
+                    // Заполнение проёма(ов) внутри створки: стеклопакет (и сэндвич внизу дверной створки с гориз. импостом)
+                    let sashGlassSvg = '';
+                    let sashMullionsSvg = '';
+
+                    if (sContour.isPolygon && sContour.mmPts) {
+                        const sOuterPts = sContour.mmPts.map(p => ({
+                            x: sx1 + (p.x / Math.max(1, s.widthMm)) * sw,
+                            y: sy1 + (p.y / Math.max(1, s.heightMm)) * sh
+                        }));
+                        const sInnerPts = offsetPolygonPoints(sOuterPts, sashProf);
+                        const sBeadPts = offsetPolygonPoints(sOuterPts, Math.max(1.2, sashProf - sashBeadPx));
+                        const sSpacerPts = offsetPolygonPoints(sInnerPts, gasketPx + 1.1);
+                        const sOuterPath = pointsToSvgPath(sOuterPts);
+                        const sInnerPath = pointsToSvgPath(sInnerPts);
+                        const sBeadPath = pointsToSvgPath(sBeadPts);
+                        const sSpacerPath = pointsToSvgPath(sSpacerPts);
+                        const sPolyClip = `${uid}_spoly_${mIdx}`;
+
+                        let sPolyMiters = '';
+                        if (!sContour.isArch && sOuterPts.length === sInnerPts.length) {
+                            for (let i = 0; i < sOuterPts.length; i++) {
+                                sPolyMiters += `<line x1="${sOuterPts[i].x.toFixed(1)}" y1="${sOuterPts[i].y.toFixed(1)}" x2="${sInnerPts[i].x.toFixed(1)}" y2="${sInnerPts[i].y.toFixed(1)}" stroke="${isLaminated ? '#2f190c' : '#adb8c4'}" stroke-width="0.65" opacity="0.82"/>`;
                             }
                         }
-                    }
 
-                    combinedSashesSvg += `
-                        <rect x="${sx1.toFixed(1)}" y="${sy1.toFixed(1)}" width="${sw.toFixed(1)}" height="${sh.toFixed(1)}" fill="var(--sash-fill)" stroke="var(--sash-stroke)" stroke-width="1.6"/>
-                        <rect x="${(sx1 + sashProf).toFixed(1)}" y="${(sy1 + sashProf).toFixed(1)}" width="${Math.max(4, sw - sashProf * 2).toFixed(1)}" height="${Math.max(4, sh - sashProf * 2).toFixed(1)}" fill="none" stroke="var(--sash-stroke)" stroke-width="0.9" opacity="0.7"/>
-                        ${sashInnerMullionsSvg}
-                        ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, 'var(--sash-stroke)')}
-                        ${sh >= 26 && sw >= 42 ? `<text x="${(sx1 + sw / 2).toFixed(1)}" y="${(sy1 + sh - 5).toFixed(1)}" text-anchor="middle" fill="var(--sash-stroke)" font-size="9.5" font-weight="700" font-family="system-ui, sans-serif">${formatMm(s.widthMm)}×${formatMm(s.heightMm)}</text>` : ''}
-                    `;
-                }
-                if (item.spanComparison.stulpDividers && item.spanComparison.stulpDividers.length > 0) {
-                    for (const sd of item.spanComparison.stulpDividers) {
-                        const sx = rectX + (sd.x / w) * drawW;
-                        const sy1 = rectY + (sd.y1 / h) * drawH + (sd.y1 <= 0.5 ? profileThick : halfMul) + 1.5;
-                        const sy2 = rectY + (sd.y2 / h) * drawH - (sd.y2 >= h - 0.5 ? botProfileThick : halfMul) - 1.5;
                         combinedSashesSvg += `
-                            <line x1="${sx.toFixed(1)}" y1="${sy1.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy2.toFixed(1)}" stroke="var(--accent-blue)" stroke-width="2.2" stroke-dasharray="5,3"/>
+                            <g filter="url(#${uid}_sashShadow)">
+                                <clipPath id="${sPolyClip}"><path d="${sInnerPath}"/></clipPath>
+                                <path d="${sOuterPath}" fill="url(#${uid}_pvcPoly)" stroke="${isLaminated ? '#2a160b' : '#6d7a89'}" stroke-width="1.15" stroke-linejoin="round"/>
+                                ${isLaminated ? `<path d="${sOuterPath}" fill="url(#${uid}_woodD)" stroke="none"/>` : ''}
+                                <path d="${sBeadPath}" fill="none" stroke="${isLaminated ? '#3b2011' : '#c0cad5'}" stroke-width="0.65" stroke-linejoin="round"/>
+                                ${sPolyMiters}
+                                <g clip-path="url(#${sPolyClip})">
+                                    ${renderGlassPaneSvg(sx1, sy1, sw, sh, pxPerMm, uid, `s${mIdx}`, false, isLaminated)}
+                                    <path d="${sSpacerPath}" fill="none" stroke="#8a97a6" stroke-width="0.7" opacity="0.58"/>
+                                </g>
+                                <path d="${sInnerPath}" fill="none" stroke="#1f252d" stroke-width="${gasketPx.toFixed(2)}" stroke-linejoin="round"/>
+                            </g>
+                            ${(() => {
+                                const effHingeRef = s.handleSide || (!s.isFixedSash && sp.isStulpSide === 'right' ? 'П' : (!s.isFixedSash && sp.isStulpSide === 'left' ? 'Л' : ''));
+                                return renderRealisticHingesSvg(sx1, sy1, sw, sh, effHingeRef, pxPerMm, s.heightMm, uid, isLaminated);
+                            })()}
+                            ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, pxPerMm, s.heightMm, uid, isLaminated)}
+                        `;
+                    } else {
+                        const sHorizMuls = sMullions.filter(sm => sm.orient === 'H');
+                        const sLowestHoriz = (s.heightMm >= 1600 && sHorizMuls.length > 0)
+                            ? Math.max(...sHorizMuls.map(sm => sm.posMm))
+                            : null;
+
+                        const sSpans = sMullions.length > 0
+                            ? computeFrameSpans(s.widthMm, s.heightMm, sMullions)
+                            : [{ x1: 0, y1: 0, x2: s.widthMm, y2: s.heightMm }];
+
+                        sSpans.forEach((ssp, sspIdx) => {
+                            const sgx1 = sx1 + (ssp.x1 / Math.max(1, s.widthMm)) * sw + (ssp.x1 <= 0.5 ? sashProf : sHalfMul);
+                            const sgx2 = sx1 + (ssp.x2 / Math.max(1, s.widthMm)) * sw - (ssp.x2 >= s.widthMm - 0.5 ? sashProf : sHalfMul);
+                            const sgy1 = sy1 + (ssp.y1 / Math.max(1, s.heightMm)) * sh + (ssp.y1 <= 0.5 ? sashProf : sHalfMul);
+                            const sgy2 = sy1 + (ssp.y2 / Math.max(1, s.heightMm)) * sh - (ssp.y2 >= s.heightMm - 0.5 ? sashProf : sHalfMul);
+
+                            const isDoorBotSandwich = sLowestHoriz !== null
+                                && ssp.y1 >= sLowestHoriz - 1.5
+                                && (s.heightMm - sLowestHoriz) <= 1050;
+
+                            sashGlassSvg += renderGlassPaneSvg(
+                                sgx1, sgy1,
+                                Math.max(1, sgx2 - sgx1),
+                                Math.max(1, sgy2 - sgy1),
+                                pxPerMm, uid, `s${mIdx}_${sspIdx}`, isDoorBotSandwich, isLaminated
+                            );
+                        });
+
+                        for (const sm of sMullions) {
+                            if (sm.orient === 'H') {
+                                const my = sy1 + (sm.posMm / Math.max(1, s.heightMm)) * sh;
+                                sashMullionsSvg += renderRealisticImpostSvg(
+                                    sInnerX - 0.6, my - sHalfMul,
+                                    sInnerW + 1.2, sImpostThick,
+                                    'H', sashBeadPx, uid, isLaminated
+                                );
+                                if (sInnerW >= 32 && sm.bottomMm) {
+                                    combinedLabelsSvg += renderLabelPillSvg(
+                                        sInnerX + sInnerW / 2,
+                                        my - sHalfMul - 4,
+                                        `~${formatMm(sm.bottomMm)}`,
+                                        '#ffd666',
+                                        8.4
+                                    );
+                                }
+                            } else if (sm.orient === 'V') {
+                                const mx = sx1 + (sm.posMm / Math.max(1, s.widthMm)) * sw;
+                                sashMullionsSvg += renderRealisticImpostSvg(
+                                    mx - sHalfMul, sInnerY - 0.6,
+                                    sImpostThick, sInnerH + 1.2,
+                                    'V', sashBeadPx, uid, isLaminated
+                                );
+                            }
+                        }
+
+                        combinedSashesSvg += `
+                            <g filter="url(#${uid}_sashShadow)">
+                                ${sashGlassSvg}
+                                ${sashMullionsSvg}
+                                ${renderMiteredProfileFrameSvg(
+                                    sx1, sy1, sw, sh,
+                                    sashProf, sashProf, sashProf,
+                                    sashBeadPx, false, uid, true, isLaminated
+                                )}
+                            </g>
+                            ${(() => {
+                                const effHingeRef = s.handleSide || (!s.isFixedSash && sp.isStulpSide === 'right' ? 'П' : (!s.isFixedSash && sp.isStulpSide === 'left' ? 'Л' : ''));
+                                return renderRealisticHingesSvg(sx1, sy1, sw, sh, effHingeRef, pxPerMm, s.heightMm, uid, isLaminated);
+                            })()}
+                            ${renderSashHandleOverlay(sx1, sy1, sw, sh, sashProf, s.handleSide, pxPerMm, s.heightMm, uid, isLaminated)}
                         `;
                     }
+
+                    if (sh >= 30 && sw >= 44) {
+                        combinedLabelsSvg += renderLabelPillSvg(
+                            sx1 + sw / 2,
+                            sy1 + sh - Math.max(sashProf + 5, 11),
+                            `${formatMm(s.widthMm)}×${formatMm(s.heightMm)}`,
+                            '#a7f3b5',
+                            8.8
+                        );
+                    }
+                });
+
+                // Реалистичный ПВХ-штульп между штульповыми створками
+                if (item.spanComparison.stulpDividers && item.spanComparison.stulpDividers.length > 0) {
+                    const stulpPx = Math.max(3.0, Math.min(46 * pxPerMm, drawW * 0.12));
+                    for (const sd of item.spanComparison.stulpDividers) {
+                        const sx = rectX + (sd.x / w) * drawW;
+                        const sy1 = rectY + (sd.y1 / h) * drawH + (sd.y1 <= 0.5 ? (33 * pxPerMm) : halfMul);
+                        const sy2 = rectY + (sd.y2 / h) * drawH - (sd.y2 >= h - 0.5 ? (hasAluThreshold ? botProfileThick : 33 * pxPerMm) : halfMul);
+                        combinedSashesSvg += renderRealisticStulpSvg(sx, sy1, sy2, stulpPx, uid, isLaminated);
+                    }
                 }
             }
 
-            let sashHandleSvg = '';
+            // 5. Фурнитура (ручка и петли) для режима отдельной створки
+            let sashHardwareSvg = '';
             if (isSash && item.handleSide) {
-                sashHandleSvg = renderSashHandleOverlay(rectX, rectY, drawW, drawH, profileThick, item.handleSide, strokeVar);
+                sashHardwareSvg =
+                    renderRealisticHingesSvg(rectX, rectY, drawW, drawH, item.handleSide, pxPerMm, h, uid, isLaminated) +
+                    renderSashHandleOverlay(rectX, rectY, drawW, drawH, profileThick, item.handleSide, pxPerMm, h, uid, isLaminated);
             }
 
+            // 6. Размерные линии и подписи габаритов (сохранены без изменений!)
             let bottomSubDimsSvg = '';
             if (vertMullions.length > 0) {
                 const botTouchVerts = vertMullions.filter(m => m.y2 >= h - 1);
@@ -3312,19 +4217,18 @@
                     }
                 }
 
-                // Если сверху есть отдельные Т-импосты, отличающиеся от нижних (как в 34419/2 или 34306/1), подписываем верхние сегменты отдельно
                 if (topOnlyVerts.length > 0 && botTouchVerts.length > 0) {
                     const topTouchVerts = vertMullions.filter(m => m.y1 <= 1);
                     const topXs = Array.from(new Set(topTouchVerts.map(m => m.posMm))).sort((a, b) => a - b);
                     const topPts = [0, ...topXs, w];
                     const topZoneY2 = Math.min(...topOnlyVerts.map(m => m.y2));
-                    const topLabelY = innerY + Math.min(14, Math.max(9, ((topZoneY2 / h) * drawH - profileThick) / 2 + 3));
+                    const topLabelY = innerY + Math.min(16, Math.max(10, ((topZoneY2 / h) * drawH - profileThick) / 2 + 3));
                     for (let i = 0; i < topPts.length - 1; i++) {
                         const px = rectX + (topPts[i] / w) * drawW;
                         const nextPx = rectX + (topPts[i + 1] / w) * drawW;
                         const segMm = Math.round((topPts[i + 1] - topPts[i]) * 10) / 10;
                         if (nextPx - px >= 28) {
-                            bottomSubDimsSvg += `<text x="${((px + nextPx) / 2).toFixed(1)}" y="${topLabelY.toFixed(1)}" text-anchor="middle" fill="var(--subdim-text)" font-size="10" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${formatMm(segMm)}</text>`;
+                            bottomSubDimsSvg += renderLabelPillSvg((px + nextPx) / 2, topLabelY, formatMm(segMm), '#ffd666', 9.2);
                         }
                     }
                 }
@@ -3356,11 +4260,11 @@
                 }
             }
 
-            const centerText = `${formatMm(item.widthMm)} × ${formatMm(item.heightMm)}`;
-            const showCenterText = mullions.length === 0 && !isSash && !isCombined && innerW >= 68 && innerH >= 28;
-
             return `
                 <svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${wText} на ${hText}">
+                    ${buildRealisticDefs(uid, isLaminated)}
+
+                    <!-- Габарит ширины сверху -->
                     <line x1="${rectX}" y1="${rectY - 3}" x2="${rectX}" y2="${dimTopY - 5}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
                     <line x1="${rectX + drawW}" y1="${rectY - 3}" x2="${rectX + drawW}" y2="${dimTopY - 5}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
                     <line x1="${rectX}" y1="${dimTopY}" x2="${rectX + drawW}" y2="${dimTopY}" stroke="var(--dim-color)" stroke-width="1.5"/>
@@ -3368,6 +4272,7 @@
                     <polygon points="${rectX + drawW},${dimTopY} ${rectX + drawW - 6},${dimTopY - 3} ${rectX + drawW - 6},${dimTopY + 3}" fill="var(--dim-color)"/>
                     <text x="${topMidX}" y="${dimTopY - 6}" text-anchor="middle" fill="var(--dim-text)" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${wText}</text>
 
+                    <!-- Габарит высоты справа -->
                     <line x1="${rectX + drawW + 3}" y1="${rectY}" x2="${dimRightX + 5}" y2="${rectY}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
                     <line x1="${rectX + drawW + 3}" y1="${rectY + drawH}" x2="${dimRightX + 5}" y2="${rectY + drawH}" stroke="var(--dim-color)" stroke-width="1.2" opacity="0.75"/>
                     <line x1="${dimRightX}" y1="${rectY}" x2="${dimRightX}" y2="${rectY + drawH}" stroke="var(--dim-color)" stroke-width="1.5"/>
@@ -3375,41 +4280,18 @@
                     <polygon points="${dimRightX},${rectY + drawH} ${dimRightX - 3},${rectY + drawH - 6} ${dimRightX + 3},${rectY + drawH - 6}" fill="var(--dim-color)"/>
                     <text x="${dimRightX + 7}" y="${rightMidY + 4}" text-anchor="start" fill="var(--dim-text)" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">${hText}</text>
 
-${(() => {
-                        const threshY = rectY + drawH - botProfileThick;
-                        const aluStripSvg = hasAluThreshold
-                            ? `<rect x="${rectX}" y="${threshY.toFixed(1)}" width="${drawW}" height="${botProfileThick}" fill="var(--alu-fill)" stroke="var(--alu-stroke)" stroke-width="1.3"/>
-                               <line x1="${rectX}" y1="${(threshY + botProfileThick / 2).toFixed(1)}" x2="${rectX + drawW}" y2="${(threshY + botProfileThick / 2).toFixed(1)}" stroke="var(--alu-line)" stroke-width="0.7" opacity="0.75"/>`
-                            : '';
-                        if (contour.isPolygon) {
-                            return `<path d="${outerPolyPath}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2" stroke-linejoin="round"/>
-                                    <path d="${innerPolyPath}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3" stroke-linejoin="round"/>
-                                    ${polyMiterLinesSvg}
-                                    ${aluStripSvg}`;
-                        }
-                        if (hasAluThreshold) {
-                            const uPath = `M ${rectX} ${threshY.toFixed(1)} L ${rectX} ${rectY} L ${rectX + drawW} ${rectY} L ${rectX + drawW} ${threshY.toFixed(1)} L ${(innerX + innerW).toFixed(1)} ${threshY.toFixed(1)} L ${(innerX + innerW).toFixed(1)} ${innerY} L ${innerX} ${innerY} L ${innerX} ${threshY.toFixed(1)} Z`;
-                            return `<rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)"/>
-                                    <path d="${uPath}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2" stroke-linejoin="miter"/>
-                                    <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                                    <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                                    ${aluStripSvg}`;
-                        }
-                        return `<rect x="${rectX}" y="${rectY}" width="${drawW}" height="${drawH}" fill="${fillVar}" stroke="${strokeVar}" stroke-width="2"/>
-                                <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--pvc-inner)" stroke="${strokeVar}" stroke-width="1.3"/>
-                                <line x1="${rectX}" y1="${rectY}" x2="${innerX}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                                <line x1="${rectX + drawW}" y1="${rectY}" x2="${innerX + innerW}" y2="${innerY}" stroke="${strokeVar}" stroke-width="1.1"/>
-                                <line x1="${rectX}" y1="${rectY + drawH}" x2="${innerX}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>
-                                <line x1="${rectX + drawW}" y1="${rectY + drawH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="${strokeVar}" stroke-width="1.1"/>`;
-                    })()}
-
-                    ${mullionsSvg}
+                    <!-- Реалистичное окно (рама, стеклопакеты, импосты, створки, фурнитура) -->
+                    <g filter="url(#${uid}_winShadow)">
+                        ${baseWindowSvg}
+                        ${clippedMullionsSvg}
+                    </g>
                     ${combinedSashesSvg}
-                    ${sashHandleSvg}
+                    ${sashHardwareSvg}
+                    ${combinedLabelsSvg}
+
+                    <!-- Размерные цепочки импостов -->
                     ${bottomSubDimsSvg}
                     ${leftSubDimsSvg}
-
-                    ${showCenterText ? `<text x="${rectX + drawW / 2}" y="${rectY + drawH / 2 + 4}" text-anchor="middle" fill="var(--text-secondary)" font-size="12" font-weight="600" font-family="system-ui, -apple-system, sans-serif">${centerText}</text>` : ''}
                 </svg>
             `;
         }
@@ -3456,7 +4338,8 @@ ${(() => {
                 const aluStr = item.hasAluThreshold ? `алюминиевый порог алюм ${item.aluThresholdArticle || ''}` : '';
                 const stulpStr = (item.stulps && item.stulps.length > 0) ? 'штульп ш1' : '';
                 const manualStr = item.hasManualCut ? 'ручная резка' : '';
-                const hay = `${item.orderNo} ${item.itemNo} ${kindStr} ${item.client} ${item.article} ${dimStr} ${mulStr} ${handleStr} ${aluStr} ${stulpStr} ${manualStr}`.toLowerCase();
+                const lamStr = item.isLaminated ? 'ламинация ламинированный коричневый дерево' : 'белый';
+                const hay = `${item.orderNo} ${item.itemNo} ${kindStr} ${item.client} ${item.article} ${dimStr} ${mulStr} ${handleStr} ${aluStr} ${stulpStr} ${manualStr} ${lamStr}`.toLowerCase();
                 return hay.includes(query);
             });
 
@@ -3559,7 +4442,7 @@ ${(() => {
                     : '';
 
                 html += `
-                    <div class="frame-card ${cardWarnClass}" data-item-idx="${idx}">
+                    <div class="frame-card ${cardWarnClass}" data-item-idx="${idx}" tabindex="0">
                         <div class="frame-card-header">
                             <div>
                                 <span class="order-badge">Заказ № ${escapeHtml(item.orderNo)}</span>
@@ -3575,6 +4458,7 @@ ${(() => {
                             </div>
                             <div class="meta-tags">
                                 ${oversizeTag}
+                                ${item.isLaminated ? '<span class="tag laminated-tag">Ламинация</span>' : ''}
                                 ${item.hasAluThreshold ? `<span class="tag alu-tag">Алюм. порог${item.aluThresholdArticle ? ' ' + escapeHtml(item.aluThresholdArticle) : ''}</span>` : ''}
                                 ${(item.stulps && item.stulps.length > 0) ? `<span class="tag stulp-tag">Штульп ${formatMm(item.stulps[0].cutMm)} мм</span>` : ''}
                                 ${item.hasManualCut ? '<span class="tag manual-tag">Ручная резка</span>' : ''}
@@ -3595,7 +4479,7 @@ ${(() => {
                 card.addEventListener('click', () => {
                     const idx = parseInt(card.getAttribute('data-item-idx'), 10);
                     const item = filtered[idx];
-                    if (item) openItemModal(item);
+                    if (item) openItemModal(item, card);
                 });
             });
         }
@@ -3720,27 +4604,50 @@ ${(() => {
             return list;
         }
 
-        function openVisBarcodeZoom(code, label) {
+        function openVisBarcodeZoom(code, label, triggerEl) {
             const modal = document.getElementById('barcodeZoomModal');
             const lblEl = document.getElementById('visBcZoomLabel');
             const svgEl = document.getElementById('visBcZoomSvg');
             const codeEl = document.getElementById('visBcZoomCode');
             if (!modal || !svgEl || !code) return;
+            lastFocusedBeforeBcZoom = triggerEl || document.activeElement || null;
             if (lblEl) lblEl.textContent = label || 'Штрих-код';
             svgEl.innerHTML = renderCode128Svg(code, 108);
             if (codeEl) codeEl.textContent = code;
             modal.classList.add('open');
+            if (isTvModeActive()) {
+                const closeBtn = document.getElementById('closeVisBcZoomBtn');
+                if (closeBtn) setTvFocus(closeBtn, false);
+            }
         }
 
         function closeVisBarcodeZoom() {
             const modal = document.getElementById('barcodeZoomModal');
             if (modal) modal.classList.remove('open');
+            if (lastFocusedBeforeBcZoom && document.contains(lastFocusedBeforeBcZoom)) {
+                setTvFocus(lastFocusedBeforeBcZoom, false);
+            }
+            lastFocusedBeforeBcZoom = null;
         }
 
-        function openItemModal(item) {
+        let lastFocusedBeforeModal = null;
+        let lastFocusedBeforeBcZoom = null;
+
+        function closeItemModal() {
+            const modal = document.getElementById('detailModal');
+            if (!modal) return;
+            modal.classList.remove('open');
+            if (lastFocusedBeforeModal && document.contains(lastFocusedBeforeModal)) {
+                setTvFocus(lastFocusedBeforeModal, false);
+            }
+            lastFocusedBeforeModal = null;
+        }
+
+        function openItemModal(item, triggerEl) {
             const modal = document.getElementById('detailModal');
             const title = document.getElementById('modalTitle');
             const body = document.getElementById('modalBody');
+            lastFocusedBeforeModal = triggerEl || document.activeElement || null;
 
             const isSash = item.entityType === 'sash' || !!item.isStandaloneSash;
             const isCombined = item.entityType === 'combined' && !item.isStandaloneSash;
@@ -3869,8 +4776,17 @@ ${(() => {
                 : '';
 
             body.innerHTML = `
+                <div class="modal-preview-stage" id="modalPreviewStage" tabindex="0" aria-label="Увеличенное изображение изделия">
+                    ${createEntitySvg(item)}
+                </div>
+                <button type="button" class="modal-scroll-hint" id="modalScrollHintBtn">
+                    <span>↓</span>
+                    <span>Пролистайте вниз для подробной информации и штрих-кодов</span>
+                </button>
+                <div class="modal-details-section" id="modalDetailsStart">
                 <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.55;">
                     Файл: <strong>${escapeHtml(item.fileName)}</strong><br>
+                    ${item.isLaminated ? `Цвет профиля: <strong style="color:#b8774b;">Коричневый с текстурой (ламинация)</strong><br>` : ''}
                     ${item.client ? `Заказчик: <strong>${escapeHtml(item.client)}</strong><br>` : ''}
                     Габариты: <strong>${formatMm(item.widthMm)} × ${formatMm(item.heightMm)} мм</strong>
                     ${item.isOversize ? ` <span style="color:var(--accent-red); font-weight:700;">(Негабарит: ${escapeHtml(item.oversizeReasons.join(', '))})</span>` : ''}<br>
@@ -3900,7 +4816,7 @@ ${(() => {
                     const cardsHtml = bcs.map(bc => {
                         const fullLabel = `${bc.roleTitle} (${bc.detail})`;
                         return `
-                            <div class="barcode-card" data-bc-code="${escapeHtml(bc.code)}" data-bc-label="${escapeHtml(fullLabel)}" title="Нажмите для увеличения">
+                            <div class="barcode-card" data-bc-code="${escapeHtml(bc.code)}" data-bc-label="${escapeHtml(fullLabel)}" tabindex="0" title="Нажмите для увеличения">
                                 <div class="barcode-card-head">
                                     <span class="bc-role-badge ${bc.roleClass}">${escapeHtml(bc.roleTitle)}</span>
                                     <span>${escapeHtml(bc.detail)}</span>
@@ -3920,17 +4836,32 @@ ${(() => {
                         </div>
                     `;
                 })()}
+                </div>
             `;
+
+            body.scrollTop = 0;
+
+            const scrollHintBtn = document.getElementById('modalScrollHintBtn');
+            if (scrollHintBtn) {
+                scrollHintBtn.addEventListener('click', () => {
+                    const detailsEl = document.getElementById('modalDetailsStart');
+                    if (detailsEl) detailsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
 
             body.querySelectorAll('.barcode-card[data-bc-code]').forEach(card => {
                 card.addEventListener('click', () => {
                     const code = card.getAttribute('data-bc-code');
                     const label = card.getAttribute('data-bc-label');
-                    if (code) openVisBarcodeZoom(code, label);
+                    if (code) openVisBarcodeZoom(code, label, card);
                 });
             });
 
             modal.classList.add('open');
+            if (isTvModeActive()) {
+                const previewEl = document.getElementById('modalPreviewStage');
+                if (previewEl) setTvFocus(previewEl, false);
+            }
         }
 
         function applyLoadedItems(parsedAll, names, sourceLabel) {
@@ -3961,7 +4892,8 @@ ${(() => {
             for (const file of files) {
                 const buffer = await file.arrayBuffer();
                 const text = decodeCsvBuffer(buffer);
-                const items = parseCsvContent(text, file.name);
+                const sourcePath = [file.webkitRelativePath, file.name].filter(Boolean).join('/');
+                const items = parseCsvContent(text, file.name, sourcePath);
                 parsedAll.push(...items);
                 names.push(file.name);
             }
@@ -4074,13 +5006,11 @@ ${(() => {
 
 
 
-        document.getElementById('closeModalBtn').addEventListener('click', () => {
-            document.getElementById('detailModal').classList.remove('open');
-        });
+        document.getElementById('closeModalBtn').addEventListener('click', closeItemModal);
 
         document.getElementById('detailModal').addEventListener('click', e => {
             if (e.target.id === 'detailModal') {
-                document.getElementById('detailModal').classList.remove('open');
+                closeItemModal();
             }
         });
 
@@ -4148,9 +5078,12 @@ ${(() => {
 
                 const parsedAll = [];
                 const names = [];
+                const payloadSourceHint = [payload.folderPath, payload.path, payload.dir, payload.title].filter(Boolean).join('/');
                 for (const f of payload.files) {
                     if (!f || !f.content) continue;
-                    const items = parseCsvContent(f.content, f.name || 'file.csv');
+                    const fileSourcePath = [payloadSourceHint, f.path, f.folder, f.dir, f.name].filter(Boolean).join('/');
+                    const forceLam = (f.isLaminated === true) || (payload.isLaminated === true);
+                    const items = parseCsvContent(f.content, f.name || 'file.csv', forceLam ? ('ламинация/' + fileSourcePath) : fileSourcePath);
                     parsedAll.push(...items);
                     names.push(f.name || 'file.csv');
                 }
@@ -4190,10 +5123,379 @@ ${(() => {
             }
         });
 
+
+        // ==================== ПОДДЕРЖКА ПУЛЬТА ANDROID TV (D-PAD) ====================
+        const TV_UA_REGEX = /Android.*TV|GoogleTV|BRAVIA|AFT[A-Z0-9]|MIBOX|SHIELD|SmartTV|CrKey|TV Safari|Web0S|Tizen/i;
+        let tvFocusEl = null;
+
+        function isTvModeActive() {
+            return document.body.classList.contains('tv-mode');
+        }
+
+        function enableTvMode() {
+            if (!document.body.classList.contains('tv-mode')) {
+                document.body.classList.add('tv-mode');
+            }
+        }
+
+        function setTvFocus(el, shouldScroll = true) {
+            if (!el || !document.contains(el)) return;
+            if (tvFocusEl && tvFocusEl !== el) {
+                tvFocusEl.classList.remove('tv-focused');
+            }
+            tvFocusEl = el;
+            el.classList.add('tv-focused');
+            try {
+                el.focus({ preventScroll: true });
+            } catch (e) {
+                try { el.focus(); } catch (err) {}
+            }
+            if (shouldScroll) {
+                try {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                } catch (e) {
+                    el.scrollIntoView(false);
+                }
+            }
+        }
+
+        function isElementFocusableVisible(el) {
+            if (!el || el.disabled) return false;
+            if (el.getAttribute('aria-hidden') === 'true') return false;
+            const style = window.getComputedStyle(el);
+            if (!style || style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                return false;
+            }
+            const rect = el.getBoundingClientRect();
+            return rect.width > 2 && rect.height > 2;
+        }
+
+        function getActiveTvFocusables() {
+            const bcModal = document.getElementById('barcodeZoomModal');
+            if (bcModal && bcModal.classList.contains('open')) {
+                return Array.from(bcModal.querySelectorAll('button, [tabindex="0"]')).filter(isElementFocusableVisible);
+            }
+            const detailModal = document.getElementById('detailModal');
+            if (detailModal && detailModal.classList.contains('open')) {
+                return Array.from(detailModal.querySelectorAll('#closeModalBtn, #modalPreviewStage, #modalScrollHintBtn, .barcode-card[tabindex="0"]'))
+                    .filter(isElementFocusableVisible);
+            }
+            const selector = [
+                '.topbar button',
+                '.server-panel.open input',
+                '.server-panel.open button',
+                '.server-panel.open .server-item[tabindex="0"]',
+                '.dropzone[tabindex="0"]',
+                '.toolbar.visible .seg-btn',
+                '.toolbar.visible input',
+                '.toolbar.visible select',
+                '.frames-grid .frame-card[tabindex="0"]'
+            ].join(', ');
+            return Array.from(document.querySelectorAll(selector)).filter(isElementFocusableVisible);
+        }
+
+        function findBestSpatialCandidate(currentEl, dir, candidates) {
+            if (!candidates || candidates.length === 0) return null;
+            if (!currentEl || !candidates.includes(currentEl)) {
+                return candidates[0];
+            }
+
+            const curRect = currentEl.getBoundingClientRect();
+            const cx = curRect.left + curRect.width / 2;
+            const cy = curRect.top + curRect.height / 2;
+
+            let best = null;
+            let bestScore = Infinity;
+
+            for (const cand of candidates) {
+                if (cand === currentEl) continue;
+                const r = cand.getBoundingClientRect();
+                const tx = r.left + r.width / 2;
+                const ty = r.top + r.height / 2;
+                const dx = tx - cx;
+                const dy = ty - cy;
+
+                let primary = 0;
+                let secondary = 0;
+                let overlapBonus = 0;
+
+                if (dir === 'right') {
+                    if (dx <= 6) continue;
+                    primary = Math.max(0, r.left - curRect.right);
+                    if (primary === 0) primary = dx * 0.6;
+                    secondary = Math.abs(dy);
+                    const overlapY = Math.min(curRect.bottom, r.bottom) - Math.max(curRect.top, r.top);
+                    if (overlapY > 4) overlapBonus = -Math.min(180, overlapY * 1.4);
+                } else if (dir === 'left') {
+                    if (dx >= -6) continue;
+                    primary = Math.max(0, curRect.left - r.right);
+                    if (primary === 0) primary = (-dx) * 0.6;
+                    secondary = Math.abs(dy);
+                    const overlapY = Math.min(curRect.bottom, r.bottom) - Math.max(curRect.top, r.top);
+                    if (overlapY > 4) overlapBonus = -Math.min(180, overlapY * 1.4);
+                } else if (dir === 'down') {
+                    if (dy <= 6) continue;
+                    primary = Math.max(0, r.top - curRect.bottom);
+                    if (primary === 0) primary = dy * 0.6;
+                    secondary = Math.abs(dx);
+                    const overlapX = Math.min(curRect.right, r.right) - Math.max(curRect.left, r.left);
+                    if (overlapX > 4) overlapBonus = -Math.min(180, overlapX * 1.4);
+                } else if (dir === 'up') {
+                    if (dy >= -6) continue;
+                    primary = Math.max(0, curRect.top - r.bottom);
+                    if (primary === 0) primary = (-dy) * 0.6;
+                    secondary = Math.abs(dx);
+                    const overlapX = Math.min(curRect.right, r.right) - Math.max(curRect.left, r.left);
+                    if (overlapX > 4) overlapBonus = -Math.min(180, overlapX * 1.4);
+                }
+
+                const score = primary + secondary * 2.4 + overlapBonus;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = cand;
+                }
+            }
+            return best;
+        }
+
+        function handleTvModalDpad(dir) {
+            const modalBody = document.getElementById('modalBody');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const previewStage = document.getElementById('modalPreviewStage');
+            const barcodeCards = modalBody ? Array.from(modalBody.querySelectorAll('.barcode-card[tabindex="0"]')).filter(isElementFocusableVisible) : [];
+            const cur = (document.activeElement && document.getElementById('detailModal').contains(document.activeElement))
+                ? document.activeElement
+                : tvFocusEl;
+
+            if (!modalBody) return;
+
+            const isBarcodeFocused = !!(cur && cur.classList && cur.classList.contains('barcode-card'));
+            const maxScroll = Math.max(0, modalBody.scrollHeight - modalBody.clientHeight);
+            const scrollStep = Math.max(180, Math.round(modalBody.clientHeight * 0.42));
+
+            if (dir === 'down') {
+                if (cur === closeBtn) {
+                    if (previewStage) {
+                        setTvFocus(previewStage, false);
+                        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    return;
+                }
+                if (isBarcodeFocused) {
+                    const nextBc = findBestSpatialCandidate(cur, 'down', barcodeCards);
+                    if (nextBc) {
+                        setTvFocus(nextBc, true);
+                    } else if (modalBody.scrollTop < maxScroll - 4) {
+                        modalBody.scrollBy({ top: scrollStep, behavior: 'smooth' });
+                    }
+                    return;
+                }
+                // Если прокрутка ещё не внизу — плавно пролистываем к информации ниже картинки
+                if (modalBody.scrollTop < maxScroll - 12) {
+                    const nextTop = Math.min(maxScroll, modalBody.scrollTop + scrollStep);
+                    modalBody.scrollTo({ top: nextTop, behavior: 'smooth' });
+                    // Если после прокрутки достигли блока штрих-кодов внизу — переводим фокус на первый штрих-код
+                    if (barcodeCards.length > 0 && nextTop >= maxScroll - 40) {
+                        setTimeout(() => setTvFocus(barcodeCards[0], true), 180);
+                    }
+                    return;
+                }
+                if (barcodeCards.length > 0) {
+                    setTvFocus(barcodeCards[0], true);
+                }
+                return;
+            }
+
+            if (dir === 'up') {
+                if (isBarcodeFocused) {
+                    const prevBc = findBestSpatialCandidate(cur, 'up', barcodeCards);
+                    if (prevBc) {
+                        setTvFocus(prevBc, true);
+                    } else {
+                        if (previewStage) setTvFocus(previewStage, false);
+                        modalBody.scrollBy({ top: -scrollStep, behavior: 'smooth' });
+                    }
+                    return;
+                }
+                if (modalBody.scrollTop > 12) {
+                    modalBody.scrollTo({ top: Math.max(0, modalBody.scrollTop - scrollStep), behavior: 'smooth' });
+                    return;
+                }
+                if (cur !== closeBtn && closeBtn) {
+                    setTvFocus(closeBtn, false);
+                }
+                return;
+            }
+
+            if (dir === 'left' || dir === 'right') {
+                if (isBarcodeFocused && barcodeCards.length > 1) {
+                    const nextBc = findBestSpatialCandidate(cur, dir, barcodeCards);
+                    if (nextBc) setTvFocus(nextBc, true);
+                } else if (dir === 'right' && cur !== closeBtn && closeBtn && modalBody.scrollTop <= 12) {
+                    setTvFocus(closeBtn, false);
+                } else if (dir === 'left' && cur === closeBtn && previewStage) {
+                    setTvFocus(previewStage, false);
+                }
+            }
+        }
+
+        function handleTvBackKey() {
+            const bcModal = document.getElementById('barcodeZoomModal');
+            if (bcModal && bcModal.classList.contains('open')) {
+                closeVisBarcodeZoom();
+                return true;
+            }
+            const detailModal = document.getElementById('detailModal');
+            if (detailModal && detailModal.classList.contains('open')) {
+                closeItemModal();
+                return true;
+            }
+            const srvPanel = document.getElementById('serverPanel');
+            if (srvPanel && srvPanel.classList.contains('open')) {
+                srvPanel.classList.remove('open');
+                const toggleBtn = document.getElementById('toggleServerBtn');
+                if (toggleBtn && isElementFocusableVisible(toggleBtn)) setTvFocus(toggleBtn, false);
+                return true;
+            }
+            if (isEmbeddedLaunch) {
+                closeEmbeddedVisualizer();
+                return true;
+            }
+            return false;
+        }
+
+        function initAndroidTvRemoteSupport() {
+            if (TV_UA_REGEX.test(navigator.userAgent || '')) {
+                enableTvMode();
+            }
+
+            document.addEventListener('pointerdown', () => {
+                if (tvFocusEl) {
+                    tvFocusEl.classList.remove('tv-focused');
+                }
+            }, { passive: true });
+
+            document.addEventListener('keydown', e => {
+                const key = e.key || '';
+                const kc = e.keyCode || e.which || 0;
+
+                // Определение направлений пульта (стандартные + Android TV D-Pad)
+                let dir = null;
+                if (key === 'ArrowUp' || key === 'DPadUp' || kc === 19 || kc === 38) dir = 'up';
+                else if (key === 'ArrowDown' || key === 'DPadDown' || kc === 20 || kc === 40) dir = 'down';
+                else if (key === 'ArrowLeft' || key === 'DPadLeft' || kc === 21 || kc === 37) dir = 'left';
+                else if (key === 'ArrowRight' || key === 'DPadRight' || kc === 22 || kc === 39) dir = 'right';
+
+                const isOk = (key === 'Enter' || key === 'DPadCenter' || key === 'Select' || kc === 23 || kc === 66 || kc === 13);
+                const isBack = (key === 'Escape' || key === 'GoBack' || key === 'BrowserBack' || kc === 4 || kc === 27 || kc === 461 || kc === 10009);
+                const active = document.activeElement;
+                const isTextInput = !!(active && active.tagName === 'INPUT' && (active.type === 'text' || active.type === 'search' || !active.type));
+                const isBackspaceBack = (key === 'Backspace' || kc === 8) && !isTextInput;
+
+                if (isBack || isBackspaceBack) {
+                    if (handleTvBackKey()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    return;
+                }
+
+                if (dir) {
+                    enableTvMode();
+
+                    // Внутри текстового поля даём двигать курсор влево/вправо, если текст не в крайнем положении
+                    if (isTextInput && (dir === 'left' || dir === 'right')) {
+                        const valLen = (active.value || '').length;
+                        const selStart = active.selectionStart ?? 0;
+                        const selEnd = active.selectionEnd ?? 0;
+                        if (dir === 'left' && selStart > 0) return;
+                        if (dir === 'right' && selEnd < valLen) return;
+                    }
+
+                    e.preventDefault();
+
+                    const bcModal = document.getElementById('barcodeZoomModal');
+                    if (bcModal && bcModal.classList.contains('open')) {
+                        const closeBtn = document.getElementById('closeVisBcZoomBtn');
+                        if (closeBtn) setTvFocus(closeBtn, false);
+                        return;
+                    }
+
+                    const detailModal = document.getElementById('detailModal');
+                    if (detailModal && detailModal.classList.contains('open')) {
+                        handleTvModalDpad(dir);
+                        return;
+                    }
+
+                    const candidates = getActiveTvFocusables();
+                    if (candidates.length === 0) return;
+
+                    const cur = (active && candidates.includes(active))
+                        ? active
+                        : (tvFocusEl && candidates.includes(tvFocusEl) ? tvFocusEl : null);
+
+                    if (!cur) {
+                        const firstCard = document.querySelector('.frames-grid .frame-card[tabindex="0"]');
+                        setTvFocus((firstCard && candidates.includes(firstCard)) ? firstCard : candidates[0], true);
+                        return;
+                    }
+
+                    const next = findBestSpatialCandidate(cur, dir, candidates);
+                    if (next) {
+                        setTvFocus(next, true);
+                    }
+                    return;
+                }
+
+                if (isOk) {
+                    const bcModal = document.getElementById('barcodeZoomModal');
+                    if (bcModal && bcModal.classList.contains('open')) {
+                        e.preventDefault();
+                        closeVisBarcodeZoom();
+                        return;
+                    }
+
+                    if (!active || active === document.body) {
+                        if (isTvModeActive()) {
+                            const candidates = getActiveTvFocusables();
+                            if (candidates.length > 0) {
+                                e.preventDefault();
+                                setTvFocus(candidates[0], true);
+                            }
+                        }
+                        return;
+                    }
+
+                    // На кастомных элементах с tabindex="0" (карточки, строки сервера, штрих-коды, дропзона) Enter вызывает click()
+                    if (active.classList.contains('frame-card') ||
+                        active.classList.contains('server-item') ||
+                        active.classList.contains('barcode-card') ||
+                        active.id === 'dropzone') {
+                        e.preventDefault();
+                        active.click();
+                        return;
+                    }
+
+                    if (active.id === 'modalPreviewStage') {
+                        e.preventDefault();
+                        const detailsEl = document.getElementById('modalDetailsStart');
+                        if (detailsEl) detailsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        return;
+                    }
+
+                    if (isTvModeActive() && active.tagName === 'SELECT') {
+                        // На некоторых пультах Android TV нативный select удобнее переключать циклически по OK, если системный диалог не открылся
+                        return;
+                    }
+                }
+            }, true);
+        }
+
         // Автоинициализация: подгружаем тему основного окна -> AndroidVisualizer -> iframe embedded -> URL ?file= -> обычный режим
         window.addEventListener('DOMContentLoaded', async () => {
             syncThemeFromMainApp();
             restoreUiPrefs();
+            initAndroidTvRemoteSupport();
             document.getElementById('serverUrlInput').value = getDefaultServerUrl();
 
             if (window.AndroidVisualizer && typeof window.AndroidVisualizer.getPayload === 'function') {
@@ -4227,7 +5529,8 @@ ${(() => {
                     const data = await resp.json();
                     if (data && data.content) {
                         window.loadExternalCsvData({
-                            files: [{ name: data.file_name || fileParam, content: data.content }],
+                            files: [{ name: data.file_name || fileParam, path: fileParam, content: data.content }],
+                            folderPath: fileParam,
                             initialQuery: orderParam,
                             title: data.file_name || 'Чертежи из раскроя',
                             embedded: true
