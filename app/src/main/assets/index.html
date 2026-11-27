@@ -2411,7 +2411,7 @@
                     <label for="feedbackMessageInput">Сообщение</label>
                     <textarea id="feedbackMessageInput" class="feedback-textarea" placeholder="Опишите ваше предложение, замечание или найденную ошибку..." maxlength="2000"></textarea>
                 </div>
-                <div class="feedback-status" id="feedbackStatusText">Сообщение будет отправлено разработчику через Яндекс Диск</div>
+                <div class="feedback-status" id="feedbackStatusText">Сообщение будет отправлено разработчику</div>
                 <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.85rem;">
                     <button class="btn btn-sm" id="cancelFeedbackBtn" type="button" style="background: var(--bg-muted); color: var(--text-primary); border: 1px solid var(--border-input);">Отмена</button>
                     <button class="btn btn-success btn-sm" id="sendFeedbackBtn" type="button">Отправить</button>
@@ -3536,7 +3536,7 @@
 
         async function yandexDownloadText(remotePath) {
             const token = getEffectiveYandexToken();
-            if (!token) throw new Error('Не указан OAuth-токен Яндекс Диска');
+            if (!token) throw new Error('Не настроено подключение к удалённому серверу');
 
             if (window.AndroidApp && typeof window.AndroidApp.yandexDownloadAsync === 'function') {
                 return new Promise((resolve, reject) => {
@@ -3544,7 +3544,7 @@
                     const timer = setTimeout(() => {
                         if (androidAsyncCallbacks.has(cbId)) {
                             androidAsyncCallbacks.delete(cbId);
-                            reject(new Error('Таймаут загрузки с Яндекс Диска'));
+                            reject(new Error('Таймаут загрузки данных'));
                         }
                     }, 35000);
                     androidAsyncCallbacks.set(cbId, {
@@ -3562,7 +3562,7 @@
                 { headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' } },
                 15000
             );
-            if (!metaResp.ok) throw new Error('Яндекс Диск HTTP ' + metaResp.status);
+            if (!metaResp.ok) throw new Error('Ошибка сервера HTTP ' + metaResp.status);
             const meta = await metaResp.json();
             if (!meta.href) throw new Error('Не получена ссылка на скачивание');
 
@@ -3596,7 +3596,7 @@
 
         async function yandexUploadText(remotePath, content) {
             const token = getEffectiveYandexToken();
-            if (!token) throw new Error('Не указан OAuth-токен Яндекс Диска');
+            if (!token) throw new Error('Не настроено подключение к удалённому серверу');
 
             if (window.AndroidApp && typeof window.AndroidApp.yandexUploadAsync === 'function') {
                 return new Promise((resolve, reject) => {
@@ -3604,7 +3604,7 @@
                     const timer = setTimeout(() => {
                         if (androidAsyncCallbacks.has(cbId)) {
                             androidAsyncCallbacks.delete(cbId);
-                            reject(new Error('Таймаут выгрузки на Яндекс Диск'));
+                            reject(new Error('Таймаут отправки данных'));
                         }
                     }, 25000);
                     androidAsyncCallbacks.set(cbId, {
@@ -3621,7 +3621,7 @@
                 { headers: { 'Authorization': 'OAuth ' + token, 'Accept': 'application/json' } },
                 15000
             );
-            if (!metaResp.ok) throw new Error('Яндекс Диск HTTP ' + metaResp.status);
+            if (!metaResp.ok) throw new Error('Ошибка сервера HTTP ' + metaResp.status);
             const meta = await metaResp.json();
             if (!meta.href) throw new Error('Не получена ссылка для загрузки');
             const putResp = await fetchWithTimeout(meta.href, {
@@ -3629,7 +3629,7 @@
                 headers: { 'Content-Type': 'application/json; charset=utf-8' },
                 body: content
             }, 25000);
-            if (!putResp.ok) throw new Error('Ошибка отправки на Яндекс Диск HTTP ' + putResp.status);
+            if (!putResp.ok) throw new Error('Ошибка отправки данных HTTP ' + putResp.status);
             return true;
         }
 
@@ -3792,7 +3792,7 @@
                     if (savedAuthor) authorInp.value = savedAuthor;
                 } catch (e) {}
             }
-            setFeedbackStatus('Сообщение будет отправлено разработчику через Яндекс Диск', '');
+            setFeedbackStatus('Сообщение будет отправлено разработчику', '');
             const msgInp = document.getElementById('feedbackMessageInput');
             if (msgInp) setTimeout(() => msgInp.focus(), 60);
         }
@@ -3815,7 +3815,7 @@
                 return;
             }
             if (!getEffectiveYandexToken()) {
-                setFeedbackStatus('Отправка недоступна: не задан токен Яндекс Диска', 'error');
+                setFeedbackStatus('Отправка временно недоступна', 'error');
                 return;
             }
 
@@ -3827,7 +3827,7 @@
                 sendBtn.disabled = true;
                 sendBtn.textContent = 'Отправка...';
             }
-            setFeedbackStatus('Отправка сообщения на Яндекс Диск...', '');
+            setFeedbackStatus('Отправка сообщения...', '');
 
             const now = new Date();
             const pad2 = (n) => String(n).padStart(2, '0');
@@ -3856,7 +3856,7 @@
                     hideFeedbackModal();
                 }, 1300);
             } catch (e) {
-                const errText = (e && e.message) ? e.message : 'нет связи с Яндекс Диском';
+                const errText = (e && e.message) ? e.message : 'нет связи с сервером';
                 setFeedbackStatus('Не удалось отправить: ' + errText, 'error');
             } finally {
                 isSendingFeedback = false;
@@ -4158,7 +4158,7 @@
             if (!isEmployeeAccessAllowed()) return false;
             try {
                 setHeaderBrandLoading(true);
-                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Загрузка данных с Яндекс Диска...', true);
+                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Загрузка данных...', true);
                 const rawText = await yandexDownloadText('app:/cache.json');
                 if (!rawText) throw new Error('Пустой ответ cache.json');
                 const cacheObj = JSON.parse(rawText);
@@ -4175,7 +4175,7 @@
                 }
                 const remoteLines = Array.isArray(cacheObj.lines) ? cacheObj.lines : [];
                 if (remoteLines.length === 0) {
-                    throw new Error('В cache.json на Яндекс Диске нет данных линий');
+                    throw new Error('На сервере нет данных линий');
                 }
 
                 // Автоматически дозаполняем пустые пути для линий по умолчанию из cache.json
@@ -4264,17 +4264,17 @@
                         prepareChartDataFromBlocks(currentBlocks);
                     }
                     const upd = cacheObj.updated_at || formatCacheTime(validStamp);
-                    updateStatus('Данные загружены с Яндекс Диска (обновлено ' + upd + ')');
+                    updateStatus('Данные обновлены (' + upd + ')');
                     return true;
                 }
                 if (showErrors) {
-                    updateStatus('Яндекс Диск: не найдено подходящих линий в cache.json');
+                    updateStatus('Не найдено подходящих линий');
                 }
                 return false;
             } catch (e) {
                 console.warn('Ошибка загрузки с Яндекс Диска:', e);
                 if (showErrors) {
-                    updateStatus('Ошибка Яндекс Диска: ' + e.message);
+                    updateStatus('Ошибка загрузки данных: ' + e.message);
                 }
                 return false;
             } finally {
@@ -5441,14 +5441,14 @@
 
             if (!wifiOn && hasYandex) {
                 // Wi-Fi отключён — не ждём локальный сервер, сразу грузим с Яндекс Диска
-                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Нет Wi-Fi — загрузка с Яндекс Диска...', true);
+                if (!currentBlocks || currentBlocks.length === 0) updateStatus('Загрузка данных...', true);
                 const ydOk = await loadFromYandexDisk(false);
                 if (ydOk) {
                     anySuccess = true;
                 } else if (blocksByFolder[activeIndex]) {
-                    updateStatus('Нет связи с Яндекс Диском — показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
+                    updateStatus('Нет связи — показаны сохранённые данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
                 } else {
-                    updateStatus('Нет связи с Яндекс Диском', true);
+                    updateStatus('Нет связи с сервером', true);
                 }
             } else {
                 if (forceFullRecalc || !currentBlocks || currentBlocks.length === 0) updateStatus(forceFullRecalc ? 'Полный пересчёт всех дат с сервера...' : 'Проверка локального сервера...', true);
@@ -5474,7 +5474,7 @@
                     } else if (blocksByFolder[activeIndex]) {
                         updateStatus('Нет связи с сервером — показаны последние данные (от ' + formatCacheTime(lastScanTime[activeIndex]) + ')');
                     } else {
-                        updateStatus('Нет связи с сервером и Яндекс Диском', true);
+                        updateStatus('Нет связи с сервером', true);
                     }
                 }
             }
@@ -6236,10 +6236,10 @@
             return Array.from(orders).sort();
         }
 
-        async function loadYandexPackForBlock(blockData) {
+        async function loadYandexPackForBlock(blockData, forceReload = false) {
             if (!blockData || !blockData.pack_id) return null;
             const packId = blockData.pack_id;
-            if (yandexPackCache.has(packId)) return yandexPackCache.get(packId);
+            if (!forceReload && yandexPackCache.has(packId)) return yandexPackCache.get(packId);
             if (!yandexDiskEnabled || !getEffectiveYandexToken()) return null;
 
             const raw = await yandexDownloadText('app:/packs/' + packId + '.json.gz');
@@ -6249,10 +6249,82 @@
             return parsed;
         }
 
-        async function fetchCsvContentForFile(blockData, fileObj) {
+        function findFreshBlockAndFile(oldBlock, oldFile) {
+            const targetFolder = String((oldBlock && oldBlock.folder_name) || '').trim().toLowerCase();
+            const targetShift = String((oldBlock && oldBlock.day_night) || '').trim().toLowerCase();
+            const targetLine = String((oldBlock && oldBlock.lineName) || '').trim().toLowerCase();
+            const targetKey = String((oldFile && (oldFile.file_key || oldFile.filename)) || '').replace(/\\/g, '/').toLowerCase();
+            const targetBase = baseName(targetKey).toLowerCase();
+
+            const indices = [];
+            if (activeIndex >= 0 && activeIndex < FOLDER_COUNT) indices.push(activeIndex);
+            for (let i = 0; i < FOLDER_COUNT; i++) {
+                if (!indices.includes(i)) indices.push(i);
+            }
+
+            let bestBlock = null;
+            let bestScore = -1;
+            for (const idx of indices) {
+                const list = blocksByFolder[idx];
+                if (!Array.isArray(list)) continue;
+                for (const b of list) {
+                    if (!b) continue;
+                    const bf = String(b.folder_name || '').trim().toLowerCase();
+                    if (bf !== targetFolder) continue;
+                    let sc = 10;
+                    if (targetShift && String(b.day_night || '').trim().toLowerCase() === targetShift) sc += 5;
+                    if (targetLine && String(b.lineName || '').trim().toLowerCase() === targetLine) sc += 8;
+                    if (b.pack_id) sc += 4;
+                    if (sc > bestScore) {
+                        bestScore = sc;
+                        bestBlock = b;
+                    }
+                }
+            }
+
+            if (!bestBlock) return { block: null, file: null };
+
+            let bestFile = null;
+            const pfiles = Array.isArray(bestBlock.processed_files) ? bestBlock.processed_files : [];
+            for (const f of pfiles) {
+                const fk = String(f.file_key || f.filename || '').replace(/\\/g, '/').toLowerCase();
+                if (fk === targetKey || (targetBase && baseName(fk).toLowerCase() === targetBase)) {
+                    bestFile = f;
+                    break;
+                }
+            }
+            return { block: bestBlock, file: bestFile };
+        }
+
+        async function autoRefreshBaseForMissingDrawing(blockData, statusCallback) {
+            if (typeof statusCallback === 'function') {
+                statusCallback('База устарела — обновление данных...');
+            }
+            if (blockData && blockData.pack_id) {
+                yandexPackCache.delete(blockData.pack_id);
+            }
+            csvContentCache.clear();
+
+            let refreshed = false;
+            if (isLocalNetworkAvailable() && await quickProbeLocalServer(1800)) {
+                refreshed = await refreshAllFolders(false);
+            }
+            if (!refreshed && yandexDiskEnabled && getEffectiveYandexToken()) {
+                refreshed = await loadFromYandexDisk(false);
+            } else if (refreshed && yandexDiskEnabled && getEffectiveYandexToken()) {
+                // Если локальный сервер отдал блок без pack_id, а облако доступно — подтянем свежий cache.json при необходимости
+                const probe = findFreshBlockAndFile(blockData, null);
+                if (!probe.block || !probe.block.pack_id) {
+                    await loadFromYandexDisk(false);
+                }
+            }
+            return refreshed;
+        }
+
+        async function fetchCsvContentForFile(blockData, fileObj, allowAutoRefresh = true, statusCallback = null, forcePackReload = false) {
             const cacheKey = (blockData && blockData.pack_id ? blockData.pack_id + '|' : '') +
                              (fileObj.file_key || fileObj.file_path || fileObj.filename);
-            if (csvContentCache.has(cacheKey)) {
+            if (!forcePackReload && csvContentCache.has(cacheKey)) {
                 return csvContentCache.get(cacheKey);
             }
 
@@ -6275,15 +6347,15 @@
                         }
                     }
                 } catch (e) {
-                    // перейдём к запасному чтению с Яндекс Диска
+                    // перейдём к резервному чтению из пакета смены
                 }
             }
 
-            let yandexErr = '';
-            // 2. Пробуем взять из сжатого пакета смены на Яндекс Диске
+            let packErr = '';
+            // 2. Пробуем взять из сжатого пакета смены
             if (blockData && blockData.pack_id) {
                 try {
-                    const pack = await loadYandexPackForBlock(blockData);
+                    const pack = await loadYandexPackForBlock(blockData, forcePackReload);
                     if (pack && pack.files) {
                         const fKey = fileObj.file_key || String(fileObj.filename || '').replace(/\\/g, '/');
                         let text = pack.files[fKey] || pack.files[fileObj.filename];
@@ -6303,17 +6375,17 @@
                             }
                             return text;
                         }
-                        yandexErr = 'Файл не найден внутри пакета на Яндекс Диске';
+                        packErr = 'Чертёж не найден в текущей базе';
                     }
                 } catch (e) {
-                    yandexErr = e.message || String(e);
-                    console.warn('Не удалось прочитать пакет с Яндекс Диска:', e);
+                    packErr = e.message || String(e);
+                    console.warn('Не удалось прочитать пакет смены:', e);
                 }
             } else {
-                yandexErr = 'В cache.json нет пакетов чертежей (обновите 2new_yandex.py на сервере и нажмите «Выгрузить сейчас»)';
+                packErr = 'Чертежи для этой смены ещё не обновлены';
             }
 
-            // 3. Последняя попытка — локальный сервер (если lastDataSource был 'yandex', но сервер снова в сети)
+            // 3. Последняя попытка — локальный сервер (если сервер снова в сети)
             if (lastDataSource === 'yandex' && fileObj.file_path) {
                 try {
                     const resp = await fetchWithTimeout(
@@ -6334,7 +6406,30 @@
                 } catch (e) {}
             }
 
-            throw new Error(yandexErr || 'Не удалось загрузить файл раскроя');
+            // 4. Автообновление базы данных, если чертёж не найден (например, на сервере уже прошло обновление)
+            if (allowAutoRefresh) {
+                try {
+                    await autoRefreshBaseForMissingDrawing(blockData, statusCallback);
+                    const fresh = findFreshBlockAndFile(blockData, fileObj);
+                    const nextBlock = fresh.block || blockData;
+                    const nextFile = fresh.file || fileObj;
+
+                    // Обновляем открытое модальное окно, если оно показывало эту смену
+                    if (fresh.block && currentModalBlock &&
+                        String(currentModalBlock.folder_name || '').toLowerCase() === String(fresh.block.folder_name || '').toLowerCase()) {
+                        currentModalBlock = fresh.block;
+                    }
+
+                    if (typeof statusCallback === 'function') {
+                        statusCallback('Повторная загрузка чертежа...');
+                    }
+                    return await fetchCsvContentForFile(nextBlock, nextFile, false, statusCallback, true);
+                } catch (retryErr) {
+                    packErr = (retryErr && retryErr.message) ? retryErr.message : packErr;
+                }
+            }
+
+            throw new Error(packErr || 'Не удалось загрузить чертёж');
         }
 
         function getMatchingOrdersForFile(fileObj, query) {
@@ -6488,7 +6583,9 @@
                 let lastErrMsg = '';
                 for (const f of fileObjs) {
                     try {
-                        const content = await fetchCsvContentForFile(blockData, f);
+                        const content = await fetchCsvContentForFile(blockData, f, true, (msg) => {
+                            if (statusEl) statusEl.textContent = msg;
+                        });
                         if (content) {
                             filesPayload.push({ name: f.filename || 'file.csv', content: content });
                         }
@@ -6687,7 +6784,9 @@
                 let lastErrMsg = '';
                 for (const m of lastGlobalSearchMatches) {
                     try {
-                        const content = await fetchCsvContentForFile(m.block, m.file);
+                        const content = await fetchCsvContentForFile(m.block, m.file, true, (msg) => {
+                            if (statusEl) statusEl.textContent = msg;
+                        });
                         if (content) {
                             const labelName = (m.block.folder_name ? (m.block.folder_name + ' / ') : '') + (m.file.filename || 'file.csv');
                             filesPayload.push({ name: labelName, content: content });
@@ -7407,7 +7506,7 @@
                     if (!silent) {
                         showEmployeeAuthOverlay(
                             employeeAuthState.status === 'pending' ? 'pending' : 'form',
-                            'Нет связи с сервером и Яндекс Диском. Проверьте интернет и нажмите «Проверить статус».'
+                            'Нет связи с сервером. Проверьте интернет и нажмите «Проверить статус».'
                         );
                     }
                     return false;
@@ -7494,12 +7593,12 @@
                     saveEmployeeAuthState();
                     showEmployeeAuthOverlay(
                         'checking',
-                        'Заявка отправлена на сервер через Яндекс Диск. Проверка займёт 10–20 секунд...'
+                        'Заявка отправлена на сервер. Проверка займёт 10–20 секунд...'
                     );
                     return;
                 }
 
-                showEmployeeAuthOverlay('form', 'Нет связи с сервером и Яндекс Диском. Проверьте подключение к сети.');
+                showEmployeeAuthOverlay('form', 'Нет связи с сервером. Проверьте подключение к сети.');
             } catch (e) {
                 const msg = (e && e.message) ? e.message : 'ошибка сети';
                 showEmployeeAuthOverlay('form', 'Не удалось отправить запрос: ' + msg);
@@ -7653,7 +7752,7 @@
 
                 if (currentDirectory && !hasMissingDefaultFolders) {
                     if (!blocksByFolder[activeIndex]) {
-                        updateStatus(isLocalNetworkAvailable() ? 'Загрузка данных...' : 'Загрузка данных с Яндекс Диска...');
+                        updateStatus('Загрузка данных...');
                     }
                     setTimeout(async () => {
                         await refreshAllFolders();
@@ -7662,7 +7761,7 @@
                     }, 120);
                 } else {
                     if (!blocksByFolder[activeIndex]) {
-                        updateStatus(isLocalNetworkAvailable() ? 'Поиск папок линий...' : 'Загрузка с Яндекс Диска...');
+                        updateStatus(isLocalNetworkAvailable() ? 'Поиск папок линий...' : 'Загрузка данных...');
                     }
                     setTimeout(async () => {
                         if (isLocalNetworkAvailable()) {
@@ -7921,7 +8020,7 @@
                     this.textContent = 'Отправка...';
                     try {
                         const ok = await registerUserPresenceOnYandex(true);
-                        showSwipeToast(ok ? 'Метка ID отправлена на Яндекс Диск' : 'Не удалось отправить метку ID', 2000);
+                        showSwipeToast(ok ? 'Метка ID отправлена' : 'Не удалось отправить метку ID', 2000);
                     } finally {
                         this.disabled = false;
                         this.textContent = prev;
