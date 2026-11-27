@@ -69,6 +69,7 @@ public class NewDayWorker extends Worker {
     public static final String KEY_LAST_ALERT_MS = "last_new_day_alert_ms";
     public static final String KEY_YANDEX_TOKEN = "yandex_oauth_token";
     public static final String KEY_YANDEX_ENABLED = "yandex_disk_enabled";
+    public static final String KEY_CLIENT_ID = "client_uid_v1";
     public static final String EXTRA_OPEN_LINE_IDX = "extra_open_line_idx";
 
     public static final String DEFAULT_YANDEX_TOKEN =
@@ -139,6 +140,15 @@ public class NewDayWorker extends Worker {
         }
 
         if (serverUrl == null && yandexCache == null) {
+            return Result.success();
+        }
+
+        String yandexToken = prefs.getString(KEY_YANDEX_TOKEN, DEFAULT_YANDEX_TOKEN);
+        if (yandexToken == null || yandexToken.trim().isEmpty()) {
+            yandexToken = DEFAULT_YANDEX_TOKEN;
+        }
+        if (!isDeviceAccessApproved(prefs, serverUrl, yandexToken.trim())) {
+            clearPendingNotifications(ctx);
             return Result.success();
         }
 
@@ -220,6 +230,51 @@ public class NewDayWorker extends Worker {
     }
 
     // ==================== ЯНДЕКС ДИСК: ЗАГРУЗКА И ВЫГРУЗКА ====================
+
+    private static boolean isDeviceAccessApproved(SharedPreferences prefs, String serverUrl, String yandexToken) {
+        String clientId = prefs.getString(KEY_CLIENT_ID, "");
+        if (clientId == null || clientId.trim().isEmpty()) {
+            return false;
+        }
+        String cid = clientId.trim();
+
+        // 1. Сначала проверяем на локальном сервере (если доступен)
+        if (serverUrl != null && !serverUrl.trim().isEmpty()) {
+            try {
+                String encodedCid = URLEncoder.encode(cid, "UTF-8");
+                String resp = httpGetString(serverUrl + "api/auth/status?client_id=" + encodedCid, null, 3500, 5000);
+                if (resp != null && !resp.trim().isEmpty()) {
+                    JSONObject obj = new JSONObject(resp);
+                    String status = obj.optString("status", "");
+                    if (!status.isEmpty()) {
+                        return "approved".equalsIgnoreCase(status);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // 2. Иначе проверяем через app:/access.json на Яндекс Диске
+        if (prefs.getBoolean(KEY_YANDEX_ENABLED, true) && yandexToken != null && !yandexToken.isEmpty()) {
+            try {
+                String raw = downloadYandexStringOrThrow("app:/access.json", yandexToken);
+                if (raw != null && !raw.trim().isEmpty()) {
+                    JSONObject obj = new JSONObject(raw);
+                    JSONObject devices = obj.optJSONObject("devices");
+                    if (devices != null) {
+                        JSONObject dev = devices.optJSONObject(cid);
+                        if (dev != null) {
+                            return "approved".equalsIgnoreCase(dev.optString("status", ""));
+                        }
+                        return false;
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        return false;
+    }
 
     public static String downloadYandexStringOrThrow(String remotePath, String token) throws IOException {
         if (token == null || token.trim().isEmpty()) {
