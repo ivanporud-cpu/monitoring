@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -222,6 +223,10 @@ public class MainActivity extends Activity {
                 boolean visDark = "dark".equals(prefs.getString(KEY_APP_THEME, "light"));
                 visualizerWebView.setBackgroundColor(Color.parseColor(visDark ? "#0d1117" : "#F2F2F2"));
                 configureWebViewSettings(visualizerWebView);
+                if (isAndroidTvDevice) {
+                    visualizerWebView.setFocusable(true);
+                    visualizerWebView.setFocusableInTouchMode(true);
+                }
                 visualizerWebView.addJavascriptInterface(new VisualizerBridge(), "AndroidVisualizer");
 
                 visualizerWebView.setWebViewClient(new WebViewClient() {
@@ -814,6 +819,16 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void showSoftKeyboard() {
+            showSoftKeyboardForView(webView);
+        }
+
+        @JavascriptInterface
+        public void hideSoftKeyboard() {
+            hideSoftKeyboardForView(webView);
+        }
+
+        @JavascriptInterface
         public String getServerUrl() {
             return displayUrl(prefs.getString(KEY_SERVER_URL, ""));
         }
@@ -1004,6 +1019,35 @@ public class MainActivity extends Activity {
         public String getClientId() {
             return prefs.getString(NewDayWorker.KEY_CLIENT_ID, "");
         }
+    }
+
+    private void showSoftKeyboardForView(final WebView target) {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || target == null) return;
+            target.setFocusable(true);
+            target.setFocusableInTouchMode(true);
+            target.requestFocus();
+            target.postDelayed(() -> {
+                if (isFinishing() || isDestroyed() || target == null) return;
+                target.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    if (!imm.showSoftInput(target, InputMethodManager.SHOW_IMPLICIT)) {
+                        imm.showSoftInput(target, InputMethodManager.SHOW_FORCED);
+                    }
+                }
+            }, 60);
+        });
+    }
+
+    private void hideSoftKeyboardForView(final WebView target) {
+        runOnUiThread(() -> {
+            if (target == null) return;
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null && target.getWindowToken() != null) {
+                imm.hideSoftInputFromWindow(target.getWindowToken(), 0);
+            }
+        });
     }
 
     private boolean detectAndroidTv() {
