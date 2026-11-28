@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 24 crisp sun rays -->
+    <group android:pivotX="54" android:pivotY="54" android:rotation="0">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="15">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="30">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="45">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="60">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="75">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="90">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="105">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="120">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="135">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="150">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="165">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="180">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="195">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="210">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="225">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="240">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="255">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="270">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="285">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="300">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="315">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="330">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+    <group android:pivotX="54" android:pivotY="54" android:rotation="345">
+        <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
+    </group>
+
+    <!-- Window inner white glass background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,37.14 A16.86,16.86 0 1,0 54,70.86 A16.86,16.86 0 1,0 54,37.14 Z" />
+
+    <!-- Window outer circular frame with smooth orange gradient -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeWidth="4.35"
+        android:pathData="M54,37.14 A16.86,16.86 0 1,0 54,70.86 A16.86,16.86 0 1,0 54,37.14 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="39"
+                android:startY="38"
+                android:endX="69"
+                android:endY="70"
+                android:type="linear">
+                <item android:color="#FEC035" android:offset="0.0" />
+                <item android:color="#FB963B" android:offset="0.45" />
+                <item android:color="#EA8225" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Window cross muntins -->
+    <path android:pathData="M51.89,37.34 L56.11,37.34 L56.11,70.66 L51.89,70.66 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="40"
+                android:startY="38"
+                android:endX="68"
+                android:endY="70"
+                android:type="linear">
+                <item android:color="#FEC035" android:offset="0.0" />
+                <item android:color="#FB963B" android:offset="0.45" />
+                <item android:color="#EA8225" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M37.34,51.89 L70.66,51.89 L70.66,56.11 L37.34,56.11 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="40"
+                android:startY="38"
+                android:endX="68"
+                android:endY="70"
+                android:type="linear">
+                <item android:color="#FEC035" android:offset="0.0" />
+                <item android:color="#FB963B" android:offset="0.45" />
+                <item android:color="#EA8225" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Glossy arc highlight -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D9FFF4C2"
+        android:strokeWidth="1.45"
+        android:strokeLineCap="round"
+        android:pathData="M40.74,47.88 A14.82,14.82 0 0,1 52.64,39.31" />
+
+    <!-- Green leaf badge with crisp white outline -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.65"
+        android:strokeLineJoin="round"
+        android:pathData="M57.06,43.12 C57.06,37.54 60.94,34.96 66.58,34.96 L72.5,34.96 C73.18,34.96 73.72,35.5 73.72,36.18 L73.72,43.46 C73.72,49.1 69.98,51.82 63.86,51.82 L57.06,51.82 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="57"
+                android:startY="35"
+                android:endX="74"
+                android:endY="52"
+                android:type="linear">
+                <item android:color="#B0DF65" android:offset="0.0" />
+                <item android:color="#98CB56" android:offset="0.55" />
+                <item android:color="#6FA551" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Leaf inner highlight -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#EBFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M67.26,37.82 L70.86,37.82 L70.86,41.42" />
+</vector>
