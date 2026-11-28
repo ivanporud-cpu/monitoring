@@ -21,12 +21,12 @@
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="true"
-        android:banner="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher"
         android:label="Производство"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:theme="@style/Theme.Monitoring.Splash"
         android:usesCleartextTraffic="true">
 
         <provider
