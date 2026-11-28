@@ -6,7 +6,6 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 24 crisp sun rays -->
     <group android:pivotX="54" android:pivotY="54" android:rotation="0">
         <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
     </group>
@@ -80,12 +79,10 @@
         <path android:fillColor="#F69841" android:pathData="M53.02,23.6 C53.02,23.25 53.3,23.0 53.65,23.0 L54.35,23.0 C54.7,23.0 54.98,23.25 54.98,23.6 L54.98,30.8 C54.98,31.15 54.7,31.4 54.35,31.4 L53.65,31.4 C53.3,31.4 53.02,31.15 53.02,30.8 Z" />
     </group>
 
-    <!-- Window inner white glass background -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M54,37.14 A16.86,16.86 0 1,0 54,70.86 A16.86,16.86 0 1,0 54,37.14 Z" />
 
-    <!-- Window outer circular frame with smooth orange gradient -->
     <path
         android:fillColor="#00000000"
         android:strokeWidth="4.35"
@@ -104,7 +101,6 @@
         </aapt:attr>
     </path>
 
-    <!-- Window cross muntins -->
     <path android:pathData="M51.89,37.34 L56.11,37.34 L56.11,70.66 L51.89,70.66 Z">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -134,7 +130,6 @@
         </aapt:attr>
     </path>
 
-    <!-- Glossy arc highlight -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#D9FFF4C2"
@@ -142,7 +137,6 @@
         android:strokeLineCap="round"
         android:pathData="M40.74,47.88 A14.82,14.82 0 0,1 52.64,39.31" />
 
-    <!-- Green leaf badge with crisp white outline -->
     <path
         android:strokeColor="#FFFFFF"
         android:strokeWidth="1.65"
@@ -162,7 +156,6 @@
         </aapt:attr>
     </path>
 
-    <!-- Leaf inner highlight -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#EBFFFFFF"
