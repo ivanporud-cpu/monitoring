@@ -1570,6 +1570,13 @@
         html.tv-mode .chart-control-btn.tv-focus {
             transform: scale(1.06);
         }
+        html.tv-mode .emp-auth-field input.tv-focus,
+        html.tv-mode .emp-auth-btn-main.tv-focus,
+        html.tv-mode .emp-auth-actions button.tv-focus {
+            outline: 3px solid #FEC035 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 5px rgba(254, 192, 53, 0.34) !important;
+        }
         html.tv-mode .checkbox-group.tv-focus {
             background: rgba(254, 192, 53, 0.14);
             border-radius: 8px;
@@ -3210,6 +3217,10 @@
                 showBrandWeatherPill(cx, rect.bottom - 26);
                 if (!saratovWeather.updatedAt || (Date.now() - saratovWeather.updatedAt > 5 * 60 * 1000)) {
                     fetchSaratovWeather(true);
+                }
+                if (isTvMode() && !isScanning) {
+                    showSwipeToast('Обновление данных...', 1800);
+                    refreshAllFolders();
                 }
             }
 
@@ -7278,6 +7289,9 @@
                     const typ = (document.activeElement.type || '').toLowerCase();
                     if (typ !== 'checkbox' && typ !== 'button' && typ !== 'submit') {
                         document.activeElement.blur();
+                        if (window.AndroidApp && typeof window.AndroidApp.hideSoftKeyboard === 'function') {
+                            try { window.AndroidApp.hideSoftKeyboard(); } catch (e) {}
+                        }
                         return true;
                     }
                 }
@@ -7698,6 +7712,9 @@
                 if (actions) actions.classList.remove('visible');
                 stopEmployeeAuthPolling();
             }
+            if (typeof tvSyncFocusAfterUiChange === 'function') {
+                tvSyncFocusAfterUiChange();
+            }
         }
 
         function hideEmployeeAuthOverlay() {
@@ -7705,6 +7722,9 @@
             document.body.classList.remove('emp-auth-locked');
             const ov = document.getElementById('employeeAuthOverlay');
             if (ov) ov.classList.remove('active');
+            if (typeof tvSyncFocusAfterUiChange === 'function') {
+                tvSyncFocusAfterUiChange();
+            }
         }
 
         function applyEmployeeAuthResult(res, fromServer = true) {
@@ -8584,6 +8604,8 @@
 
         // ==================== ЖЕСТЫ: PULL-TO-REFRESH И СВАЙП МЕЖДУ ЛИНИЯМИ ====================
         function isAnyModalOpen() {
+            const authOv = document.getElementById('employeeAuthOverlay');
+            if (authOv && authOv.classList.contains('active')) return true;
             const ids = ['fileManager', 'filesModal', 'settingsModal', 'globalSearchModal', 'barcodeGenModal', 'feedbackModal'];
             return ids.some(id => {
                 const el = document.getElementById(id);
@@ -8785,6 +8807,10 @@
         }
 
         function tvGetActiveScope() {
+            const authOv = document.getElementById('employeeAuthOverlay');
+            if (authOv && authOv.classList.contains('active')) {
+                return { id: 'employeeAuthOverlay', root: authOv, scrollBox: authOv };
+            }
             const bcZoom = document.getElementById('barcodeZoomModal');
             if (bcZoom && bcZoom.classList.contains('open')) return { id: 'barcodeZoomModal', root: bcZoom, scrollBox: null };
 
@@ -8831,6 +8857,8 @@
                 selector = '#closeBarcodeGenBtn, #bcGenTypeGroup .bc-pill-btn, #bcGenSubGroup .bc-pill-btn, #bcGenOrderInput, #bcGenItemGroup .bc-pill-btn, #bcGenItemInput, #bcGenPreviewBox';
             } else if (scope.id === 'feedbackModal') {
                 selector = '#closeFeedbackModalBtn, #feedbackTypeGroup .bc-pill-btn, #feedbackAuthorInput, #feedbackMessageInput, #cancelFeedbackBtn, #sendFeedbackBtn';
+            } else if (scope.id === 'employeeAuthOverlay') {
+                selector = '#empAuthForm input, #empAuthSubmitBtn, #empAuthActions button';
             } else if (scope.id === 'barcodeZoomModal') {
                 selector = '#closeBcZoomBtn';
             }
@@ -9013,8 +9041,15 @@
             const tag = (el.tagName || '').toUpperCase();
             if (tag === 'INPUT' || tag === 'TEXTAREA') {
                 el.focus();
-                if (typeof el.select === 'function') {
-                    try { el.select(); } catch (e) {}
+                try { el.click(); } catch (e) {}
+                if (typeof el.setSelectionRange === 'function') {
+                    try {
+                        const len = (el.value || '').length;
+                        el.setSelectionRange(len, len);
+                    } catch (e) {}
+                }
+                if (window.AndroidApp && typeof window.AndroidApp.showSoftKeyboard === 'function') {
+                    try { window.AndroidApp.showSoftKeyboard(); } catch (e) {}
                 }
                 triggerBrandOutlinePulse(el);
                 return;
@@ -9066,6 +9101,9 @@
                     const activeTag = (document.activeElement.tagName || '').toUpperCase();
                     if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
                         document.activeElement.blur();
+                        if (window.AndroidApp && typeof window.AndroidApp.hideSoftKeyboard === 'function') {
+                            try { window.AndroidApp.hideSoftKeyboard(); } catch (e) {}
+                        }
                     }
                 }
                 const curEl = tvNav.currentEl || items[0];
