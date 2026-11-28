@@ -331,6 +331,75 @@
             font-size: 0.78rem;
             color: var(--text-muted);
         }
+        .btn-reinforcement-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: var(--btn-primary-bg);
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        html.mobile-mode:not(.tv-mode) .btn-reinforcement-toggle {
+            display: inline-flex;
+        }
+        .btn-reinforcement-toggle.active {
+            background: var(--color-info);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) inset;
+        }
+        .reinf-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 0.55rem;
+            border-radius: 0.5rem;
+            background: var(--bg-soft);
+            border: 0.0625rem solid var(--border-soft);
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .reinf-summary strong {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .reinf-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem 0.65rem;
+            border-bottom: 0.0625rem solid var(--border-soft);
+        }
+        .reinf-item:last-child {
+            border-bottom: none;
+        }
+        .reinf-item-left {
+            min-width: 0;
+            flex: 1;
+        }
+        .reinf-article {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .reinf-meta {
+            margin-top: 0.2rem;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+        .reinf-bars-badge {
+            flex-shrink: 0;
+            background: var(--btn-success-bg);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: bold;
+            padding: 0.32rem 0.7rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
         .visualizer-overlay {
             display: none;
             position: fixed;
@@ -2305,6 +2374,7 @@
                     <input type="text" id="orderSearchInput" class="files-search-input" placeholder="Поиск по номеру заказа за всю дату (напр. 28775)...">
                     <button class="btn-scan-barcode" id="scanDateBarcodeBtn" type="button" title="Сканировать штрих-код" aria-label="Сканировать штрих-код"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="11" y1="7" x2="11" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/><line x1="17" y1="7" x2="17" y2="17"/></svg></button>
                     <button class="btn btn-success btn-sm" id="openOrderInVisualizerBtn" type="button">Чертежи</button>
+                    <button class="btn btn-sm btn-reinforcement-toggle" id="toggleReinforcementBtn" type="button">Армирование на смену</button>
                 </div>
                 <div class="files-search-status" id="orderSearchStatus">Нажмите на любой файл, чтобы открыть чертежи рам и створок</div>
             </div>
@@ -3484,6 +3554,10 @@
 
         let currentModalBlock = null;
         let isIndexingModalOrders = false;
+        const REINFORCEMENT_BAR_LENGTH_MM = 6000;
+        let currentFilesModalMode = 'files'; // 'files' | 'reinforcement'
+        let isCalculatingReinforcement = false;
+        const shiftReinforcementCache = new Map();
         const csvContentCache = new Map();       // fileKeyOrPath -> csvText
         const yandexPackCache = new Map();       // pack_id -> { files: { file_key: csvText } }
         const androidAsyncCallbacks = new Map();
@@ -5058,6 +5132,7 @@
 
         function resetDataCacheOnly() {
             dayCache = {};
+            shiftReinforcementCache.clear();
             monthCache.clear();
             blocksByFolder = [null, null, null];
             lastScanTime = [null, null, null];
@@ -6304,6 +6379,7 @@
                 yandexPackCache.delete(blockData.pack_id);
             }
             csvContentCache.clear();
+            shiftReinforcementCache.clear();
 
             let refreshed = false;
             if (isLocalNetworkAvailable() && await quickProbeLocalServer(1800)) {
@@ -6486,12 +6562,238 @@
             }
         }
 
+        // ==================== АРМИРОВАНИЕ НА СМЕНУ (ТОЛЬКО ТЕЛЕФОНЫ) ====================
+        function isPhoneOnlyMode() {
+            return !isTvMode() && isMobileVersion();
+        }
+
+        function normalizeReinforcementKey(article) {
+            return String(article || '').trim().toUpperCase().replace(/\s+/g, ' ').replace(/Х/g, 'X');
+        }
+
+        function parseReinforcementFromCsvText(csvText, accMap) {
+            if (!csvText || !accMap) return;
+            const lines = String(csvText).split(/\r?\n/);
+            for (let i = 0; i < lines.length; i++) {
+                const rawLine = lines[i];
+                if (!rawLine) continue;
+                const trimmed = rawLine.trim();
+                if (trimmed.length < 8 || trimmed.slice(0, 7).toUpperCase() !== 'BARCODE') continue;
+
+                const delim = trimmed.includes(';') ? ';' : ',';
+                const cols = trimmed.split(delim);
+                if (cols.length <= 12) continue;
+
+                const col1 = (cols[1] || '').trim();
+                const col7 = (cols[7] || '').trim();
+                if (!col7 && (col1 === '0' || !col1)) continue;
+
+                const lenStr = (cols[11] || '').trim();
+                const artRaw = (cols[12] || '').trim();
+                if (!artRaw || artRaw === '0' || artRaw === '-' || !lenStr) continue;
+
+                const lenMm = parseFloat(lenStr.replace(',', '.'));
+                if (!isFinite(lenMm) || lenMm <= 0) continue;
+
+                const key = normalizeReinforcementKey(artRaw);
+                if (!key) continue;
+
+                let entry = accMap.get(key);
+                if (!entry) {
+                    entry = { key: key, article: artRaw, totalMm: 0, pieces: 0 };
+                    accMap.set(key, entry);
+                }
+                entry.totalMm += lenMm;
+                entry.pieces += 1;
+            }
+        }
+
+        function buildReinforcementItemsFromMap(accMap) {
+            const items = [];
+            for (const entry of accMap.values()) {
+                const roundedMm = Math.round(entry.totalMm * 10) / 10;
+                const bars = Math.ceil(roundedMm / REINFORCEMENT_BAR_LENGTH_MM);
+                items.push({
+                    key: entry.key,
+                    article: entry.article,
+                    totalMm: roundedMm,
+                    totalMeters: roundedMm / 1000,
+                    pieces: entry.pieces,
+                    bars: bars
+                });
+            }
+            items.sort((a, b) => (b.bars - a.bars) || (b.totalMm - a.totalMm) || a.article.localeCompare(b.article, 'ru', { numeric: true }));
+            return items;
+        }
+
+        function getReinforcementCacheKey(blockData) {
+            const allFiles = (blockData && Array.isArray(blockData.processed_files)) ? blockData.processed_files : [];
+            if (blockData && blockData.pack_id) {
+                return 'pack|' + blockData.pack_id + '|' + allFiles.length;
+            }
+            return 'dir|' + (blockData?.sourcePath || '') + '|' + (blockData?.folder_name || '') + '|' + (blockData?.day_night || '') + '|' + allFiles.length;
+        }
+
+        function updateReinforcementToggleUi() {
+            const btn = document.getElementById('toggleReinforcementBtn');
+            const searchInp = document.getElementById('orderSearchInput');
+            const isReinf = currentFilesModalMode === 'reinforcement';
+            const allFiles = (currentModalBlock && Array.isArray(currentModalBlock.processed_files)) ? currentModalBlock.processed_files : [];
+
+            if (btn) {
+                btn.disabled = allFiles.length === 0;
+                btn.classList.toggle('active', isReinf);
+                btn.textContent = isReinf ? '← К файлам' : 'Армирование на смену';
+            }
+            if (searchInp) {
+                searchInp.placeholder = isReinf
+                    ? 'Поиск по артикулу армирования...'
+                    : 'Поиск по номеру заказа за всю дату (напр. 28775)...';
+            }
+        }
+
+        function renderReinforcementList(cachedObj, query) {
+            const listDiv = document.getElementById('filesList');
+            const statusEl = document.getElementById('orderSearchStatus');
+            const items = (cachedObj && Array.isArray(cachedObj.items)) ? cachedObj.items : [];
+            const qRaw = String(query || '').trim();
+            const qNorm = normalizeReinforcementKey(qRaw);
+
+            const filtered = qNorm
+                ? items.filter(it => it.key.includes(qNorm) || String(it.article).toLowerCase().includes(qRaw.toLowerCase()))
+                : items;
+
+            const totalBars = filtered.reduce((acc, it) => acc + (it.bars || 0), 0);
+            const totalMeters = filtered.reduce((acc, it) => acc + (it.totalMeters || 0), 0);
+
+            if (statusEl) {
+                const failNote = cachedObj && cachedObj.failedCount > 0
+                    ? (' (не прочитано файлов: ' + cachedObj.failedCount + ')')
+                    : '';
+                if (qRaw) {
+                    statusEl.textContent = 'Найдено артикулов: ' + filtered.length + ' из ' + items.length + ' • Хлыст 6 м' + failNote;
+                } else {
+                    statusEl.textContent = 'Армирование на всю смену (хлыст 6 м, неполный хлыст округлён вверх)' + failNote;
+                }
+            }
+
+            if (items.length === 0) {
+                listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Данные об армировании в файлах этой смены не найдены</div>';
+                return;
+            }
+
+            if (filtered.length === 0) {
+                listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">Артикул «' + escapeHtmlSimple(qRaw) + '» не найден</div>';
+                return;
+            }
+
+            let htmlOut = '<div class="reinf-summary">' +
+                '<span>Артикулов: <strong>' + filtered.length + '</strong></span>' +
+                '<span>Всего: <strong>' + totalMeters.toFixed(2) + ' м</strong></span>' +
+                '<span>Итого: <strong>' + totalBars + ' хл.</strong></span>' +
+                '</div>';
+
+            for (const it of filtered) {
+                htmlOut += '<div class="reinf-item">' +
+                    '<div class="reinf-item-left">' +
+                        '<div class="reinf-article">' + escapeHtmlSimple(it.article) + '</div>' +
+                        '<div class="reinf-meta">' + it.totalMeters.toFixed(2) + ' м • ' + it.pieces + ' загот.</div>' +
+                    '</div>' +
+                    '<div class="reinf-bars-badge">' + it.bars + ' хл.</div>' +
+                '</div>';
+            }
+
+            listDiv.innerHTML = htmlOut;
+        }
+
+        async function showShiftReinforcementView(blockData, query = '') {
+            if (!blockData || !isPhoneOnlyMode()) return;
+            currentFilesModalMode = 'reinforcement';
+            updateReinforcementToggleUi();
+
+            const listDiv = document.getElementById('filesList');
+            const statusEl = document.getElementById('orderSearchStatus');
+            const allFiles = Array.isArray(blockData.processed_files) ? blockData.processed_files : [];
+            if (allFiles.length === 0) {
+                listDiv.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">В этой смене нет файлов раскроя</div>';
+                if (statusEl) statusEl.textContent = 'В этой смене нет файлов раскроя';
+                return;
+            }
+
+            const cacheKey = getReinforcementCacheKey(blockData);
+            if (shiftReinforcementCache.has(cacheKey)) {
+                renderReinforcementList(shiftReinforcementCache.get(cacheKey), query);
+                return;
+            }
+
+            if (isCalculatingReinforcement) return;
+            isCalculatingReinforcement = true;
+
+            if (statusEl) statusEl.textContent = 'Подсчёт армирования (0/' + allFiles.length + ')...';
+            listDiv.innerHTML = '<div style="padding:1.25rem; text-align:center; color:var(--text-muted);">Загрузка и подсчёт армирования по файлам смены...</div>';
+
+            try {
+                // В удалённом режиме одним запросом подгружаем сжатый пакет всех файлов смены
+                if (lastDataSource === 'yandex' && blockData.pack_id) {
+                    try {
+                        await loadYandexPackForBlock(blockData);
+                    } catch (e) {}
+                }
+
+                const accMap = new Map();
+                let done = 0;
+                let failedCount = 0;
+
+                for (const f of allFiles) {
+                    if (currentModalBlock !== blockData || currentFilesModalMode !== 'reinforcement') {
+                        return;
+                    }
+                    try {
+                        const txt = await fetchCsvContentForFile(blockData, f, true, (msg) => {
+                            if (statusEl && currentModalBlock === blockData && currentFilesModalMode === 'reinforcement') {
+                                statusEl.textContent = msg;
+                            }
+                        });
+                        if (txt) {
+                            parseReinforcementFromCsvText(txt, accMap);
+                        } else {
+                            failedCount++;
+                        }
+                    } catch (e) {
+                        failedCount++;
+                    }
+                    done++;
+                    if (statusEl && currentModalBlock === blockData && currentFilesModalMode === 'reinforcement') {
+                        statusEl.textContent = 'Подсчёт армирования (' + done + '/' + allFiles.length + ')...';
+                    }
+                }
+
+                const resultObj = {
+                    items: buildReinforcementItemsFromMap(accMap),
+                    totalFiles: allFiles.length,
+                    failedCount: failedCount
+                };
+                if (failedCount < allFiles.length) {
+                    shiftReinforcementCache.set(cacheKey, resultObj);
+                }
+
+                if (currentModalBlock === blockData && currentFilesModalMode === 'reinforcement') {
+                    const curQ = (document.getElementById('orderSearchInput')?.value || '').trim();
+                    renderReinforcementList(resultObj, curQ);
+                }
+            } finally {
+                isCalculatingReinforcement = false;
+            }
+        }
+
         function openDateFilesModal(blockData) {
             currentModalBlock = blockData;
+            currentFilesModalMode = 'files';
             document.getElementById('filesModalTitle').textContent =
                 (blockData.folder_name || '') + ' ' + (blockData.day_night || '');
             const searchInp = document.getElementById('orderSearchInput');
             if (searchInp) searchInp.value = '';
+            updateReinforcementToggleUi();
             renderDateModalFiles(blockData, '');
             showFilesModal();
         }
@@ -7038,6 +7340,8 @@
             if (!orderNo) return;
 
             if (target === 'date' && currentModalBlock) {
+                currentFilesModalMode = 'files';
+                updateReinforcementToggleUi();
                 const inp = document.getElementById('orderSearchInput');
                 if (inp) inp.value = orderNo;
                 renderDateModalFiles(currentModalBlock, orderNo);
@@ -7271,6 +7575,7 @@
                 monthCache.clear();
                 csvContentCache.clear();
                 yandexPackCache.clear();
+                shiftReinforcementCache.clear();
                 blocksByFolder = [null, null, null];
                 lastScanTime = [null, null, null];
                 currentBlocks = [];
@@ -7850,8 +8155,30 @@
             const orderSearchInp = document.getElementById('orderSearchInput');
             if (orderSearchInp) {
                 orderSearchInp.addEventListener('input', function() {
-                    if (currentModalBlock) {
+                    if (!currentModalBlock) return;
+                    if (currentFilesModalMode === 'reinforcement') {
+                        const cacheKey = getReinforcementCacheKey(currentModalBlock);
+                        if (shiftReinforcementCache.has(cacheKey)) {
+                            renderReinforcementList(shiftReinforcementCache.get(cacheKey), this.value);
+                        }
+                    } else {
                         renderDateModalFiles(currentModalBlock, this.value);
+                    }
+                });
+            }
+            const toggleReinfBtn = document.getElementById('toggleReinforcementBtn');
+            if (toggleReinfBtn) {
+                toggleReinfBtn.addEventListener('click', async function() {
+                    if (!currentModalBlock || !isPhoneOnlyMode()) return;
+                    const searchInp = document.getElementById('orderSearchInput');
+                    if (currentFilesModalMode === 'reinforcement') {
+                        currentFilesModalMode = 'files';
+                        if (searchInp) searchInp.value = '';
+                        updateReinforcementToggleUi();
+                        renderDateModalFiles(currentModalBlock, '');
+                    } else {
+                        if (searchInp) searchInp.value = '';
+                        await showShiftReinforcementView(currentModalBlock, '');
                     }
                 });
             }
